@@ -376,72 +376,32 @@ taxBtn.addEventListener('click', () => {
   render();
 });
 
-// 雙軌自動備援連線機制
 async function fetchBotRates() {
   const ind = document.getElementById('statusIndicator');
   const updateTimeText = document.getElementById('rateUpdateTime');
   ind.className = "w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse";
-  updateTimeText.textContent = "連線最新匯率中...";
+  updateTimeText.textContent = "讀取臺銀牌告中...";
 
-  let success = false;
-
-  // 第一軌：嘗試透過代理抓取臺灣銀行官方牌告
   try {
-    const botUrl = "https://rate.bot.com.tw/xrt/flcsv/0/day";
-    const proxy = `https://api.allorigins.win/raw?url=${encodeURIComponent(botUrl)}`;
-    const res = await fetch(proxy, { signal: AbortSignal.timeout(3000) });
-    if (res.ok) {
-      const csv = await res.text();
-      if (csv && csv.includes("USD")) {
-        const lines = csv.trim().split("\n");
-        for (let i = 1; i < lines.length; i++) {
-          const cols = lines[i].split(",").map(c => c.trim());
-          const code = cols[0];
-          if (cols.length >= 7 && currentRates[code]) {
-            const cashSell = parseFloat(cols[4]);
-            const spotSell = parseFloat(cols[6]);
-            if (!isNaN(cashSell) && cashSell > 0) currentRates[code].cashSell = cashSell;
-            if (!isNaN(spotSell) && spotSell > 0) currentRates[code].spotSell = spotSell;
-          }
+    // 直接讀取同專案下的 rates.json (無任何 CORS 限制)
+    const res = await fetch('./rates.json?t=' + Date.now(), { cache: 'no-cache' });
+    if (!res.ok) throw new Error("檔案不存在");
+    const data = await res.json();
+
+    if (data && data.rates) {
+      Object.keys(data.rates).forEach(code => {
+        if (currentRates[code]) {
+          if (data.rates[code].cashSell) currentRates[code].cashSell = data.rates[code].cashSell;
+          if (data.rates[code].spotSell) currentRates[code].spotSell = data.rates[code].spotSell;
         }
-        success = true;
-        updateTimeText.textContent = `臺銀牌告已同步 (${new Date().toLocaleTimeString('zh-TW', {hour:'2-digit',minute:'2-digit'})})`;
-      }
+      });
+      localStorage.setItem('bot_mini_rates', JSON.stringify(currentRates));
+      ind.className = "w-2.5 h-2.5 rounded-full bg-emerald-400";
+      updateTimeText.textContent = `牌告已同步 (${data.updatedAt || '最新'})`;
     }
   } catch (e) {
-    // 臺銀線路遭防火牆攔截，準備切換備援
-  }
-
-  // 第二軌：若臺銀遭阻擋，無縫切換全球即時外匯開放 API (無 CORS 限制、100% 穩定)
-  if (!success) {
-    try {
-      const res = await fetch("https://open.er-api.com/v6/latest/TWD", { signal: AbortSignal.timeout(4000) });
-      if (res.ok) {
-        const data = await res.json();
-        if (data && data.rates) {
-          // data.rates[CODE] 代表 1 台幣折合多少外幣，取倒數即為 1 外幣折合多少台幣
-          Object.keys(currentRates).forEach(code => {
-            if (code !== 'TWD' && data.rates[code]) {
-              const twdRate = 1 / data.rates[code];
-              currentRates[code].cashSell = parseFloat(twdRate.toFixed(4));
-              currentRates[code].spotSell = parseFloat(twdRate.toFixed(4));
-            }
-          });
-          success = true;
-          updateTimeText.textContent = `即時匯率已同步 (${new Date().toLocaleTimeString('zh-TW', {hour:'2-digit',minute:'2-digit'})})`;
-        }
-      }
-    } catch (err) {
-      // 兩者皆逾時
-    }
-  }
-
-  if (success) {
-    localStorage.setItem('bot_mini_rates', JSON.stringify(currentRates));
-    ind.className = "w-2.5 h-2.5 rounded-full bg-emerald-400";
-  } else {
     ind.className = "w-2.5 h-2.5 rounded-full bg-slate-500";
-    updateTimeText.textContent = "使用本機快取匯率";
+    updateTimeText.textContent = "使用離線快取資料";
   }
 
   buildSheetList();
