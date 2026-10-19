@@ -28,141 +28,136 @@
     .sheet-closed { transform: translateY(100%); }
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 flex justify-center items-center h-full sm:p-4">
+<body class="bg-slate-950 text-slate-100 flex justify-center items-center h-full sm:p-2">
 
-<!-- 為了配合放大的 UI，電腦版預覽高度也相應放寬到 840px -->
-<div class="w-full max-w-md bg-slate-900 sm:rounded-3xl h-full sm:h-[840px] flex flex-col shadow-xl relative overflow-hidden sm:border border-slate-800">
+<!-- 容器高度嚴格受限於 100dvh，配合三星瀏覽器工具列不超出版面 -->
+<div class="w-full max-w-md bg-slate-900 sm:rounded-3xl h-full flex flex-col justify-between shadow-2xl relative overflow-hidden sm:border border-slate-800">
 
-  <!-- 1. 頂部狀態列 (稍微放大字體) -->
-  <header class="px-4 py-3 bg-slate-900 border-b border-slate-800 flex justify-between items-center z-10 shrink-0">
+  <!-- 1. 頂部狀態列 (精簡高度) -->
+  <header class="px-3 py-2 bg-slate-900 border-b border-slate-800 flex justify-between items-center z-10 shrink-0">
     <div>
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-1.5">
         <span id="statusIndicator" class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
-        <h1 class="text-sm font-bold tracking-tight text-white">臺銀牌告 (對向直算)</h1>
+        <h1 class="text-xs font-bold tracking-tight text-white">臺銀牌告 (對向直算)</h1>
       </div>
-      <p id="rateUpdateTime" class="text-xs text-slate-400 mt-0.5">正在同步最新牌告...</p>
+      <p id="rateUpdateTime" class="text-[10px] text-slate-400 mt-0.5">正在同步最新牌告...</p>
     </div>
     
-    <div class="flex items-center gap-2.5">
-      <button id="refreshBtn" class="p-1.5 text-slate-400 hover:text-white bg-slate-800 rounded-lg border border-slate-700 active:scale-95 transition-all">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+    <div class="flex items-center gap-2">
+      <button id="refreshBtn" class="p-1 text-slate-400 hover:text-white bg-slate-800 rounded border border-slate-700 active:scale-95 transition-all">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
       </button>
-      <div class="flex bg-slate-950 p-1 rounded-lg border border-slate-800">
-        <button id="typeCash" class="px-2.5 py-1 text-xs rounded-md font-medium bg-emerald-600 text-white transition-all">現鈔</button>
-        <button id="typeSpot" class="px-2.5 py-1 text-xs rounded-md font-medium text-slate-400 hover:text-white transition-all">即期</button>
+      <div class="flex bg-slate-950 p-0.5 rounded border border-slate-800">
+        <button id="typeCash" class="px-2 py-0.5 text-[11px] rounded font-medium bg-emerald-600 text-white transition-all">現鈔</button>
+        <button id="typeSpot" class="px-2 py-0.5 text-[11px] rounded font-medium text-slate-400 hover:text-white transition-all">即期</button>
       </div>
     </div>
   </header>
 
-  <!-- 2. 雙向輸入區塊 (全面放大留白、字體與國旗) -->
-  <div class="flex-1 flex flex-col justify-center px-4 py-5 gap-6 relative">
+  <!-- 2. 雙向輸入區塊 (自適應彈性收縮，不擠壓鍵盤) -->
+  <div class="flex-1 flex flex-col justify-around px-3 py-2 gap-2 relative min-h-0">
     
     <!-- 上方：外幣輸入框 -->
-    <!-- p-5 加大卡片內部空間，rounded-3xl 讓卡片更圓潤 -->
-    <div id="targetCard" class="bg-slate-800/60 border-2 border-transparent focus-within:border-emerald-500/70 rounded-3xl p-5 shadow-sm transition-all cursor-text relative overflow-hidden" onclick="setActiveInput('target')">
-      
-      <!-- 幣別選擇按鈕放大 -->
-      <button id="currencySelectBtn" class="absolute top-4 left-4 flex items-center gap-2.5 bg-slate-700/50 hover:bg-slate-600/50 px-3 py-1.5 rounded-xl border border-slate-600/50 active:scale-95 transition-all z-10" onclick="event.stopPropagation(); openCurrencySheet()">
-        <span id="targetFlag" class="text-3xl">🇯🇵</span> <!-- 國旗放大 -->
+    <div id="targetCard" class="bg-slate-800/60 border-2 border-transparent focus-within:border-emerald-500/70 rounded-2xl px-3 py-2 shadow-sm transition-all cursor-text relative overflow-hidden" onclick="setActiveInput('target')">
+      <button id="currencySelectBtn" class="absolute top-2 left-2 flex items-center gap-1.5 bg-slate-700/50 hover:bg-slate-600/50 px-2 py-1 rounded-lg border border-slate-600/50 active:scale-95 transition-all z-10" onclick="event.stopPropagation(); openCurrencySheet()">
+        <span id="targetFlag" class="text-2xl">🇯🇵</span>
         <div class="text-left leading-tight">
-          <div id="targetCode" class="text-base font-bold text-white">JPY</div> <!-- 代碼放大 -->
-          <div id="targetName" class="text-xs text-slate-400">日圓</div>
+          <div id="targetCode" class="text-xs font-bold text-white">JPY</div>
+          <div id="targetName" class="text-[9px] text-slate-400">日圓</div>
         </div>
-        <svg class="w-4 h-4 text-slate-400 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
       </button>
 
-      <div class="text-right mt-12">
-        <div id="targetCalcPreview" class="h-5 text-sm font-mono text-slate-400 truncate"></div>
-        <!-- 輸入數字放大到 text-5xl -->
+      <div class="text-right mt-7">
+        <div id="targetCalcPreview" class="h-3.5 text-[11px] font-mono text-slate-400 truncate"></div>
         <input 
           id="targetInput" 
           type="text" 
           inputmode="none" 
           value="1000" 
           placeholder="0"
-          class="w-full bg-transparent text-5xl font-mono font-bold tracking-tight text-white text-right outline-none focus:ring-0"
+          class="w-full bg-transparent text-4xl font-mono font-bold tracking-tight text-white text-right outline-none focus:ring-0 leading-none"
         />
       </div>
-      <div id="targetRateInfo" class="absolute bottom-3 left-4 text-xs text-slate-500">牌告匯率: --</div>
+      <div id="targetRateInfo" class="text-[10px] text-slate-500 text-left mt-0.5">牌告匯率: --</div>
     </div>
 
-    <!-- 中間：雙向交換圖示 (跟著放大) -->
-    <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-slate-900 border-4 border-slate-900 rounded-full z-10 pointer-events-none">
-      <div class="bg-slate-800 w-10 h-10 rounded-full flex items-center justify-center text-emerald-400 shadow-inner">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path></svg>
+    <!-- 中間：雙向交換圖示 -->
+    <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-slate-900 border-2 border-slate-900 rounded-full z-10 pointer-events-none">
+      <div class="bg-slate-800 w-7 h-7 rounded-full flex items-center justify-center text-emerald-400 shadow-inner">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path></svg>
       </div>
     </div>
 
     <!-- 下方：台幣輸入框 -->
-    <div id="baseCard" class="bg-slate-850 border-2 border-emerald-500/70 rounded-3xl p-5 shadow-inner transition-all cursor-text relative" onclick="setActiveInput('base')">
-      <div class="absolute top-4 left-4 flex items-center gap-2.5 px-2 py-1">
-        <span class="text-3xl">🇹🇼</span>
+    <div id="baseCard" class="bg-slate-850 border-2 border-emerald-500/70 rounded-2xl px-3 py-2 shadow-inner transition-all cursor-text relative" onclick="setActiveInput('base')">
+      <div class="absolute top-2 left-2 flex items-center gap-1.5 px-1 py-0.5">
+        <span class="text-2xl">🇹🇼</span>
         <div class="text-left leading-tight">
-          <div class="text-base font-bold text-white">TWD</div>
-          <div class="text-xs text-slate-400">新台幣</div>
+          <div class="text-xs font-bold text-white">TWD</div>
+          <div class="text-[9px] text-slate-400">新台幣</div>
         </div>
       </div>
-      <div class="text-right mt-12">
-        <div id="baseCalcPreview" class="h-5 text-sm font-mono text-slate-400 truncate"></div>
-        <!-- 數字放大到 text-5xl -->
+      <div class="text-right mt-7">
+        <div id="baseCalcPreview" class="h-3.5 text-[11px] font-mono text-slate-400 truncate"></div>
         <input 
           id="baseInput" 
           type="text" 
           inputmode="none" 
           placeholder="0"
-          class="w-full bg-transparent text-5xl font-mono font-bold tracking-tight text-emerald-300 text-right outline-none focus:ring-0"
+          class="w-full bg-transparent text-4xl font-mono font-bold tracking-tight text-emerald-300 text-right outline-none focus:ring-0 leading-none"
         />
       </div>
+      <div class="h-3.5"></div>
     </div>
   </div>
 
-  <!-- 3. 附加費率快捷鍵 (放大按鈕方便手機點擊) -->
-  <div class="px-4 pb-3 bg-slate-950 flex items-center justify-between text-sm">
-    <span class="text-slate-500 text-xs">金額加計：</span>
+  <!-- 3. 附加費率快捷鍵 -->
+  <div class="px-3 py-1 bg-slate-950 flex items-center justify-between text-[11px] shrink-0">
+    <span class="text-slate-500 text-[10px]">金額加計：</span>
     <div class="flex gap-2">
-      <button id="toggleFee" class="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 text-xs font-mono active:scale-95 transition-all">+1.5% 刷卡</button>
-      <button id="toggleTax" class="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 text-xs font-mono active:scale-95 transition-all">-10% 退稅</button>
+      <button id="toggleFee" class="px-2.5 py-1 rounded border border-slate-700 bg-slate-800 text-slate-300 text-xs font-mono active:scale-95 transition-all">+1.5% 刷卡</button>
+      <button id="toggleTax" class="px-2.5 py-1 rounded border border-slate-700 bg-slate-800 text-slate-300 text-xs font-mono active:scale-95 transition-all">-10% 退稅</button>
     </div>
   </div>
 
-  <!-- 4. 虛擬計算機鍵盤 (放大字體 text-2xl，加高按鈕 py-3.5) -->
-  <div class="bg-slate-950 p-4 rounded-t-3xl border-t border-slate-800/90 shadow-2xl shrink-0">
-    <div class="grid grid-cols-4 gap-2.5 text-2xl font-semibold">
-      <button class="key-btn bg-slate-800 hover:bg-slate-700 text-rose-400 py-3.5 rounded-2xl active:scale-95 transition-transform" data-val="C">C</button>
-      <button class="key-btn bg-slate-800 hover:bg-slate-700 text-emerald-400 py-3.5 rounded-2xl active:scale-95 transition-transform" data-val="⌫">⌫</button>
-      <button class="key-btn bg-slate-800 hover:bg-slate-700 text-emerald-400 py-3.5 rounded-2xl active:scale-95 transition-transform" data-val="%">%</button>
-      <button class="key-btn bg-emerald-700/80 hover:bg-emerald-600 text-white py-3.5 rounded-2xl active:scale-95 transition-transform" data-val="/">÷</button>
+  <!-- 4. 虛擬計算機鍵盤 (高度設定適中，避免被下方工具列吃掉) -->
+  <div class="bg-slate-950 p-2.5 pb-4 rounded-t-2xl border-t border-slate-800/90 shadow-2xl shrink-0">
+    <div class="grid grid-cols-4 gap-1.5 text-xl font-semibold">
+      <button class="key-btn bg-slate-800 hover:bg-slate-700 text-rose-400 py-2.5 rounded-xl active:scale-95 transition-transform" data-val="C">C</button>
+      <button class="key-btn bg-slate-800 hover:bg-slate-700 text-emerald-400 py-2.5 rounded-xl active:scale-95 transition-transform" data-val="⌫">⌫</button>
+      <button class="key-btn bg-slate-800 hover:bg-slate-700 text-emerald-400 py-2.5 rounded-xl active:scale-95 transition-transform" data-val="%">%</button>
+      <button class="key-btn bg-emerald-700/80 hover:bg-emerald-600 text-white py-2.5 rounded-xl active:scale-95 transition-transform" data-val="/">÷</button>
 
-      <button class="key-btn bg-slate-800/50 hover:bg-slate-700/80 text-white py-3.5 rounded-2xl active:scale-95 transition-transform" data-val="7">7</button>
-      <button class="key-btn bg-slate-800/50 hover:bg-slate-700/80 text-white py-3.5 rounded-2xl active:scale-95 transition-transform" data-val="8">8</button>
-      <button class="key-btn bg-slate-800/50 hover:bg-slate-700/80 text-white py-3.5 rounded-2xl active:scale-95 transition-transform" data-val="9">9</button>
-      <button class="key-btn bg-emerald-700/80 hover:bg-emerald-600 text-white py-3.5 rounded-2xl active:scale-95 transition-transform" data-val="*">×</button>
+      <button class="key-btn bg-slate-800/50 hover:bg-slate-700/80 text-white py-2.5 rounded-xl active:scale-95 transition-transform" data-val="7">7</button>
+      <button class="key-btn bg-slate-800/50 hover:bg-slate-700/80 text-white py-2.5 rounded-xl active:scale-95 transition-transform" data-val="8">8</button>
+      <button class="key-btn bg-slate-800/50 hover:bg-slate-700/80 text-white py-2.5 rounded-xl active:scale-95 transition-transform" data-val="9">9</button>
+      <button class="key-btn bg-emerald-700/80 hover:bg-emerald-600 text-white py-2.5 rounded-xl active:scale-95 transition-transform" data-val="*">×</button>
 
-      <button class="key-btn bg-slate-800/50 hover:bg-slate-700/80 text-white py-3.5 rounded-2xl active:scale-95 transition-transform" data-val="4">4</button>
-      <button class="key-btn bg-slate-800/50 hover:bg-slate-700/80 text-white py-3.5 rounded-2xl active:scale-95 transition-transform" data-val="5">5</button>
-      <button class="key-btn bg-slate-800/50 hover:bg-slate-700/80 text-white py-3.5 rounded-2xl active:scale-95 transition-transform" data-val="6">6</button>
-      <button class="key-btn bg-emerald-700/80 hover:bg-emerald-600 text-white py-3.5 rounded-2xl active:scale-95 transition-transform" data-val="-">-</button>
+      <button class="key-btn bg-slate-800/50 hover:bg-slate-700/80 text-white py-2.5 rounded-xl active:scale-95 transition-transform" data-val="4">4</button>
+      <button class="key-btn bg-slate-800/50 hover:bg-slate-700/80 text-white py-2.5 rounded-xl active:scale-95 transition-transform" data-val="5">5</button>
+      <button class="key-btn bg-slate-800/50 hover:bg-slate-700/80 text-white py-2.5 rounded-xl active:scale-95 transition-transform" data-val="6">6</button>
+      <button class="key-btn bg-emerald-700/80 hover:bg-emerald-600 text-white py-2.5 rounded-xl active:scale-95 transition-transform" data-val="-">-</button>
 
-      <button class="key-btn bg-slate-800/50 hover:bg-slate-700/80 text-white py-3.5 rounded-2xl active:scale-95 transition-transform" data-val="1">1</button>
-      <button class="key-btn bg-slate-800/50 hover:bg-slate-700/80 text-white py-3.5 rounded-2xl active:scale-95 transition-transform" data-val="2">2</button>
-      <button class="key-btn bg-slate-800/50 hover:bg-slate-700/80 text-white py-3.5 rounded-2xl active:scale-95 transition-transform" data-val="3">3</button>
-      <button class="key-btn bg-emerald-700/80 hover:bg-emerald-600 text-white py-3.5 rounded-2xl active:scale-95 transition-transform" data-val="+">+</button>
+      <button class="key-btn bg-slate-800/50 hover:bg-slate-700/80 text-white py-2.5 rounded-xl active:scale-95 transition-transform" data-val="1">1</button>
+      <button class="key-btn bg-slate-800/50 hover:bg-slate-700/80 text-white py-2.5 rounded-xl active:scale-95 transition-transform" data-val="2">2</button>
+      <button class="key-btn bg-slate-800/50 hover:bg-slate-700/80 text-white py-2.5 rounded-xl active:scale-95 transition-transform" data-val="3">3</button>
+      <button class="key-btn bg-emerald-700/80 hover:bg-emerald-600 text-white py-2.5 rounded-xl active:scale-95 transition-transform" data-val="+">+</button>
 
-      <button class="key-btn bg-slate-800/50 hover:bg-slate-700/80 text-white py-3.5 rounded-2xl col-span-2 active:scale-95 transition-transform" data-val="0">0</button>
-      <button class="key-btn bg-slate-800/50 hover:bg-slate-700/80 text-white py-3.5 rounded-2xl active:scale-95 transition-transform" data-val=".">.</button>
-      <button class="key-btn bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 rounded-2xl active:scale-95 transition-transform" data-val="=">=</button>
+      <button class="key-btn bg-slate-800/50 hover:bg-slate-700/80 text-white py-2.5 rounded-xl col-span-2 active:scale-95 transition-transform" data-val="0">0</button>
+      <button class="key-btn bg-slate-800/50 hover:bg-slate-700/80 text-white py-2.5 rounded-xl active:scale-95 transition-transform" data-val=".">.</button>
+      <button class="key-btn bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl active:scale-95 transition-transform" data-val="=">=</button>
     </div>
   </div>
 
-  <!-- 5. 抽屜式外幣選擇選單 (清單項目也全部放大) -->
+  <!-- 5. 抽屜式外幣選擇選單 -->
   <div id="currencySheetOverlay" class="absolute inset-0 bg-black/60 z-40 hidden opacity-0 transition-opacity duration-300" onclick="closeCurrencySheet()"></div>
-  <div id="currencySheet" class="absolute bottom-0 left-0 right-0 bg-slate-900 rounded-t-3xl h-[70%] z-50 sheet-closed transition-transform duration-300 flex flex-col border-t border-slate-700">
-    <div class="px-5 py-4 border-b border-slate-800 flex justify-between items-center">
-      <h3 class="text-base font-bold text-white">選擇外幣</h3>
-      <button onclick="closeCurrencySheet()" class="p-2 bg-slate-800 rounded-full text-slate-400 active:scale-95"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+  <div id="currencySheet" class="absolute bottom-0 left-0 right-0 bg-slate-900 rounded-t-2xl h-[65%] z-50 sheet-closed transition-transform duration-300 flex flex-col border-t border-slate-700">
+    <div class="px-4 py-3 border-b border-slate-800 flex justify-between items-center">
+      <h3 class="text-sm font-bold text-white">選擇外幣</h3>
+      <button onclick="closeCurrencySheet()" class="p-1.5 bg-slate-800 rounded-full text-slate-400 active:scale-95"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
     </div>
-    <div id="sheetList" class="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-3 pb-8 content-start">
-      <!-- 外幣按鈕將由 JavaScript 動態生成注入此處 -->
+    <div id="sheetList" class="flex-1 overflow-y-auto p-3 grid grid-cols-2 gap-2 pb-8 content-start">
     </div>
   </div>
 
@@ -338,13 +333,12 @@ function buildSheetList() {
     const btn = document.createElement('button');
     const activeStyle = code === activeCurrencyCode ? 'border-emerald-500 bg-emerald-900/30' : 'border-slate-700 bg-slate-800';
     
-    // 抽屜清單的國旗與字體全面放大
-    btn.className = `flex items-center gap-3.5 p-3.5 rounded-2xl border text-left transition-all active:scale-95 ${activeStyle}`;
+    btn.className = `flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition-all active:scale-95 ${activeStyle}`;
     btn.innerHTML = `
-      <span class="text-4xl">${info.flag}</span>
+      <span class="text-3xl">${info.flag}</span>
       <div>
-        <div class="font-bold text-lg text-white leading-none">${code}</div>
-        <div class="text-xs text-slate-400 mt-1.5">${info.name}</div>
+        <div class="font-bold text-sm text-white leading-none">${code}</div>
+        <div class="text-[10px] text-slate-400 mt-1">${info.name}</div>
       </div>
     `;
     btn.onclick = () => {
@@ -359,40 +353,61 @@ function buildSheetList() {
 
 document.getElementById('typeCash').addEventListener('click', () => {
   rateMode = 'cash';
-  document.getElementById('typeCash').className = "px-2.5 py-1 text-xs rounded-md font-medium bg-emerald-600 text-white transition-all";
-  document.getElementById('typeSpot').className = "px-2.5 py-1 text-xs rounded-md font-medium text-slate-400 hover:text-white transition-all";
+  document.getElementById('typeCash').className = "px-2 py-0.5 text-[11px] rounded font-medium bg-emerald-600 text-white transition-all";
+  document.getElementById('typeSpot').className = "px-2 py-0.5 text-[11px] rounded font-medium text-slate-400 hover:text-white transition-all";
   render();
 });
 document.getElementById('typeSpot').addEventListener('click', () => {
   rateMode = 'spot';
-  document.getElementById('typeSpot').className = "px-2.5 py-1 text-xs rounded-md font-medium bg-emerald-600 text-white transition-all";
-  document.getElementById('typeCash').className = "px-2.5 py-1 text-xs rounded-md font-medium text-slate-400 hover:text-white transition-all";
+  document.getElementById('typeSpot').className = "px-2 py-0.5 text-[11px] rounded font-medium bg-emerald-600 text-white transition-all";
+  document.getElementById('typeCash').className = "px-2 py-0.5 text-[11px] rounded font-medium text-slate-400 hover:text-white transition-all";
   render();
 });
 const feeBtn = document.getElementById('toggleFee');
 feeBtn.addEventListener('click', () => {
   applyFee = !applyFee;
-  feeBtn.className = applyFee ? "px-3 py-1.5 rounded-lg border border-emerald-500 bg-emerald-950 text-emerald-300 text-xs font-mono active:scale-95 transition-all" : "px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 text-xs font-mono active:scale-95 transition-all";
+  feeBtn.className = applyFee ? "px-2.5 py-1 rounded border border-emerald-500 bg-emerald-950 text-emerald-300 text-xs font-mono active:scale-95 transition-all" : "px-2.5 py-1 rounded border border-slate-700 bg-slate-800 text-slate-300 text-xs font-mono active:scale-95 transition-all";
   render();
 });
 const taxBtn = document.getElementById('toggleTax');
 taxBtn.addEventListener('click', () => {
   applyTaxFree = !applyTaxFree;
-  taxBtn.className = applyTaxFree ? "px-3 py-1.5 rounded-lg border border-emerald-500 bg-emerald-950 text-emerald-300 text-xs font-mono active:scale-95 transition-all" : "px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 text-xs font-mono active:scale-95 transition-all";
+  taxBtn.className = applyTaxFree ? "px-2.5 py-1 rounded border border-emerald-500 bg-emerald-950 text-emerald-300 text-xs font-mono active:scale-95 transition-all" : "px-2.5 py-1 rounded border border-slate-700 bg-slate-800 text-slate-300 text-xs font-mono active:scale-95 transition-all";
   render();
 });
 
+// 多組 Proxy 備援抓取臺銀牌告 CSV
 async function fetchBotRates() {
   const ind = document.getElementById('statusIndicator');
   const updateTimeText = document.getElementById('rateUpdateTime');
   ind.className = "w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse";
-  updateTimeText.textContent = "正在同步最新牌告...";
+  updateTimeText.textContent = "連線臺銀牌告中...";
 
-  const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent("https://rate.bot.com.tw/xrt/flcsv/0/day")}`;
-  try {
-    const res = await fetch(proxyUrl);
-    if(!res.ok) throw new Error("Fetch failed");
-    const csv = await res.text();
+  const targetUrl = "https://rate.bot.com.tw/xrt/flcsv/0/day";
+  // 三組輪替代理，確保抓取成功
+  const proxies = [
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
+    `https://corsproxy.io/?url=${encodeURIComponent(targetUrl)}`,
+    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`
+  ];
+
+  let csv = null;
+  for (const p of proxies) {
+    try {
+      const res = await fetch(p, { cache: 'no-cache' });
+      if (res.ok) {
+        const text = await res.text();
+        if (text && text.includes("USD")) {
+          csv = text;
+          break;
+        }
+      }
+    } catch (e) {
+      // 嘗試下一組代理
+    }
+  }
+
+  if (csv) {
     const lines = csv.trim().split("\n");
     let hasUpdate = false;
     for (let i = 1; i < lines.length; i++) {
@@ -406,15 +421,16 @@ async function fetchBotRates() {
         hasUpdate = true;
       }
     }
-    if(hasUpdate) {
+    if (hasUpdate) {
       localStorage.setItem('bot_mini_rates', JSON.stringify(currentRates));
     }
     ind.className = "w-2.5 h-2.5 rounded-full bg-emerald-400";
-    updateTimeText.textContent = `更新時間 ${new Date().toLocaleTimeString('zh-TW', {hour:'2-digit',minute:'2-digit'})}`;
-  } catch (e) {
+    updateTimeText.textContent = `牌告已同步 (${new Date().toLocaleTimeString('zh-TW', {hour:'2-digit',minute:'2-digit'})})`;
+  } else {
     ind.className = "w-2.5 h-2.5 rounded-full bg-slate-500";
     updateTimeText.textContent = "使用離線快取資料";
   }
+
   buildSheetList();
   render();
 }
@@ -424,7 +440,6 @@ document.getElementById('refreshBtn').addEventListener('click', fetchBotRates);
 setActiveInput('target');
 buildSheetList();
 fetchBotRates();
-
 </script>
 </body>
 </html>
