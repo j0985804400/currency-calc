@@ -30,17 +30,16 @@
 </head>
 <body class="bg-slate-950 text-slate-100 flex justify-center items-center h-full sm:p-2">
 
-<!-- 容器高度嚴格受限於 100dvh，配合三星瀏覽器工具列不超出版面 -->
 <div class="w-full max-w-md bg-slate-900 sm:rounded-3xl h-full flex flex-col justify-between shadow-2xl relative overflow-hidden sm:border border-slate-800">
 
-  <!-- 1. 頂部狀態列 (精簡高度) -->
+  <!-- 1. 頂部狀態列 -->
   <header class="px-3 py-2 bg-slate-900 border-b border-slate-800 flex justify-between items-center z-10 shrink-0">
     <div>
       <div class="flex items-center gap-1.5">
         <span id="statusIndicator" class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
-        <h1 class="text-xs font-bold tracking-tight text-white">臺銀牌告 (對向直算)</h1>
+        <h1 class="text-xs font-bold tracking-tight text-white">全球即時匯率 (對向直算)</h1>
       </div>
-      <p id="rateUpdateTime" class="text-[10px] text-slate-400 mt-0.5">正在同步最新牌告...</p>
+      <p id="rateUpdateTime" class="text-[10px] text-slate-400 mt-0.5">正在同步最新匯率...</p>
     </div>
     
     <div class="flex items-center gap-2">
@@ -54,7 +53,7 @@
     </div>
   </header>
 
-  <!-- 2. 雙向輸入區塊 (自適應彈性收縮，不擠壓鍵盤) -->
+  <!-- 2. 雙向輸入區塊 -->
   <div class="flex-1 flex flex-col justify-around px-3 py-2 gap-2 relative min-h-0">
     
     <!-- 上方：外幣輸入框 -->
@@ -79,7 +78,7 @@
           class="w-full bg-transparent text-4xl font-mono font-bold tracking-tight text-white text-right outline-none focus:ring-0 leading-none"
         />
       </div>
-      <div id="targetRateInfo" class="text-[10px] text-slate-500 text-left mt-0.5">牌告匯率: --</div>
+      <div id="targetRateInfo" class="text-[10px] text-slate-500 text-left mt-0.5">即時匯率: --</div>
     </div>
 
     <!-- 中間：雙向交換圖示 -->
@@ -121,7 +120,7 @@
     </div>
   </div>
 
-  <!-- 4. 虛擬計算機鍵盤 (高度設定適中，避免被下方工具列吃掉) -->
+  <!-- 4. 虛擬計算機鍵盤 -->
   <div class="bg-slate-950 p-2.5 pb-4 rounded-t-2xl border-t border-slate-800/90 shadow-2xl shrink-0">
     <div class="grid grid-cols-4 gap-1.5 text-xl font-semibold">
       <button class="key-btn bg-slate-800 hover:bg-slate-700 text-rose-400 py-2.5 rounded-xl active:scale-95 transition-transform" data-val="C">C</button>
@@ -166,18 +165,18 @@
 <script>
 const defaultRates = {
   "TWD": { code: "TWD", name: "新台幣", flag: "🇹🇼", cashSell: 1.0, spotSell: 1.0 },
-  "USD": { code: "USD", name: "美金", flag: "🇺🇸", cashSell: 32.48, spotSell: 32.38 },
-  "JPY": { code: "JPY", name: "日圓", flag: "🇯🇵", cashSell: 0.2185, spotSell: 0.2162 },
-  "EUR": { code: "EUR", name: "歐元", flag: "🇪🇺", cashSell: 35.25, spotSell: 34.85 },
-  "CNY": { code: "CNY", name: "人民幣", flag: "🇨🇳", cashSell: 4.52, spotSell: 4.47 },
-  "KRW": { code: "KRW", name: "韓元", flag: "🇰🇷", cashSell: 0.0252, spotSell: 0.0248 },
-  "HKD": { code: "HKD", name: "港幣", flag: "🇭🇰", cashSell: 4.18, spotSell: 4.14 },
-  "GBP": { code: "GBP", name: "英鎊", flag: "🇬🇧", cashSell: 42.30, spotSell: 41.80 },
-  "AUD": { code: "AUD", name: "澳幣", flag: "🇦🇺", cashSell: 21.65, spotSell: 21.40 },
-  "CAD": { code: "CAD", name: "加拿大幣", flag: "🇨🇦", cashSell: 23.80, spotSell: 23.50 },
-  "SGD": { code: "SGD", name: "新加坡幣", flag: "🇸🇬", cashSell: 24.60, spotSell: 24.35 },
-  "THB": { code: "THB", name: "泰銖", flag: "🇹🇭", cashSell: 0.98, spotSell: 0.94 },
-  "VND": { code: "VND", name: "越南盾", flag: "🇻🇳", cashSell: 0.0014, spotSell: 0.0012 }
+  "USD": { code: "USD", name: "美金", flag: "🇺🇸", cashSell: 32.48, spotSell: 32.48 },
+  "JPY": { code: "JPY", name: "日圓", flag: "🇯🇵", cashSell: 0.2185, spotSell: 0.2185 },
+  "EUR": { code: "EUR", name: "歐元", flag: "🇪🇺", cashSell: 35.25, spotSell: 35.25 },
+  "CNY": { code: "CNY", name: "人民幣", flag: "🇨🇳", cashSell: 4.52, spotSell: 4.52 },
+  "KRW": { code: "KRW", name: "韓元", flag: "🇰🇷", cashSell: 0.0252, spotSell: 0.0252 },
+  "HKD": { code: "HKD", name: "港幣", flag: "🇭🇰", cashSell: 4.18, spotSell: 4.18 },
+  "GBP": { code: "GBP", name: "英鎊", flag: "🇬🇧", cashSell: 42.30, spotSell: 42.30 },
+  "AUD": { code: "AUD", name: "澳幣", flag: "🇦🇺", cashSell: 21.65, spotSell: 21.65 },
+  "CAD": { code: "CAD", name: "加拿大幣", flag: "🇨🇦", cashSell: 23.80, spotSell: 23.80 },
+  "SGD": { code: "SGD", name: "新加坡幣", flag: "🇸🇬", cashSell: 24.60, spotSell: 24.60 },
+  "THB": { code: "THB", name: "泰銖", flag: "🇹🇭", cashSell: 0.98, spotSell: 0.98 },
+  "VND": { code: "VND", name: "越南盾", flag: "🇻🇳", cashSell: 0.0014, spotSell: 0.0014 }
 };
 
 let currentRates = JSON.parse(localStorage.getItem('bot_mini_rates') || 'null') || defaultRates;
@@ -376,42 +375,37 @@ taxBtn.addEventListener('click', () => {
   render();
 });
 
-async function fetchBotRates() {
-async function fetchBotRates() {
+// 全新無敵抓取法：使用 Open Exchange Rates API (完全無 CORS 限制)
+async function fetchRates() {
   const ind = document.getElementById('statusIndicator');
   const updateTimeText = document.getElementById('rateUpdateTime');
   ind.className = "w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse";
-  updateTimeText.textContent = "透過 Google 伺服器連線中...";
-
-  // ⚠️ 請將引號內的網址，替換成您剛剛在步驟 2 複製出來的專屬網址！
-  const gasUrl = "https://script.google.com/macros/s/AKfycbwlcfKEZAVC76aKuPS6gm_cJnZAD5nd87VauZQ24u527YdVu3ECd2GwBtmsjl1euLsqjw/exec";
+  updateTimeText.textContent = "連線全球即時匯率中...";
 
   try {
-    const res = await fetch(gasUrl);
-    if (!res.ok) throw new Error("連線失敗");
-    const csv = await res.text();
+    // 免費、穩定、無 CORS 限制的匯率 API，以 TWD 為基準
+    const res = await fetch("https://open.er-api.com/v6/latest/TWD");
+    if (!res.ok) throw new Error("API 連線失敗");
+    const data = await res.json();
     
-    // 檢查是否成功抓到臺銀格式的檔案
-    if (csv && csv.includes("USD")) {
-      const lines = csv.trim().split("\n");
+    if (data && data.result === "success" && data.rates) {
       let hasUpdate = false;
       
-      for (let i = 1; i < lines.length; i++) {
-        const cols = lines[i].split(",").map(c => c.trim());
-        if (cols.length >= 7 && currentRates[cols[0]]) {
-          const code = cols[0];
-          const cashSell = parseFloat(cols[4]);
-          const spotSell = parseFloat(cols[6]);
-          if (!isNaN(cashSell) && cashSell > 0) currentRates[code].cashSell = cashSell;
-          if (!isNaN(spotSell) && spotSell > 0) currentRates[code].spotSell = spotSell;
+      Object.keys(currentRates).forEach(code => {
+        if (code !== 'TWD' && data.rates[code]) {
+          // data.rates[code] 是「1台幣折合多少外幣」，取倒數就是「1外幣折合多少台幣」
+          const twdRate = 1 / data.rates[code];
+          
+          currentRates[code].cashSell = parseFloat(twdRate.toFixed(4));
+          currentRates[code].spotSell = parseFloat(twdRate.toFixed(4));
           hasUpdate = true;
         }
-      }
+      });
       
       if (hasUpdate) {
         localStorage.setItem('bot_mini_rates', JSON.stringify(currentRates));
         ind.className = "w-2.5 h-2.5 rounded-full bg-emerald-400";
-        updateTimeText.textContent = `牌告已同步 (${new Date().toLocaleTimeString('zh-TW', {hour:'2-digit',minute:'2-digit'})})`;
+        updateTimeText.textContent = `匯率已同步 (${new Date().toLocaleTimeString('zh-TW', {hour:'2-digit',minute:'2-digit'})})`;
       }
     } else {
       throw new Error("格式錯誤");
@@ -425,12 +419,11 @@ async function fetchBotRates() {
   render();
 }
 
-
-document.getElementById('refreshBtn').addEventListener('click', fetchBotRates);
+document.getElementById('refreshBtn').addEventListener('click', fetchRates);
 
 setActiveInput('target');
 buildSheetList();
-fetchBotRates();
+fetchRates(); // 初始化時呼叫新的 API
 </script>
 </body>
 </html>
