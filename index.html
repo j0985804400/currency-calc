@@ -26,13 +26,20 @@
     }
     .sheet-open { transform: translateY(0%); }
     .sheet-closed { transform: translateY(100%); }
+    
+    /* 明細面板滑出動畫 */
+    .fade-in { animation: fadeIn 0.2s ease-in-out; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 flex justify-center items-center h-full sm:p-2">
 
 <div class="w-full max-w-md bg-slate-900 sm:rounded-3xl h-full flex flex-col justify-between shadow-2xl relative overflow-hidden sm:border border-slate-800">
 
-  <!-- 1. 頂部狀態列 -->
+  <!-- 1. 頂部狀態列 (移除即期現鈔按鈕，簡化版面) -->
   <header class="px-3 py-2 bg-slate-900 border-b border-slate-800 flex justify-between items-center z-10 shrink-0">
     <div>
       <div class="flex items-center gap-1.5">
@@ -43,18 +50,15 @@
     </div>
     
     <div class="flex items-center gap-2">
-      <button id="refreshBtn" class="p-1 text-slate-400 hover:text-white bg-slate-800 rounded border border-slate-700 active:scale-95 transition-all">
+      <button id="refreshBtn" class="px-2.5 py-1 text-slate-400 hover:text-white bg-slate-800 rounded border border-slate-700 active:scale-95 transition-all text-[11px] flex items-center gap-1.5">
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+        重新整理
       </button>
-      <div class="flex bg-slate-950 p-0.5 rounded border border-slate-800">
-        <button id="typeCash" class="px-2 py-0.5 text-[11px] rounded font-medium bg-emerald-600 text-white transition-all">現鈔</button>
-        <button id="typeSpot" class="px-2 py-0.5 text-[11px] rounded font-medium text-slate-400 hover:text-white transition-all">即期</button>
-      </div>
     </div>
   </header>
 
   <!-- 2. 雙向輸入區塊 -->
-  <div class="flex-1 flex flex-col justify-around px-3 py-2 gap-2 relative min-h-0">
+  <div class="flex-1 flex flex-col justify-around px-3 py-1.5 gap-1.5 relative min-h-0">
     
     <!-- 上方：外幣輸入框 -->
     <div id="targetCard" class="bg-slate-800/60 border-2 border-transparent focus-within:border-emerald-500/70 rounded-2xl px-3 py-2 shadow-sm transition-all cursor-text relative overflow-hidden" onclick="setActiveInput('target')">
@@ -67,7 +71,7 @@
         <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
       </button>
 
-      <div class="text-right mt-7">
+      <div class="text-right mt-6">
         <div id="targetCalcPreview" class="h-3.5 text-[11px] font-mono text-slate-400 truncate"></div>
         <input 
           id="targetInput" 
@@ -97,7 +101,7 @@
           <div class="text-[9px] text-slate-400">新台幣</div>
         </div>
       </div>
-      <div class="text-right mt-7">
+      <div class="text-right mt-6">
         <div id="baseCalcPreview" class="h-3.5 text-[11px] font-mono text-slate-400 truncate"></div>
         <input 
           id="baseInput" 
@@ -111,12 +115,29 @@
     </div>
   </div>
 
-  <!-- 3. 附加費率快捷鍵 -->
-  <div class="px-3 py-1 bg-slate-950 flex items-center justify-between text-[11px] shrink-0">
-    <span class="text-slate-500 text-[10px]">金額加計：</span>
-    <div class="flex gap-2">
-      <button id="toggleFee" class="px-2.5 py-1 rounded border border-slate-700 bg-slate-800 text-slate-300 text-xs font-mono active:scale-95 transition-all">+1.5% 刷卡</button>
-      <button id="toggleTax" class="px-2.5 py-1 rounded border border-slate-700 bg-slate-800 text-slate-300 text-xs font-mono active:scale-95 transition-all">-10% 退稅</button>
+  <!-- 3. 新增：換算明細與附加費率開關 -->
+  <div class="px-3 flex flex-col shrink-0 relative pb-2 pt-1">
+    
+    <!-- 展開明細面板 (啟用退稅或手續費時才會顯示) -->
+    <div id="breakdownBox" class="hidden bg-slate-950 border border-slate-800 rounded-xl p-2.5 mb-2.5 text-[11px] font-mono shadow-inner space-y-1 fade-in">
+      <div class="flex justify-between text-slate-400">
+        <span>原始折合：</span><span id="bdRaw">0.00</span>
+      </div>
+      <div id="bdTaxRow" class="flex justify-between text-emerald-400 hidden">
+        <span>免稅退稅 (10%)：</span><span id="bdTax">-0.00</span>
+      </div>
+      <div id="bdFeeRow" class="flex justify-between text-rose-400 hidden">
+        <span>海外刷卡 (1.5%)：</span><span id="bdFee">+0.00</span>
+      </div>
+    </div>
+
+    <!-- 附加功能按鈕 -->
+    <div class="flex items-center justify-between text-[11px]">
+      <span class="text-slate-500 text-[10px]">附加計算：</span>
+      <div class="flex gap-2">
+        <button id="toggleFee" class="px-2.5 py-1 rounded border border-slate-700 bg-slate-800 text-slate-300 text-xs font-mono active:scale-95 transition-all">+1.5% 刷卡</button>
+        <button id="toggleTax" class="px-2.5 py-1 rounded border border-slate-700 bg-slate-800 text-slate-300 text-xs font-mono active:scale-95 transition-all">-10% 退稅</button>
+      </div>
     </div>
   </div>
 
@@ -164,23 +185,22 @@
 
 <script>
 const defaultRates = {
-  "TWD": { code: "TWD", name: "新台幣", flag: "🇹🇼", cashSell: 1.0, spotSell: 1.0 },
-  "USD": { code: "USD", name: "美金", flag: "🇺🇸", cashSell: 32.48, spotSell: 32.48 },
-  "JPY": { code: "JPY", name: "日圓", flag: "🇯🇵", cashSell: 0.2185, spotSell: 0.2185 },
-  "EUR": { code: "EUR", name: "歐元", flag: "🇪🇺", cashSell: 35.25, spotSell: 35.25 },
-  "CNY": { code: "CNY", name: "人民幣", flag: "🇨🇳", cashSell: 4.52, spotSell: 4.52 },
-  "KRW": { code: "KRW", name: "韓元", flag: "🇰🇷", cashSell: 0.0252, spotSell: 0.0252 },
-  "HKD": { code: "HKD", name: "港幣", flag: "🇭🇰", cashSell: 4.18, spotSell: 4.18 },
-  "GBP": { code: "GBP", name: "英鎊", flag: "🇬🇧", cashSell: 42.30, spotSell: 42.30 },
-  "AUD": { code: "AUD", name: "澳幣", flag: "🇦🇺", cashSell: 21.65, spotSell: 21.65 },
-  "CAD": { code: "CAD", name: "加拿大幣", flag: "🇨🇦", cashSell: 23.80, spotSell: 23.80 },
-  "SGD": { code: "SGD", name: "新加坡幣", flag: "🇸🇬", cashSell: 24.60, spotSell: 24.60 },
-  "THB": { code: "THB", name: "泰銖", flag: "🇹🇭", cashSell: 0.98, spotSell: 0.98 },
-  "VND": { code: "VND", name: "越南盾", flag: "🇻🇳", cashSell: 0.0014, spotSell: 0.0014 }
+  "TWD": { code: "TWD", name: "新台幣", flag: "🇹🇼", rate: 1.0 },
+  "USD": { code: "USD", name: "美金", flag: "🇺🇸", rate: 32.48 },
+  "JPY": { code: "JPY", name: "日圓", flag: "🇯🇵", rate: 0.2185 },
+  "EUR": { code: "EUR", name: "歐元", flag: "🇪🇺", rate: 35.25 },
+  "CNY": { code: "CNY", name: "人民幣", flag: "🇨🇳", rate: 4.52 },
+  "KRW": { code: "KRW", name: "韓元", flag: "🇰🇷", rate: 0.0252 },
+  "HKD": { code: "HKD", name: "港幣", flag: "🇭🇰", rate: 4.18 },
+  "GBP": { code: "GBP", name: "英鎊", flag: "🇬🇧", rate: 42.30 },
+  "AUD": { code: "AUD", name: "澳幣", flag: "🇦🇺", rate: 21.65 },
+  "CAD": { code: "CAD", name: "加拿大幣", flag: "🇨🇦", rate: 23.80 },
+  "SGD": { code: "SGD", name: "新加坡幣", flag: "🇸🇬", rate: 24.60 },
+  "THB": { code: "THB", name: "泰銖", flag: "🇹🇭", rate: 0.98 },
+  "VND": { code: "VND", name: "越南盾", flag: "🇻🇳", rate: 0.0014 }
 };
 
-let currentRates = JSON.parse(localStorage.getItem('bot_mini_rates') || 'null') || defaultRates;
-let rateMode = 'cash';
+let currentRates = JSON.parse(localStorage.getItem('global_rates_cache')) || defaultRates;
 let activeCurrencyCode = 'JPY'; 
 let activeInputType = 'target'; 
 let applyFee = false;
@@ -229,46 +249,87 @@ function setActiveInput(type) {
     tInput.classList.remove('text-emerald-300');
     tInput.classList.add('text-white');
   }
+  render(); // 切換時重繪明細面板
 }
 
 function render() {
-  const activeRate = rateMode === 'cash' ? currentRates[activeCurrencyCode].cashSell : currentRates[activeCurrencyCode].spotSell;
-  const rateValue = activeRate || currentRates[activeCurrencyCode].cashSell;
+  const rateValue = currentRates[activeCurrencyCode].rate || 1.0;
   
+  // 更新標籤與匯率資訊
   document.getElementById('targetFlag').textContent = currentRates[activeCurrencyCode].flag;
   document.getElementById('targetCode').textContent = activeCurrencyCode;
   document.getElementById('targetName').textContent = currentRates[activeCurrencyCode].name;
-  document.getElementById('targetRateInfo').textContent = `1 ${activeCurrencyCode} = ${rateValue.toFixed(4)} TWD`;
+  document.getElementById('targetRateInfo').textContent = `即時匯率: 1 ${activeCurrencyCode} = ${rateValue.toFixed(4)} TWD`;
 
-  let modifier = 1.0;
-  if (applyTaxFree) modifier *= 0.9;
-  if (applyFee) modifier *= 1.015;
+  // 取得當前輸入框的值
+  const inputStr = activeInputType === 'target' ? targetInput.value : baseInput.value;
+  const rawActive = evalSafe(inputStr);
+  const hasEq = /[+\-*/%]/.test(inputStr);
 
+  // 預覽小計顯示 (算式運算時顯示)
   if (activeInputType === 'target') {
-    const rawTarget = evalSafe(targetInput.value);
-    const hasEq = /[+\-*/%]/.test(targetInput.value);
-    document.getElementById('targetCalcPreview').textContent = hasEq ? `≈ ${rawTarget.toFixed(2)}` : '';
-    
-    const finalTwd = rawTarget * rateValue * modifier;
-    baseInput.value = targetInput.value === "0" || targetInput.value === "" ? "0" : Number(finalTwd.toFixed(2));
-    
-    let tags = [];
-    if (applyTaxFree) tags.push("-10%退稅");
-    if (applyFee) tags.push("+1.5%手續費");
-    document.getElementById('baseCalcPreview').textContent = tags.length ? `(${tags.join(',')})` : '';
+    document.getElementById('targetCalcPreview').textContent = hasEq ? `≈ ${rawActive.toFixed(2)}` : '';
+    document.getElementById('baseCalcPreview').textContent = '';
   } else {
-    const rawBase = evalSafe(baseInput.value);
-    const hasEq = /[+\-*/%]/.test(baseInput.value);
-    
-    let tags = [];
-    if (applyTaxFree) tags.push("-10%退稅");
-    if (applyFee) tags.push("+1.5%手續費");
-    const prefix = hasEq ? `≈ ${rawBase.toFixed(2)} ` : '';
-    document.getElementById('baseCalcPreview').textContent = tags.length ? `${prefix}(${tags.join(',')})` : prefix;
-
-    const targetAmt = (rawBase / modifier) / rateValue;
-    targetInput.value = baseInput.value === "0" || baseInput.value === "" ? "0" : Number(targetAmt.toFixed(2));
+    document.getElementById('baseCalcPreview').textContent = hasEq ? `≈ ${rawActive.toFixed(2)}` : '';
     document.getElementById('targetCalcPreview').textContent = '';
+  }
+  
+  // 計算原始折合金額 (Raw Converted)
+  let rawConverted = 0;
+  if (activeInputType === 'target') {
+    rawConverted = rawActive * rateValue;
+  } else {
+    rawConverted = rawActive / rateValue;
+  }
+
+  // 計算退稅與手續費
+  let currentAmount = rawConverted;
+  let taxAmount = 0;
+  let feeAmount = 0;
+
+  if (applyTaxFree) {
+    taxAmount = currentAmount * 0.1; // 退去 10%
+    currentAmount -= taxAmount;
+  }
+  
+  if (applyFee) {
+    feeAmount = currentAmount * 0.015; // 刷卡 1.5% (基於折抵後的金額)
+    currentAmount += feeAmount;
+  }
+
+  // 更新結果至對面的輸入框
+  const outStr = (rawActive === 0 && inputStr !== '0') ? "" : Number(currentAmount.toFixed(2)).toString();
+  if (activeInputType === 'target') {
+    baseInput.value = outStr || "0";
+  } else {
+    targetInput.value = outStr || "0";
+  }
+
+  // --- 更新明細面板 (Breakdown Box) ---
+  const bdBox = document.getElementById('breakdownBox');
+  if (applyTaxFree || applyFee) {
+    bdBox.classList.remove('hidden');
+    // 明細顯示目標貨幣符號 (由哪一國轉換過去就顯示那一國的符號)
+    const symbol = activeInputType === 'target' ? "TWD" : activeCurrencyCode;
+    
+    document.getElementById('bdRaw').textContent = `${rawConverted.toFixed(2)} ${symbol}`;
+    
+    if (applyTaxFree) {
+      document.getElementById('bdTaxRow').classList.remove('hidden');
+      document.getElementById('bdTax').textContent = `- ${taxAmount.toFixed(2)} ${symbol}`;
+    } else {
+      document.getElementById('bdTaxRow').classList.add('hidden');
+    }
+
+    if (applyFee) {
+      document.getElementById('bdFeeRow').classList.remove('hidden');
+      document.getElementById('bdFee').textContent = `+ ${feeAmount.toFixed(2)} ${symbol}`;
+    } else {
+      document.getElementById('bdFeeRow').classList.add('hidden');
+    }
+  } else {
+    bdBox.classList.add('hidden');
   }
 }
 
@@ -350,18 +411,7 @@ function buildSheetList() {
   });
 }
 
-document.getElementById('typeCash').addEventListener('click', () => {
-  rateMode = 'cash';
-  document.getElementById('typeCash').className = "px-2 py-0.5 text-[11px] rounded font-medium bg-emerald-600 text-white transition-all";
-  document.getElementById('typeSpot').className = "px-2 py-0.5 text-[11px] rounded font-medium text-slate-400 hover:text-white transition-all";
-  render();
-});
-document.getElementById('typeSpot').addEventListener('click', () => {
-  rateMode = 'spot';
-  document.getElementById('typeSpot').className = "px-2 py-0.5 text-[11px] rounded font-medium bg-emerald-600 text-white transition-all";
-  document.getElementById('typeCash').className = "px-2 py-0.5 text-[11px] rounded font-medium text-slate-400 hover:text-white transition-all";
-  render();
-});
+// 附加功能狀態切換
 const feeBtn = document.getElementById('toggleFee');
 feeBtn.addEventListener('click', () => {
   applyFee = !applyFee;
@@ -375,7 +425,7 @@ taxBtn.addEventListener('click', () => {
   render();
 });
 
-// 全新無敵抓取法：使用 Open Exchange Rates API (完全無 CORS 限制)
+// 全球開放匯率連線
 async function fetchRates() {
   const ind = document.getElementById('statusIndicator');
   const updateTimeText = document.getElementById('rateUpdateTime');
@@ -383,7 +433,6 @@ async function fetchRates() {
   updateTimeText.textContent = "連線全球即時匯率中...";
 
   try {
-    // 免費、穩定、無 CORS 限制的匯率 API，以 TWD 為基準
     const res = await fetch("https://open.er-api.com/v6/latest/TWD");
     if (!res.ok) throw new Error("API 連線失敗");
     const data = await res.json();
@@ -393,17 +442,14 @@ async function fetchRates() {
       
       Object.keys(currentRates).forEach(code => {
         if (code !== 'TWD' && data.rates[code]) {
-          // data.rates[code] 是「1台幣折合多少外幣」，取倒數就是「1外幣折合多少台幣」
           const twdRate = 1 / data.rates[code];
-          
-          currentRates[code].cashSell = parseFloat(twdRate.toFixed(4));
-          currentRates[code].spotSell = parseFloat(twdRate.toFixed(4));
+          currentRates[code].rate = parseFloat(twdRate.toFixed(4));
           hasUpdate = true;
         }
       });
       
       if (hasUpdate) {
-        localStorage.setItem('bot_mini_rates', JSON.stringify(currentRates));
+        localStorage.setItem('global_rates_cache', JSON.stringify(currentRates));
         ind.className = "w-2.5 h-2.5 rounded-full bg-emerald-400";
         updateTimeText.textContent = `匯率已同步 (${new Date().toLocaleTimeString('zh-TW', {hour:'2-digit',minute:'2-digit'})})`;
       }
@@ -423,7 +469,7 @@ document.getElementById('refreshBtn').addEventListener('click', fetchRates);
 
 setActiveInput('target');
 buildSheetList();
-fetchRates(); // 初始化時呼叫新的 API
+fetchRates();
 </script>
 </body>
 </html>
