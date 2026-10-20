@@ -38,50 +38,50 @@
 
 <div class="w-full max-w-md bg-slate-900 sm:rounded-3xl h-full flex flex-col justify-between shadow-2xl relative overflow-hidden sm:border border-slate-800">
 
-  <!-- 1. 頂部狀態列 -->
-  <header class="px-3 py-2 bg-slate-900 border-b border-slate-800 flex justify-between items-center z-10 shrink-0">
+  <!-- 1. 頂部狀態列 (中文字體放大) -->
+  <header class="px-3.5 py-2.5 bg-slate-900 border-b border-slate-800 flex justify-between items-center z-10 shrink-0">
     <div>
-      <div class="flex items-center gap-1.5">
+      <div class="flex items-center gap-2">
         <span id="statusIndicator" class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
-        <h1 class="text-xs font-bold tracking-tight text-white">全球即時匯率 (對向直算)</h1>
+        <h1 class="text-base font-bold tracking-tight text-white">全球即時匯率 (對向直算)</h1>
       </div>
-      <p id="rateUpdateTime" class="text-[10px] text-slate-400 mt-0.5">正在同步最新匯率...</p>
+      <p id="rateUpdateTime" class="text-xs text-slate-300 mt-0.5 font-medium">正在同步最新匯率...</p>
     </div>
     
     <div class="flex items-center gap-2">
-      <button id="refreshBtn" class="px-2.5 py-1 text-slate-400 hover:text-white bg-slate-800 rounded border border-slate-700 active:scale-95 transition-all text-[11px] flex items-center gap-1.5">
+      <button id="refreshBtn" class="px-3 py-1.5 text-slate-200 hover:text-white bg-slate-800 rounded-lg border border-slate-700 active:scale-95 transition-all text-xs font-bold flex items-center gap-1.5">
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
         重新整理
       </button>
     </div>
   </header>
 
-  <!-- 2. 雙向輸入區塊 (全面改用絕對固定高度 h-[120px]，徹底防跑版) -->
+  <!-- 2. 雙向輸入區塊 (維持固定高度 h-[124px] 防跑版，內部中文字體全面放大) -->
   <div class="px-3 py-2 flex flex-col gap-3 relative shrink-0">
     
     <!-- 上方：外幣輸入框 -->
-    <div id="targetCard" class="h-[120px] bg-slate-800/60 border-2 border-transparent rounded-2xl p-3 shadow-sm transition-all cursor-text flex flex-col justify-between" onclick="setActiveInput('target')">
+    <div id="targetCard" class="h-[124px] bg-slate-800/60 border-2 border-transparent rounded-2xl p-3 shadow-sm transition-all cursor-text flex flex-col justify-between" onclick="setActiveInput('target')">
       
       <!-- 頂部列：幣別按鈕與小計預覽 -->
       <div class="flex justify-between items-start">
-        <button id="currencySelectBtn" class="flex items-center gap-1.5 bg-slate-700/50 hover:bg-slate-600/50 px-2 py-1 rounded-lg border border-slate-600/50 active:scale-95 transition-all" onclick="event.stopPropagation(); openCurrencySheet()">
+        <button id="currencySelectBtn" class="flex items-center gap-2 bg-slate-700/60 hover:bg-slate-600/60 px-2.5 py-1 rounded-xl border border-slate-600/60 active:scale-95 transition-all" onclick="event.stopPropagation(); openCurrencySheet()">
           <span id="targetFlag" class="text-2xl">🇯🇵</span>
-          <div class="text-left leading-tight">
-            <div id="targetCode" class="text-xs font-bold text-white">JPY</div>
-            <div id="targetName" class="text-[9px] text-slate-400">日圓</div>
+          <div class="flex items-baseline gap-1.5">
+            <span id="targetCode" class="text-base font-bold text-white">JPY</span>
+            <span id="targetName" class="text-sm font-bold text-slate-200">日圓</span>
           </div>
-          <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+          <svg class="w-3.5 h-3.5 text-slate-300 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
         </button>
-        <div id="targetCalcPreview" class="text-[11px] font-mono text-slate-400 mt-1"></div>
+        <div id="targetCalcPreview" class="text-xs font-mono text-slate-300 mt-1"></div>
       </div>
 
       <!-- 底部列：自訂匯率功能與主輸入框 -->
       <div class="flex justify-between items-end gap-2">
-        <div class="flex flex-col gap-1 pb-0.5 z-10">
-          <div id="targetRateInfo" class="text-[10px] text-slate-400 transition-colors font-medium">即時匯率: --</div>
+        <div class="flex flex-col gap-1 z-10">
+          <div id="targetRateInfo" class="text-xs text-slate-300 transition-colors font-bold">即時匯率: --</div>
           <div class="flex gap-1.5">
-            <button id="editRateBtn" class="bg-slate-700/80 text-slate-200 px-1.5 py-0.5 rounded border border-slate-600 text-[10px] active:scale-95 shadow-sm" onclick="event.stopPropagation(); promptCustomRate()">✎自訂</button>
-            <button id="resetRateBtn" class="hidden bg-rose-900/50 text-rose-300 px-1.5 py-0.5 rounded border border-rose-800 text-[10px] active:scale-95 shadow-sm" onclick="event.stopPropagation(); resetToLiveRate()">↺恢復</button>
+            <button id="editRateBtn" class="bg-slate-700 text-white px-2 py-0.5 rounded border border-slate-500 text-xs font-bold active:scale-95 shadow-sm" onclick="event.stopPropagation(); promptCustomRate()">✎ 自訂匯率</button>
+            <button id="resetRateBtn" class="hidden bg-rose-900/70 text-rose-200 px-2 py-0.5 rounded border border-rose-700 text-xs font-bold active:scale-95 shadow-sm" onclick="event.stopPropagation(); resetToLiveRate()">↺ 恢復即時</button>
           </div>
         </div>
         <input 
@@ -95,7 +95,7 @@
       </div>
     </div>
 
-    <!-- 中間：雙向交換圖示 (精準定位於兩張卡片正中央) -->
+    <!-- 中間：雙向交換圖示 -->
     <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-slate-900 border-[3px] border-slate-900 rounded-full z-10 pointer-events-none">
       <div class="bg-slate-800 w-8 h-8 rounded-full flex items-center justify-center text-emerald-400 shadow-inner">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path></svg>
@@ -103,25 +103,25 @@
     </div>
 
     <!-- 下方：台幣輸入框 -->
-    <div id="baseCard" class="h-[120px] bg-slate-850 border-2 border-emerald-500/70 rounded-2xl p-3 shadow-inner transition-all cursor-text flex flex-col justify-between" onclick="setActiveInput('base')">
+    <div id="baseCard" class="h-[124px] bg-slate-850 border-2 border-emerald-500/70 rounded-2xl p-3 shadow-inner transition-all cursor-text flex flex-col justify-between" onclick="setActiveInput('base')">
       
       <!-- 頂部列：台幣標示與小計預覽 -->
       <div class="flex justify-between items-start">
-        <div class="flex items-center gap-1.5 px-1 py-0.5">
+        <div class="flex items-center gap-2 px-1 py-0.5">
           <span class="text-2xl">🇹🇼</span>
-          <div class="text-left leading-tight">
-            <div class="text-xs font-bold text-white">TWD</div>
-            <div class="text-[9px] text-slate-400">新台幣</div>
+          <div class="flex items-baseline gap-1.5">
+            <span class="text-base font-bold text-white">TWD</span>
+            <span class="text-sm font-bold text-slate-200">新台幣</span>
           </div>
         </div>
-        <div id="baseCalcPreview" class="text-[11px] font-mono text-slate-400 mt-1"></div>
+        <div id="baseCalcPreview" class="text-xs font-mono text-slate-300 mt-1"></div>
       </div>
 
-      <!-- 底部列：隱形佔位(維持對齊)與主輸入框 -->
+      <!-- 底部列：隱形佔位與主輸入框 -->
       <div class="flex justify-between items-end gap-2">
-        <div class="opacity-0 pointer-events-none pb-0.5">
-          <div class="text-[10px]">即時匯率: --</div>
-          <div class="flex gap-1.5"><button class="px-1.5 py-0.5 text-[10px]">✎自訂</button></div>
+        <div class="opacity-0 pointer-events-none">
+          <div class="text-xs">即時匯率</div>
+          <div class="flex gap-1.5"><button class="px-2 py-0.5 text-xs">自訂</button></div>
         </div>
         <input 
           id="baseInput" 
@@ -134,10 +134,10 @@
     </div>
   </div>
 
-  <!-- 3. 明細與附加費率 (還原適中大小) -->
-  <div class="px-3 flex flex-col flex-1 relative pt-1 pb-1 justify-center">
-    <div id="breakdownBox" class="hidden bg-slate-950 border border-slate-800 rounded-xl p-2.5 mb-2 text-[11px] font-mono shadow-inner space-y-1 fade-in">
-      <div class="flex justify-between text-slate-400">
+  <!-- 3. 明細與附加費率 (中文字體放大為 text-sm / text-xs 粗體) -->
+  <div class="px-3.5 flex flex-col flex-1 relative pt-1 pb-1 justify-center">
+    <div id="breakdownBox" class="hidden bg-slate-950 border border-slate-800 rounded-xl p-2.5 mb-2 text-xs font-mono font-bold shadow-inner space-y-1 fade-in">
+      <div class="flex justify-between text-slate-300">
         <span>原始折合：</span><span id="bdRaw">0.00</span>
       </div>
       <div id="bdTaxRow" class="flex justify-between text-emerald-400 hidden">
@@ -148,21 +148,21 @@
       </div>
     </div>
 
-    <div class="flex items-center justify-between text-[11px]">
-      <div class="flex items-center gap-1.5 text-slate-500 text-[10px]">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-1.5 text-slate-300 text-sm font-bold">
         <span>附加計算</span>
-        <button onclick="promptCustomAddon()" class="flex items-center justify-center w-5 h-5 bg-slate-800 hover:bg-slate-700 rounded-full border border-slate-700 active:scale-95 transition-all text-slate-300 shadow-sm">
+        <button onclick="promptCustomAddon()" class="flex items-center justify-center w-6 h-6 bg-slate-800 hover:bg-slate-700 rounded-full border border-slate-600 active:scale-95 transition-all text-slate-200 shadow-sm text-xs">
           ⚙️
         </button>
       </div>
       <div class="flex gap-2">
-        <button id="toggleFee" class="px-2.5 py-1.5 rounded border border-slate-700 bg-slate-800 text-slate-300 text-xs font-mono active:scale-95 transition-all shadow-sm">+1.5% 刷卡</button>
-        <button id="toggleTax" class="px-2.5 py-1.5 rounded border border-slate-700 bg-slate-800 text-slate-300 text-xs font-mono active:scale-95 transition-all shadow-sm">-10% 退稅</button>
+        <button id="toggleFee" class="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 text-sm font-bold font-mono active:scale-95 transition-all shadow-sm">+1.5% 刷卡</button>
+        <button id="toggleTax" class="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 text-sm font-bold font-mono active:scale-95 transition-all shadow-sm">-10% 退稅</button>
       </div>
     </div>
   </div>
 
-  <!-- 4. 虛擬計算機鍵盤 (還原穩定的尺寸) -->
+  <!-- 4. 虛擬計算機鍵盤 -->
   <div class="bg-slate-950 p-2.5 pb-4 rounded-t-2xl border-t border-slate-800/90 shadow-2xl shrink-0">
     <div class="grid grid-cols-4 gap-1.5 text-xl font-semibold">
       <button class="key-btn bg-slate-800 hover:bg-slate-700 text-rose-400 py-2.5 rounded-xl active:scale-95 transition-transform" data-val="C">C</button>
@@ -191,14 +191,14 @@
     </div>
   </div>
 
-  <!-- 5. 抽屜式外幣選擇選單 -->
+  <!-- 5. 抽屜式外幣選擇選單 (中文字體放大) -->
   <div id="currencySheetOverlay" class="absolute inset-0 bg-black/60 z-40 hidden opacity-0 transition-opacity duration-300" onclick="closeCurrencySheet()"></div>
   <div id="currencySheet" class="absolute bottom-0 left-0 right-0 bg-slate-900 rounded-t-2xl h-[65%] z-50 sheet-closed transition-transform duration-300 flex flex-col border-t border-slate-700">
     <div class="px-4 py-3 border-b border-slate-800 flex justify-between items-center">
-      <h3 class="text-sm font-bold text-white">選擇外幣</h3>
-      <button onclick="closeCurrencySheet()" class="p-1.5 bg-slate-800 rounded-full text-slate-400 active:scale-95"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+      <h3 class="text-base font-bold text-white">選擇外幣</h3>
+      <button onclick="closeCurrencySheet()" class="p-1.5 bg-slate-800 rounded-full text-slate-300 active:scale-95"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
     </div>
-    <div id="sheetList" class="flex-1 overflow-y-auto p-3 grid grid-cols-2 gap-2 pb-8 content-start">
+    <div id="sheetList" class="flex-1 overflow-y-auto p-3 grid grid-cols-2 gap-2.5 pb-8 content-start">
     </div>
   </div>
 
@@ -242,8 +242,8 @@ function updateAddonButtons() {
   feeBtn.textContent = `+${feeRate}% 刷卡`;
   taxBtn.textContent = `-${taxRate}% 退稅`;
 
-  const activeFeeClass = "px-2.5 py-1.5 rounded border border-emerald-500 bg-emerald-950 text-emerald-300 text-xs font-mono active:scale-95 transition-all shadow-sm";
-  const inactiveClass = "px-2.5 py-1.5 rounded border border-slate-700 bg-slate-800 text-slate-300 text-xs font-mono active:scale-95 transition-all shadow-sm";
+  const activeFeeClass = "px-3 py-1.5 rounded-lg border border-emerald-500 bg-emerald-950 text-emerald-300 text-sm font-bold font-mono active:scale-95 transition-all shadow-sm";
+  const inactiveClass = "px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 text-sm font-bold font-mono active:scale-95 transition-all shadow-sm";
 
   feeBtn.className = applyFee ? activeFeeClass : inactiveClass;
   taxBtn.className = applyTaxFree ? activeFeeClass : inactiveClass;
@@ -357,11 +357,11 @@ function render() {
   
   if (isCustom) {
     rateInfoEl.classList.add('text-amber-400');
-    rateInfoEl.classList.remove('text-slate-400');
+    rateInfoEl.classList.remove('text-slate-300');
     document.getElementById('editRateBtn').classList.add('hidden');
     document.getElementById('resetRateBtn').classList.remove('hidden');
   } else {
-    rateInfoEl.classList.add('text-slate-400');
+    rateInfoEl.classList.add('text-slate-300');
     rateInfoEl.classList.remove('text-amber-400');
     document.getElementById('editRateBtn').classList.remove('hidden');
     document.getElementById('resetRateBtn').classList.add('hidden');
@@ -492,14 +492,14 @@ function buildSheetList() {
     const activeStyle = code === activeCurrencyCode ? 'border-emerald-500 bg-emerald-900/30' : 'border-slate-700 bg-slate-800';
     
     const isCustom = customRates[code] !== undefined;
-    const customBadge = isCustom ? `<span class="bg-amber-500/20 text-amber-400 text-[10px] px-1.5 py-0.5 rounded ml-2">自訂</span>` : '';
+    const customBadge = isCustom ? `<span class="bg-amber-500/20 text-amber-400 text-xs px-1.5 py-0.5 rounded ml-2 font-bold">自訂</span>` : '';
 
-    btn.className = `flex items-center gap-2.5 p-2.5 rounded-xl border text-left transition-all active:scale-95 ${activeStyle}`;
+    btn.className = `flex items-center gap-3 p-3 rounded-xl border text-left transition-all active:scale-95 ${activeStyle}`;
     btn.innerHTML = `
       <span class="text-3xl">${info.flag}</span>
       <div class="flex-1">
-        <div class="font-bold text-sm text-white leading-none flex items-center">${code} ${customBadge}</div>
-        <div class="text-[10px] text-slate-400 mt-1">${info.name}</div>
+        <div class="font-bold text-base text-white leading-none flex items-center">${code} ${customBadge}</div>
+        <div class="text-sm font-bold text-slate-300 mt-1">${info.name}</div>
       </div>
     `;
     btn.onclick = () => {
