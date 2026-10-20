@@ -377,27 +377,44 @@ taxBtn.addEventListener('click', () => {
 });
 
 async function fetchBotRates() {
+async function fetchBotRates() {
   const ind = document.getElementById('statusIndicator');
   const updateTimeText = document.getElementById('rateUpdateTime');
   ind.className = "w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse";
-  updateTimeText.textContent = "讀取臺銀牌告中...";
+  updateTimeText.textContent = "透過 Google 伺服器連線中...";
+
+  // ⚠️ 請將引號內的網址，替換成您剛剛在步驟 2 複製出來的專屬網址！
+  const gasUrl = "https://script.google.com/macros/s/AKfycbwlcfKEZAVC76aKuPS6gm_cJnZAD5nd87VauZQ24u527YdVu3ECd2GwBtmsjl1euLsqjw/exec";
 
   try {
-    // 直接讀取同專案下的 rates.json (無任何 CORS 限制)
-    const res = await fetch('./rates.json?t=' + Date.now(), { cache: 'no-cache' });
-    if (!res.ok) throw new Error("檔案不存在");
-    const data = await res.json();
-
-    if (data && data.rates) {
-      Object.keys(data.rates).forEach(code => {
-        if (currentRates[code]) {
-          if (data.rates[code].cashSell) currentRates[code].cashSell = data.rates[code].cashSell;
-          if (data.rates[code].spotSell) currentRates[code].spotSell = data.rates[code].spotSell;
+    const res = await fetch(gasUrl);
+    if (!res.ok) throw new Error("連線失敗");
+    const csv = await res.text();
+    
+    // 檢查是否成功抓到臺銀格式的檔案
+    if (csv && csv.includes("USD")) {
+      const lines = csv.trim().split("\n");
+      let hasUpdate = false;
+      
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(",").map(c => c.trim());
+        if (cols.length >= 7 && currentRates[cols[0]]) {
+          const code = cols[0];
+          const cashSell = parseFloat(cols[4]);
+          const spotSell = parseFloat(cols[6]);
+          if (!isNaN(cashSell) && cashSell > 0) currentRates[code].cashSell = cashSell;
+          if (!isNaN(spotSell) && spotSell > 0) currentRates[code].spotSell = spotSell;
+          hasUpdate = true;
         }
-      });
-      localStorage.setItem('bot_mini_rates', JSON.stringify(currentRates));
-      ind.className = "w-2.5 h-2.5 rounded-full bg-emerald-400";
-      updateTimeText.textContent = `牌告已同步 (${data.updatedAt || '最新'})`;
+      }
+      
+      if (hasUpdate) {
+        localStorage.setItem('bot_mini_rates', JSON.stringify(currentRates));
+        ind.className = "w-2.5 h-2.5 rounded-full bg-emerald-400";
+        updateTimeText.textContent = `牌告已同步 (${new Date().toLocaleTimeString('zh-TW', {hour:'2-digit',minute:'2-digit'})})`;
+      }
+    } else {
+      throw new Error("格式錯誤");
     }
   } catch (e) {
     ind.className = "w-2.5 h-2.5 rounded-full bg-slate-500";
