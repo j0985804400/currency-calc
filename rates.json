@@ -1,0 +1,12 @@
+{
+  "updatedAt": "09:34",
+  "rates": {
+    "TWD": {
+      "code": "TWD",
+      "name": "新台幣",
+      "flag": "🇹🇼",
+      "cashSell": 1.0,
+      "spotSell": 1.0
+    }
+  }
+}
