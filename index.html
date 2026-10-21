@@ -6,7 +6,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#0f172a">
-  <title>全球匯率與記帳神器</title>
+  <title>全球匯率與雙幣記帳神器</title>
   
   <script src="https://cdn.tailwindcss.com"></script>
   
@@ -30,7 +30,6 @@
       from { opacity: 0; transform: translateY(-5px); }
       to { opacity: 1; transform: translateY(0); }
     }
-    /* 隱藏卷軸但可滑動 */
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
@@ -44,7 +43,7 @@
     <div>
       <div class="flex items-center gap-2">
         <span id="statusIndicator" class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
-        <h1 id="topTitle" class="text-base font-bold tracking-tight text-white">全球即時匯率 (任選雙向)</h1>
+        <h1 id="topTitle" class="text-base font-bold tracking-tight text-white">全球即時匯率 (雙向直算)</h1>
       </div>
       <p id="rateUpdateTime" class="text-xs text-slate-300 mt-0.5 font-medium">正在同步最新匯率...</p>
     </div>
@@ -57,13 +56,13 @@
     </div>
   </header>
 
-  <!-- 主內容切換區 (計算機 / 旅遊清單 / 代購清單) -->
+  <!-- 主內容切換區 -->
   <div id="mainContent" class="flex-1 flex flex-col relative min-h-0 pb-[65px]">
     
     <!-- ================== 分頁一：🧮 計算機 ================== -->
     <div id="tabCalc" class="flex flex-col h-full fade-in">
       <div class="px-3 py-2 flex flex-col gap-3 relative shrink-0">
-        <!-- 上方：目標幣別輸入框 -->
+        <!-- 上方：外幣輸入框 (固定高度 124px) -->
         <div id="targetCard" class="h-[124px] bg-slate-800/60 border-2 border-transparent rounded-2xl p-3 shadow-sm transition-all cursor-text flex flex-col justify-between" onclick="setActiveInput('target')">
           <div class="flex justify-between items-start">
             <button class="flex items-center gap-2 bg-slate-700/60 hover:bg-slate-600/60 px-2.5 py-1 rounded-xl border border-slate-600/60 active:scale-95 transition-all" onclick="event.stopPropagation(); openCurrencySheet('target')">
@@ -95,7 +94,7 @@
           </div>
         </button>
 
-        <!-- 下方：基準幣別輸入框 -->
+        <!-- 下方：基準幣別輸入框 (固定高度 124px) -->
         <div id="baseCard" class="h-[124px] bg-slate-850 border-2 border-emerald-500/70 rounded-2xl p-3 shadow-inner transition-all cursor-text flex flex-col justify-between" onclick="setActiveInput('base')">
           <div class="flex justify-between items-start">
             <button class="flex items-center gap-2 bg-slate-700/60 hover:bg-slate-600/60 px-2.5 py-1 rounded-xl border border-slate-600/60 active:scale-95 transition-all" onclick="event.stopPropagation(); openCurrencySheet('base')">
@@ -131,7 +130,7 @@
           </div>
           <!-- 記帳按鈕 -->
           <button onclick="openRecordChoiceModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-500/80 bg-amber-900/50 text-amber-300 text-sm font-bold active:scale-95 transition-all shadow-sm">
-            📝 記一筆
+            📝 雙幣存檔
           </button>
         </div>
       </div>
@@ -164,45 +163,48 @@
 
     <!-- ================== 分頁二：📒 旅遊清單 ================== -->
     <div id="tabTravel" class="hidden flex-col h-full fade-in p-4 overflow-y-auto no-scrollbar">
-      <div class="flex justify-between items-end mb-4">
+      <div class="flex justify-between items-center mb-3">
         <div>
-          <h2 class="text-xl font-bold text-white">本趟旅遊花費</h2>
-          <p class="text-sm text-slate-400 mt-1">自動結算分攤金額</p>
+          <h2 class="text-lg font-bold text-white">旅遊花費與拆帳</h2>
+          <p class="text-xs text-slate-400 mt-0.5" id="tvlTotalCount">共 0 筆消費</p>
         </div>
-        <button onclick="manageMembers()" class="text-xs bg-slate-800 text-slate-300 px-3 py-1.5 rounded-lg border border-slate-700 active:scale-95">👥 旅伴名單</button>
+        <div class="flex gap-2">
+          <!-- 雙幣切換開關 -->
+          <button onclick="toggleCurrencyView()" id="currencyViewBtn" class="text-xs bg-slate-800 text-emerald-400 px-2.5 py-1.5 rounded-lg border border-slate-700 active:scale-95 font-bold">
+            🔀 雙幣對照
+          </button>
+          <button onclick="manageMembers()" class="text-xs bg-slate-800 text-slate-300 px-2.5 py-1.5 rounded-lg border border-slate-700 active:scale-95">👥 旅伴</button>
+        </div>
       </div>
       
       <!-- 結算卡片 -->
-      <div class="bg-slate-800/80 rounded-2xl p-4 border border-slate-700/50 mb-5 shadow-lg">
-        <h3 class="text-sm font-bold text-slate-300 border-b border-slate-700 pb-2 mb-3">🤝 最終結算清單</h3>
-        <div id="travelSummaryBox" class="space-y-2 text-sm">
-          <!-- 動態生成結算 -->
-        </div>
+      <div class="bg-slate-800/80 rounded-2xl p-4 border border-slate-700/50 mb-4 shadow-lg">
+        <h3 class="text-xs font-bold text-slate-300 border-b border-slate-700 pb-2 mb-2 flex justify-between items-center">
+          <span>🤝 結算分攤 (台幣基準)</span>
+          <span class="text-[10px] text-slate-400">系統自動抵銷</span>
+        </h3>
+        <div id="travelSummaryBox" class="space-y-1.5 text-xs"></div>
       </div>
 
       <!-- 明細列表 -->
-      <div class="flex justify-between items-center mb-3">
-        <h3 class="text-sm font-bold text-slate-300">花費明細</h3>
-        <button onclick="clearTravel()" class="text-xs text-rose-400 bg-rose-950/30 px-2 py-1 rounded border border-rose-900/50">🗑️ 清空</button>
+      <div class="flex justify-between items-center mb-2">
+        <h3 class="text-xs font-bold text-slate-300">消費明細列表</h3>
+        <button onclick="clearTravel()" class="text-xs text-rose-400 bg-rose-950/30 px-2 py-0.5 rounded border border-rose-900/50">🗑️ 清空</button>
       </div>
-      <div id="travelList" class="space-y-3 pb-6">
-        <!-- 動態生成清單 -->
-      </div>
+      <div id="travelList" class="space-y-2.5 pb-6"></div>
     </div>
 
     <!-- ================== 分頁三：🛍️ 代購清單 ================== -->
     <div id="tabShop" class="hidden flex-col h-full fade-in p-4 overflow-y-auto no-scrollbar">
-      <div class="flex justify-between items-end mb-4">
+      <div class="flex justify-between items-end mb-3">
         <div>
-          <h2 class="text-xl font-bold text-white">代購接單管理</h2>
-          <p class="text-sm text-emerald-400 mt-1 font-bold" id="shopTotalProfit">本趟總利潤：NT$ 0</p>
+          <h2 class="text-lg font-bold text-white">代購接單管理</h2>
+          <p class="text-xs text-emerald-400 mt-0.5 font-bold" id="shopTotalProfit">本趟總利潤：NT$ 0</p>
         </div>
-        <button onclick="clearShop()" class="text-xs text-rose-400 bg-rose-950/30 px-3 py-1.5 rounded border border-rose-900/50 active:scale-95">🗑️ 清空接單</button>
+        <button onclick="clearShop()" class="text-xs text-rose-400 bg-rose-950/30 px-2.5 py-1.5 rounded border border-rose-900/50 active:scale-95">🗑️ 清空接單</button>
       </div>
 
-      <div id="shopList" class="space-y-3 pb-6">
-        <!-- 動態生成清單 -->
-      </div>
+      <div id="shopList" class="space-y-2.5 pb-6"></div>
     </div>
   </div>
 
@@ -222,45 +224,52 @@
   <!-- ================== 彈出視窗：記帳選擇 ================== -->
   <div id="recordChoiceModal" class="absolute inset-0 bg-black/70 z-50 hidden opacity-0 transition-opacity duration-300 flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-sm p-6 flex flex-col gap-4 shadow-2xl transform scale-95 transition-transform duration-300" id="recordChoiceBox">
-      <div class="text-center mb-2">
-        <h3 class="text-lg font-bold text-white mb-1">這筆金額要記在哪？</h3>
-        <p class="text-sm text-emerald-400 font-mono font-bold" id="recordAmountDisplay">NT$ 0</p>
+      <div class="text-center mb-1">
+        <h3 class="text-base font-bold text-white mb-1">雙幣記錄確認</h3>
+        <div class="text-lg text-emerald-400 font-mono font-bold" id="recordAmountDisplay">0</div>
+        <div class="text-xs text-slate-400 font-mono" id="recordSubAmountDisplay">0</div>
       </div>
-      <button onclick="openTravelForm()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-3.5 rounded-2xl font-bold text-base flex justify-center items-center gap-2 active:scale-95 transition-all">
-        <span class="text-xl">📒</span> 記進【旅遊清單】(拆帳)
+      <button onclick="openTravelForm()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-2xl font-bold text-sm flex justify-center items-center gap-2 active:scale-95 transition-all">
+        <span class="text-lg">📒</span> 記進【旅遊清單】(拆帳)
       </button>
-      <button onclick="openShopForm()" class="w-full bg-rose-600 hover:bg-rose-500 text-white py-3.5 rounded-2xl font-bold text-base flex justify-center items-center gap-2 active:scale-95 transition-all">
-        <span class="text-xl">🛍️</span> 記進【代購清單】(接單)
+      <button onclick="openShopForm()" class="w-full bg-rose-600 hover:bg-rose-500 text-white py-3 rounded-2xl font-bold text-sm flex justify-center items-center gap-2 active:scale-95 transition-all">
+        <span class="text-lg">🛍️</span> 記進【代購清單】(接單)
       </button>
-      <button onclick="closeModal('recordChoiceModal', 'recordChoiceBox')" class="w-full bg-slate-800 text-slate-300 py-3 rounded-2xl font-bold mt-2 active:scale-95 transition-all">取消</button>
+      <button onclick="closeModal('recordChoiceModal', 'recordChoiceBox')" class="w-full bg-slate-800 text-slate-300 py-2.5 rounded-2xl font-bold text-xs mt-1 active:scale-95 transition-all">取消</button>
     </div>
   </div>
 
   <!-- ================== 彈出視窗：旅遊清單表單 ================== -->
   <div id="travelFormModal" class="absolute inset-0 bg-black/80 z-50 hidden opacity-0 transition-opacity duration-300 flex items-end sm:items-center justify-center">
     <div class="bg-slate-900 border-t sm:border border-slate-700 rounded-t-3xl sm:rounded-3xl w-full max-w-md p-6 flex flex-col shadow-2xl transform translate-y-full sm:translate-y-0 transition-transform duration-300" id="travelFormBox">
-      <h3 class="text-lg font-bold text-white mb-4">新增旅遊花費</h3>
-      <div class="space-y-4">
+      <h3 class="text-base font-bold text-white mb-3">新增旅遊花費 (雙幣存檔)</h3>
+      <div class="space-y-3">
         <div>
-          <label class="text-xs text-slate-400 font-bold block mb-1.5">品項名稱</label>
-          <input type="text" id="tvlItem" placeholder="例如：午餐燒肉、計程車" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500" />
+          <label class="text-xs text-slate-400 font-bold block mb-1">品項名稱</label>
+          <input type="text" id="tvlItem" placeholder="例如：午餐燒肉、計程車、伴手禮" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500" />
+        </div>
+        <div class="grid grid-cols-2 gap-2 bg-slate-950 p-3 rounded-xl border border-slate-800">
+          <div>
+            <span class="text-[10px] text-slate-400 block font-bold">當地外幣金額</span>
+            <input type="text" id="tvlOrigAmount" readonly class="w-full bg-transparent text-white font-mono font-bold text-base outline-none mt-0.5" />
+          </div>
+          <div>
+            <span class="text-[10px] text-slate-400 block font-bold">折合新台幣</span>
+            <input type="text" id="tvlTwdAmount" readonly class="w-full bg-transparent text-emerald-400 font-mono font-bold text-base outline-none mt-0.5" />
+          </div>
         </div>
         <div>
-          <label class="text-xs text-slate-400 font-bold block mb-1.5">花費金額 (已換算)</label>
-          <input type="number" id="tvlAmount" readonly class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-emerald-400 font-mono font-bold outline-none" />
+          <label class="text-xs text-slate-400 font-bold block mb-1">由誰先墊付？</label>
+          <select id="tvlPayer" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none appearance-none"></select>
         </div>
         <div>
-          <label class="text-xs text-slate-400 font-bold block mb-1.5">這筆錢誰先墊的？</label>
-          <select id="tvlPayer" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none appearance-none"></select>
-        </div>
-        <div>
-          <label class="text-xs text-slate-400 font-bold block mb-2">這筆錢誰要分攤？(可複選)</label>
+          <label class="text-xs text-slate-400 font-bold block mb-1.5">分攤成員 (可複選)</label>
           <div id="tvlSplitters" class="flex flex-wrap gap-2"></div>
         </div>
       </div>
-      <div class="flex gap-3 mt-6">
-        <button onclick="closeModal('travelFormModal', 'travelFormBox')" class="flex-1 bg-slate-800 text-slate-300 py-3.5 rounded-xl font-bold active:scale-95 transition-all">取消</button>
-        <button onclick="saveTravelRecord()" class="flex-1 bg-indigo-600 text-white py-3.5 rounded-xl font-bold active:scale-95 transition-all">儲存</button>
+      <div class="flex gap-2.5 mt-5">
+        <button onclick="closeModal('travelFormModal', 'travelFormBox')" class="flex-1 bg-slate-800 text-slate-300 py-3 rounded-xl text-sm font-bold active:scale-95 transition-all">取消</button>
+        <button onclick="saveTravelRecord()" class="flex-1 bg-indigo-600 text-white py-3 rounded-xl text-sm font-bold active:scale-95 transition-all">儲存明細</button>
       </div>
     </div>
   </div>
@@ -268,40 +277,41 @@
   <!-- ================== 彈出視窗：代購清單表單 ================== -->
   <div id="shopFormModal" class="absolute inset-0 bg-black/80 z-50 hidden opacity-0 transition-opacity duration-300 flex items-end sm:items-center justify-center">
     <div class="bg-slate-900 border-t sm:border border-slate-700 rounded-t-3xl sm:rounded-3xl w-full max-w-md p-6 flex flex-col shadow-2xl transform translate-y-full sm:translate-y-0 transition-transform duration-300" id="shopFormBox">
-      <h3 class="text-lg font-bold text-white mb-4">新增代購接單</h3>
-      <div class="space-y-4">
-        <div class="flex gap-3">
+      <h3 class="text-base font-bold text-white mb-3">新增代購接單</h3>
+      <div class="space-y-3">
+        <div class="flex gap-2">
           <div class="flex-1">
-            <label class="text-xs text-slate-400 font-bold block mb-1.5">買家姓名</label>
-            <input type="text" id="shopBuyer" placeholder="例如：陳小姐" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500" />
+            <label class="text-xs text-slate-400 font-bold block mb-1">買家姓名</label>
+            <input type="text" id="shopBuyer" placeholder="例如：陳小姐" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500" />
           </div>
-          <div class="flex-[2]">
-            <label class="text-xs text-slate-400 font-bold block mb-1.5">代購品項</label>
-            <input type="text" id="shopItem" placeholder="例如：Dior包包" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500" />
+          <div class="flex-[1.5]">
+            <label class="text-xs text-slate-400 font-bold block mb-1">代購品項</label>
+            <input type="text" id="shopItem" placeholder="例如：日本限定包包" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500" />
           </div>
         </div>
         
-        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
+        <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2.5">
           <div class="flex justify-between items-center">
-            <span class="text-sm text-slate-400 font-bold">商品成本 (已換算)</span>
-            <span class="text-base text-slate-300 font-mono font-bold" id="shopCostText">0</span>
+            <span class="text-xs text-slate-400 font-bold">外幣進貨成本</span>
+            <span class="text-sm text-white font-mono font-bold" id="shopOrigCostText">0</span>
           </div>
-          <div class="flex justify-between items-center border-t border-slate-800 pt-3">
-            <span class="text-sm text-white font-bold">向客人收費</span>
-            <div class="flex items-center gap-2">
-              <span class="text-sm text-slate-400">NT$</span>
-              <input type="number" id="shopSell" oninput="calcShopProfit()" class="w-24 bg-slate-800 border border-emerald-500/50 rounded-lg px-2 py-1.5 text-emerald-400 font-mono font-bold text-right outline-none focus:border-emerald-500" />
-            </div>
+          <div class="flex justify-between items-center">
+            <span class="text-xs text-slate-400 font-bold">折合台幣成本</span>
+            <span class="text-sm text-slate-300 font-mono font-bold" id="shopTwdCostText">NT$ 0</span>
           </div>
-          <div class="flex justify-between items-center bg-emerald-950/30 -mx-2 px-2 py-1.5 rounded-lg">
-            <span class="text-xs text-emerald-400 font-bold">預估利潤</span>
+          <div class="flex justify-between items-center border-t border-slate-800 pt-2.5">
+            <span class="text-xs text-white font-bold">向客人收費 (NT$)</span>
+            <input type="number" id="shopSell" oninput="calcShopProfit()" class="w-28 bg-slate-800 border border-emerald-500/50 rounded-lg px-2.5 py-1 text-emerald-400 font-mono font-bold text-right outline-none focus:border-emerald-500 text-sm" />
+          </div>
+          <div class="flex justify-between items-center bg-emerald-950/40 -mx-1.5 px-2.5 py-1.5 rounded-lg">
+            <span class="text-xs text-emerald-400 font-bold">實收淨利 (NT$)</span>
             <span class="text-sm text-emerald-400 font-mono font-bold" id="shopProfitText">+0</span>
           </div>
         </div>
       </div>
-      <div class="flex gap-3 mt-6">
-        <button onclick="closeModal('shopFormModal', 'shopFormBox')" class="flex-1 bg-slate-800 text-slate-300 py-3.5 rounded-xl font-bold active:scale-95 transition-all">取消</button>
-        <button onclick="saveShopRecord()" class="flex-1 bg-rose-600 text-white py-3.5 rounded-xl font-bold active:scale-95 transition-all">建立接單</button>
+      <div class="flex gap-2.5 mt-5">
+        <button onclick="closeModal('shopFormModal', 'shopFormBox')" class="flex-1 bg-slate-800 text-slate-300 py-3 rounded-xl text-sm font-bold active:scale-95 transition-all">取消</button>
+        <button onclick="saveShopRecord()" class="flex-1 bg-rose-600 text-white py-3 rounded-xl text-sm font-bold active:scale-95 transition-all">建立接單</button>
       </div>
     </div>
   </div>
@@ -319,7 +329,7 @@
 </div>
 
 <script>
-// ================= 核心設定與變數 =================
+// ================= 核心設定 =================
 const defaultRates = {
   "TWD": { code: "TWD", name: "新台幣", flag: "🇹🇼", rate: 1.0 },
   "USD": { code: "USD", name: "美金", flag: "🇺🇸", rate: 32.48 },
@@ -344,41 +354,61 @@ let taxRate = parseFloat(localStorage.getItem('custom_tax_rate')) || 10.0;
 let targetCode = 'JPY', baseCode = 'TWD';
 let activeInputType = 'target', applyFee = false, applyTaxFree = false, sheetMode = 'target';
 
+// 檢視模式：dual(雙幣對照), foreign(純外幣), twd(純台幣)
+let currencyViewMode = localStorage.getItem('app_curr_view_mode') || 'dual';
+
+// 暫存當前算出的雙幣數據
+let snapOrigAmount = 0;
+let snapOrigCode = 'JPY';
+let snapTwdAmount = 0;
+
 const baseInput = document.getElementById('baseInput');
 const targetInput = document.getElementById('targetInput');
 
-// ================= 資料庫 (Local Storage) =================
+// 本機資料庫
 let members = JSON.parse(localStorage.getItem('app_members')) || ['我', '老婆', '朋友A'];
 let travelRecords = JSON.parse(localStorage.getItem('app_travel_records')) || [];
 let shopRecords = JSON.parse(localStorage.getItem('app_shop_records')) || [];
-let currentCalculatedTwd = 0; // 暫存目前畫面算出來的台幣金額
 
-// ================= 分頁切換功能 =================
+// ================= 分頁切換 =================
 function switchTab(tabId) {
-  ['tabCalc', 'tabTravel', 'tabShop'].forEach(id => {
-    document.getElementById(id).classList.add('hidden');
-  });
+  ['tabCalc', 'tabTravel', 'tabShop'].forEach(id => document.getElementById(id).classList.add('hidden'));
   document.getElementById(tabId).classList.remove('hidden');
 
-  // 導覽列顏色切換
   ['navCalc', 'navTravel', 'navShop'].forEach(id => {
     document.getElementById(id).classList.remove('text-emerald-400');
     document.getElementById(id).classList.add('text-slate-500');
   });
-  const activeNav = tabId === 'tabCalc' ? 'navCalc' : tabId === 'tabTravel' ? 'navTravel' : 'navShop';
-  document.getElementById(activeNav).classList.add('text-emerald-400');
-  document.getElementById(activeNav).classList.remove('text-slate-500');
+  const actMap = { 'tabCalc': 'navCalc', 'tabTravel': 'navTravel', 'tabShop': 'navShop' };
+  document.getElementById(actMap[tabId]).classList.add('text-emerald-400');
+  document.getElementById(actMap[tabId]).classList.remove('text-slate-500');
 
-  // 標題切換
-  const titleMap = { 'tabCalc': '全球即時匯率 (雙向)', 'tabTravel': '旅遊清單與結算', 'tabShop': '代購接單管理' };
+  const titleMap = { 'tabCalc': '全球即時匯率 (雙向直算)', 'tabTravel': '旅遊清單與拆帳', 'tabShop': '代購接單管理' };
   document.getElementById('topTitle').textContent = titleMap[tabId];
 
-  // 如果切換到特定分頁，重新渲染資料
   if(tabId === 'tabTravel') renderTravelList();
   if(tabId === 'tabShop') renderShopList();
 }
 
-// ================= 計算機核心邏輯 =================
+// ================= 雙幣顯示切換 (清單) =================
+function toggleCurrencyView() {
+  if (currencyViewMode === 'dual') currencyViewMode = 'foreign';
+  else if (currencyViewMode === 'foreign') currencyViewMode = 'twd';
+  else currencyViewMode = 'dual';
+
+  localStorage.setItem('app_curr_view_mode', currencyViewMode);
+  updateCurrencyViewBtn();
+  renderTravelList();
+}
+
+function updateCurrencyViewBtn() {
+  const btn = document.getElementById('currencyViewBtn');
+  if (currencyViewMode === 'dual') btn.textContent = '🔀 雙幣對照';
+  else if (currencyViewMode === 'foreign') btn.textContent = '💴 當地外幣';
+  else btn.textContent = '🇹🇼 結算台幣';
+}
+
+// ================= 計算機邏輯 =================
 function updateAddonButtons() {
   document.getElementById('toggleFee').textContent = `+${feeRate}%刷卡`;
   document.getElementById('toggleTax').textContent = `-${taxRate}%退稅`;
@@ -475,11 +505,17 @@ function render() {
   const outStr = (rawAct === 0 && inStr !== '0') ? "" : Number(curAmt.toFixed(2)).toString();
   if (activeInputType === 'target') baseInput.value = outStr || "0"; else targetInput.value = outStr || "0";
 
-  // 抓取精準的 TWD 金額作為記帳基準
-  if (baseCode === 'TWD') currentCalculatedTwd = activeInputType === 'target' ? curAmt : rawAct;
-  else if (targetCode === 'TWD') currentCalculatedTwd = activeInputType === 'base' ? curAmt : rawAct;
-  else currentCalculatedTwd = (activeInputType === 'target' ? curAmt : rawAct) / currentRates[baseCode].rate; // 轉回 TWD
-  currentCalculatedTwd = Math.round(currentCalculatedTwd);
+  // 雙幣快照儲存
+  if (targetCode !== 'TWD') {
+    snapOrigCode = targetCode;
+    snapOrigAmount = activeInputType === 'target' ? rawAct : Number(outStr);
+    snapTwdAmount = activeInputType === 'target' ? Number(outStr) : rawAct;
+  } else {
+    snapOrigCode = baseCode;
+    snapOrigAmount = activeInputType === 'base' ? rawAct : Number(outStr);
+    snapTwdAmount = activeInputType === 'base' ? Number(outStr) : rawAct;
+  }
+  snapTwdAmount = Math.round(snapTwdAmount);
 
   const bdBox = document.getElementById('breakdownBox');
   if (applyTaxFree || applyFee) {
@@ -507,7 +543,7 @@ function handleKeyPress(val) {
   render();
 }
 
-document.querySelectorAll('.key-btn').forEach(btn => { btn.addEventListener('click', () => handleKeyPress(btn.getAttribute('data-val'))); });
+document.querySelectorAll('.key-btn').forEach(btn => btn.addEventListener('click', () => handleKeyPress(btn.getAttribute('data-val'))));
 
 // 選單
 function openCurrencySheet(mode) {
@@ -527,11 +563,9 @@ function buildSheetList() {
   Object.keys(currentRates).forEach(code => {
     const info = currentRates[code]; const aCode = sheetMode === 'target' ? targetCode : baseCode;
     const aStyle = code === aCode ? 'border-emerald-500 bg-emerald-900/30' : 'border-slate-700 bg-slate-800';
-    const isCus = customCrossRates[`${code}_TWD`] !== undefined; 
-    const cBadge = isCus ? `<span class="bg-amber-500/20 text-amber-400 text-[10px] px-1.5 py-0.5 rounded ml-2 font-bold">自訂</span>` : '';
     const btn = document.createElement('button');
     btn.className = `flex items-center gap-3 p-3 rounded-xl border text-left transition-all active:scale-95 ${aStyle}`;
-    btn.innerHTML = `<span class="text-3xl">${info.flag}</span><div class="flex-1"><div class="font-bold text-base text-white leading-none flex items-center">${code} ${cBadge}</div><div class="text-sm font-bold text-slate-300 mt-1">${info.name}</div></div>`;
+    btn.innerHTML = `<span class="text-3xl">${info.flag}</span><div class="flex-1"><div class="font-bold text-base text-white leading-none">${code}</div><div class="text-sm font-bold text-slate-300 mt-1">${info.name}</div></div>`;
     btn.onclick = () => { if (sheetMode === 'target') targetCode = code; else baseCode = code; closeCurrencySheet(); render(); };
     c.appendChild(btn);
   });
@@ -554,7 +588,7 @@ async function fetchRates() {
 }
 document.getElementById('refreshBtn').addEventListener('click', fetchRates);
 
-// ================= Modals 彈出視窗控制 =================
+// Modals 控制
 function showModal(bgId, boxId) {
   document.getElementById(bgId).classList.remove('hidden');
   void document.getElementById(bgId).offsetWidth;
@@ -567,22 +601,24 @@ function closeModal(bgId, boxId) {
   setTimeout(() => document.getElementById(bgId).classList.add('hidden'), 300);
 }
 
-// ================= 記帳共用邏輯 =================
+// ================= 雙幣記帳邏輯 =================
 function openRecordChoiceModal() {
-  document.getElementById('recordAmountDisplay').textContent = `金額：NT$ ${currentCalculatedTwd.toLocaleString()}`;
+  document.getElementById('recordAmountDisplay').textContent = `${snapOrigAmount.toLocaleString()} ${snapOrigCode}`;
+  document.getElementById('recordSubAmountDisplay').textContent = `≈ NT$ ${snapTwdAmount.toLocaleString()}`;
   showModal('recordChoiceModal', 'recordChoiceBox');
 }
 
-// ==== 旅遊清單 ====
+// ==== 旅遊清單 (雙幣存檔) ====
 function openTravelForm() {
   closeModal('recordChoiceModal', 'recordChoiceBox');
-  document.getElementById('tvlAmount').value = currentCalculatedTwd;
+  document.getElementById('tvlOrigAmount').value = `${snapOrigAmount.toLocaleString()} ${snapOrigCode}`;
+  document.getElementById('tvlTwdAmount').value = `NT$ ${snapTwdAmount.toLocaleString()}`;
   document.getElementById('tvlItem').value = '';
   
   const payerSel = document.getElementById('tvlPayer'); payerSel.innerHTML = '';
   const splitDiv = document.getElementById('tvlSplitters'); splitDiv.innerHTML = '';
   
-  members.forEach((m, idx) => {
+  members.forEach(m => {
     payerSel.innerHTML += `<option value="${m}">${m}</option>`;
     splitDiv.innerHTML += `<label class="flex items-center gap-1.5 bg-slate-800 border border-slate-700 px-3 py-2 rounded-lg text-sm text-white cursor-pointer select-none has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-900/30 transition-all"><input type="checkbox" value="${m}" checked class="accent-indigo-500 w-4 h-4"> ${m}</label>`;
   });
@@ -590,15 +626,24 @@ function openTravelForm() {
 }
 
 function saveTravelRecord() {
-  const item = document.getElementById('tvlItem').value || '未命名項目';
-  const amount = parseInt(document.getElementById('tvlAmount').value);
+  const item = document.getElementById('tvlItem').value || '未命名消費';
   const payer = document.getElementById('tvlPayer').value;
   const checkboxes = document.querySelectorAll('#tvlSplitters input:checked');
   const splitters = Array.from(checkboxes).map(cb => cb.value);
   
-  if(splitters.length === 0) return alert('至少需要選擇一位分攤人！');
+  if(splitters.length === 0) return alert('至少需選擇一位分攤人！');
   
-  travelRecords.push({ id: Date.now(), item, amount, payer, splitters, date: new Date().toLocaleDateString() });
+  travelRecords.push({
+    id: Date.now(),
+    item,
+    origAmount: snapOrigAmount,
+    origCode: snapOrigCode,
+    twdAmount: snapTwdAmount,
+    payer,
+    splitters,
+    date: new Date().toLocaleDateString()
+  });
+  
   localStorage.setItem('app_travel_records', JSON.stringify(travelRecords));
   closeModal('travelFormModal', 'travelFormBox');
   switchTab('tabTravel');
@@ -607,25 +652,26 @@ function saveTravelRecord() {
 function renderTravelList() {
   const list = document.getElementById('travelList'); list.innerHTML = '';
   const summary = document.getElementById('travelSummaryBox'); summary.innerHTML = '';
+  document.getElementById('tvlTotalCount').textContent = `共 ${travelRecords.length} 筆消費紀錄`;
+
   if (travelRecords.length === 0) {
     list.innerHTML = `<div class="text-center text-slate-500 py-10">尚無記帳紀錄</div>`;
     summary.innerHTML = `<div class="text-slate-500 text-center py-2">目前沒有帳目</div>`;
     return;
   }
   
-  // 計算結算
+  // 結算計算 (以 TWD 統一結清)
   let balances = {}; members.forEach(m => balances[m] = 0);
   travelRecords.forEach(r => {
     if(balances[r.payer] === undefined) balances[r.payer] = 0;
-    balances[r.payer] += r.amount; // 付款人獲得債權
-    const splitAmt = r.amount / r.splitters.length;
+    balances[r.payer] += r.twdAmount;
+    const splitTwd = r.twdAmount / r.splitters.length;
     r.splitters.forEach(s => {
       if(balances[s] === undefined) balances[s] = 0;
-      balances[s] -= splitAmt; // 分攤人扣除債務
+      balances[s] -= splitTwd;
     });
   });
 
-  // 簡單配對顯示 (正數 = 應收, 負數 = 應付)
   let resultHTML = '';
   Object.keys(balances).forEach(m => {
     let amt = Math.round(balances[m]);
@@ -634,47 +680,60 @@ function renderTravelList() {
   });
   summary.innerHTML = resultHTML || '<div class="text-slate-400 text-center">大家已互不相欠 🎉</div>';
 
-  // 渲染清單
+  // 渲染清單 (依據雙幣檢視模式)
   [...travelRecords].reverse().forEach(r => {
+    let priceHTML = '';
+    if (currencyViewMode === 'dual') {
+      priceHTML = `
+        <div class="text-right">
+          <div class="text-white font-mono font-bold text-sm">${r.origAmount.toLocaleString()} ${r.origCode}</div>
+          <div class="text-[11px] text-emerald-400 font-mono mt-0.5">≈ NT$ ${r.twdAmount.toLocaleString()}</div>
+        </div>
+      `;
+    } else if (currencyViewMode === 'foreign') {
+      priceHTML = `<div class="text-white font-mono font-bold text-sm">${r.origAmount.toLocaleString()} ${r.origCode}</div>`;
+    } else {
+      priceHTML = `<div class="text-emerald-400 font-mono font-bold text-sm">NT$ ${r.twdAmount.toLocaleString()}</div>`;
+    }
+
     list.innerHTML += `
-      <div class="bg-slate-800/50 p-3.5 rounded-xl border border-slate-700/50 flex justify-between items-center">
+      <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700/50 flex justify-between items-center shadow-sm">
         <div>
           <div class="text-white font-bold text-sm">${r.item}</div>
-          <div class="text-[11px] text-slate-400 mt-1">${r.payer} 先付 ➔ 平分給 ${r.splitters.join(', ')}</div>
+          <div class="text-[10px] text-slate-400 mt-1">${r.payer} 先付 ➔ 平分給 ${r.splitters.join(', ')}</div>
         </div>
-        <div class="text-emerald-400 font-mono font-bold">NT$ ${r.amount.toLocaleString()}</div>
+        ${priceHTML}
       </div>
     `;
   });
 }
 
 function manageMembers() {
-  const cur = members.join('，');
-  const res = prompt(`請輸入旅伴名單（請用全形逗號「，」隔開）：`, cur);
+  const res = prompt(`請輸入旅伴名單（請用全形逗號「，」隔開）：`, members.join('，'));
   if (res) {
     members = res.split('，').map(s => s.trim()).filter(s => s);
     localStorage.setItem('app_members', JSON.stringify(members));
     renderTravelList();
   }
 }
-function clearTravel() { if(confirm('確定要清空所有旅遊帳目嗎？這無法復原喔！')) { travelRecords = []; localStorage.setItem('app_travel_records', '[]'); renderTravelList(); } }
+function clearTravel() { if(confirm('確定要清空所有旅遊帳目嗎？')) { travelRecords = []; localStorage.setItem('app_travel_records', '[]'); renderTravelList(); } }
 
 
-// ==== 代購清單 ====
+// ==== 代購清單 (精準外幣成本與台幣利潤) ====
 function openShopForm() {
   closeModal('recordChoiceModal', 'recordChoiceBox');
   document.getElementById('shopBuyer').value = '';
   document.getElementById('shopItem').value = '';
-  document.getElementById('shopCostText').textContent = `NT$ ${currentCalculatedTwd}`;
-  // 預設加上剛剛算好的額外利潤 (如果有的話)，或者直接帶入現有金額
-  document.getElementById('shopSell').value = currentCalculatedTwd; 
+  document.getElementById('shopOrigCostText').textContent = `${snapOrigAmount.toLocaleString()} ${snapOrigCode}`;
+  document.getElementById('shopTwdCostText').textContent = `NT$ ${snapTwdAmount.toLocaleString()}`;
+  document.getElementById('shopSell').value = snapTwdAmount; 
   calcShopProfit();
   setTimeout(() => showModal('shopFormModal', 'shopFormBox'), 200);
 }
 
 function calcShopProfit() {
   const sell = parseInt(document.getElementById('shopSell').value) || 0;
-  const profit = sell - currentCalculatedTwd;
+  const profit = sell - snapTwdAmount;
   const pEl = document.getElementById('shopProfitText');
   pEl.textContent = profit >= 0 ? `+${profit.toLocaleString()}` : profit.toLocaleString();
   pEl.className = profit >= 0 ? "text-sm text-emerald-400 font-mono font-bold" : "text-sm text-rose-400 font-mono font-bold";
@@ -683,9 +742,19 @@ function calcShopProfit() {
 function saveShopRecord() {
   const buyer = document.getElementById('shopBuyer').value || '未署名買家';
   const item = document.getElementById('shopItem').value || '代購商品';
-  const sell = parseInt(document.getElementById('shopSell').value) || currentCalculatedTwd;
+  const sell = parseInt(document.getElementById('shopSell').value) || snapTwdAmount;
   
-  shopRecords.push({ id: Date.now(), buyer, item, cost: currentCalculatedTwd, sell, isPaid: false });
+  shopRecords.push({
+    id: Date.now(),
+    buyer,
+    item,
+    origCost: snapOrigAmount,
+    origCode: snapOrigCode,
+    twdCost: snapTwdAmount,
+    sell,
+    isPaid: false
+  });
+  
   localStorage.setItem('app_shop_records', JSON.stringify(shopRecords));
   closeModal('shopFormModal', 'shopFormBox');
   switchTab('tabShop');
@@ -704,22 +773,27 @@ function renderShopList() {
     list.innerHTML = `<div class="text-center text-slate-500 py-10">目前沒有代購接單</div>`;
   } else {
     [...shopRecords].reverse().forEach(r => {
-      const profit = r.sell - r.cost;
+      const profit = r.sell - r.twdCost;
       totalProfit += profit;
-      const bgClass = r.isPaid ? 'bg-slate-800/30 border-slate-700/30 opacity-70' : 'bg-slate-800 border-slate-700';
-      const btnClass = r.isPaid ? 'bg-emerald-900/50 text-emerald-400 border-emerald-800' : 'bg-slate-700 text-slate-300 border-slate-600';
-      const btnText = r.isPaid ? '✅ 已收款' : '未收款';
+      const bgClass = r.isPaid ? 'bg-slate-800/30 border-slate-700/30 opacity-70' : 'bg-slate-800/80 border-slate-700';
+      const btnClass = r.isPaid ? 'bg-emerald-900/50 text-emerald-400 border-emerald-800' : 'bg-slate-700 text-slate-200 border-slate-600';
+      const btnText = r.isPaid ? '✅ 已收到款項' : '⏳ 待收款';
       
       list.innerHTML += `
-        <div class="${bgClass} p-4 rounded-2xl border flex flex-col gap-3 transition-all">
+        <div class="${bgClass} p-3.5 rounded-2xl border flex flex-col gap-2.5 transition-all shadow-sm">
           <div class="flex justify-between items-start">
             <div>
-              <div class="text-white font-bold">${r.buyer} <span class="text-xs text-slate-400 font-normal ml-2">${r.item}</span></div>
-              <div class="text-xs text-slate-400 mt-1">成本 ${r.cost} / 利潤 <span class="${profit>=0?'text-emerald-400':'text-rose-400'}">+${profit}</span></div>
+              <div class="text-white font-bold text-sm">${r.buyer} <span class="text-xs text-slate-400 font-normal ml-1">(${r.item})</span></div>
+              <div class="text-[11px] text-slate-400 mt-1 font-mono">
+                進貨成本: <span class="text-white">${r.origCost.toLocaleString()} ${r.origCode}</span> (≈ NT$ ${r.twdCost.toLocaleString()})
+              </div>
             </div>
-            <div class="text-lg text-emerald-400 font-mono font-bold">NT$ ${r.sell.toLocaleString()}</div>
+            <div class="text-right">
+              <div class="text-base text-emerald-400 font-mono font-bold">NT$ ${r.sell.toLocaleString()}</div>
+              <div class="text-[10px] font-mono mt-0.5 ${profit>=0?'text-emerald-400':'text-rose-400'}">實收淨利: ${profit>=0?'+':''}${profit.toLocaleString()}</div>
+            </div>
           </div>
-          <button onclick="toggleShopPaid(${r.id})" class="w-full ${btnClass} py-2 rounded-lg text-sm font-bold border active:scale-95 transition-all">${btnText}</button>
+          <button onclick="toggleShopPaid(${r.id})" class="w-full ${btnClass} py-1.5 rounded-lg text-xs font-bold border active:scale-95 transition-all">${btnText}</button>
         </div>
       `;
     });
@@ -729,7 +803,9 @@ function renderShopList() {
 function clearShop() { if(confirm('確定要清空所有代購紀錄嗎？')) { shopRecords = []; localStorage.setItem('app_shop_records', '[]'); renderShopList(); } }
 
 // 初始化
-setActiveInput('target'); fetchRates();
+setActiveInput('target');
+updateCurrencyViewBtn();
+fetchRates();
 </script>
 </body>
 </html>
