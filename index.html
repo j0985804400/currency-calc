@@ -38,12 +38,12 @@
 
 <div class="w-full max-w-md bg-slate-900 sm:rounded-3xl h-full flex flex-col justify-between shadow-2xl relative overflow-hidden sm:border border-slate-800">
 
-  <!-- 1. 頂部狀態列 (中文字體放大) -->
+  <!-- 1. 頂部狀態列 -->
   <header class="px-3.5 py-2.5 bg-slate-900 border-b border-slate-800 flex justify-between items-center z-10 shrink-0">
     <div>
       <div class="flex items-center gap-2">
         <span id="statusIndicator" class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
-        <h1 class="text-base font-bold tracking-tight text-white">全球即時匯率 (對向直算)</h1>
+        <h1 class="text-base font-bold tracking-tight text-white">全球即時匯率 (任選雙向)</h1>
       </div>
       <p id="rateUpdateTime" class="text-xs text-slate-300 mt-0.5 font-medium">正在同步最新匯率...</p>
     </div>
@@ -56,15 +56,14 @@
     </div>
   </header>
 
-  <!-- 2. 雙向輸入區塊 (維持固定高度 h-[124px] 防跑版，內部中文字體全面放大) -->
+  <!-- 2. 雙向輸入區塊 (上下卡片皆可自由切換幣別) -->
   <div class="px-3 py-2 flex flex-col gap-3 relative shrink-0">
     
-    <!-- 上方：外幣輸入框 -->
+    <!-- 上方：目標幣別輸入框 -->
     <div id="targetCard" class="h-[124px] bg-slate-800/60 border-2 border-transparent rounded-2xl p-3 shadow-sm transition-all cursor-text flex flex-col justify-between" onclick="setActiveInput('target')">
       
-      <!-- 頂部列：幣別按鈕與小計預覽 -->
       <div class="flex justify-between items-start">
-        <button id="currencySelectBtn" class="flex items-center gap-2 bg-slate-700/60 hover:bg-slate-600/60 px-2.5 py-1 rounded-xl border border-slate-600/60 active:scale-95 transition-all" onclick="event.stopPropagation(); openCurrencySheet()">
+        <button class="flex items-center gap-2 bg-slate-700/60 hover:bg-slate-600/60 px-2.5 py-1 rounded-xl border border-slate-600/60 active:scale-95 transition-all" onclick="event.stopPropagation(); openCurrencySheet('target')">
           <span id="targetFlag" class="text-2xl">🇯🇵</span>
           <div class="flex items-baseline gap-1.5">
             <span id="targetCode" class="text-base font-bold text-white">JPY</span>
@@ -75,7 +74,6 @@
         <div id="targetCalcPreview" class="text-xs font-mono text-slate-300 mt-1"></div>
       </div>
 
-      <!-- 底部列：自訂匯率功能與主輸入框 -->
       <div class="flex justify-between items-end gap-2">
         <div class="flex flex-col gap-1 z-10">
           <div id="targetRateInfo" class="text-xs text-slate-300 transition-colors font-bold">即時匯率: --</div>
@@ -95,29 +93,28 @@
       </div>
     </div>
 
-    <!-- 中間：雙向交換圖示 -->
-    <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-slate-900 border-[3px] border-slate-900 rounded-full z-10 pointer-events-none">
-      <div class="bg-slate-800 w-8 h-8 rounded-full flex items-center justify-center text-emerald-400 shadow-inner">
+    <!-- 中間：一鍵對調按鈕 -->
+    <button onclick="swapCurrencies()" class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-slate-900 border-[3px] border-slate-900 rounded-full z-20 active:scale-90 transition-transform">
+      <div class="bg-slate-800 w-8 h-8 rounded-full flex items-center justify-center text-emerald-400 shadow-inner hover:bg-slate-700 transition-colors">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path></svg>
       </div>
-    </div>
+    </button>
 
-    <!-- 下方：台幣輸入框 -->
+    <!-- 下方：基準幣別輸入框 (預設 TWD，現已開放選擇) -->
     <div id="baseCard" class="h-[124px] bg-slate-850 border-2 border-emerald-500/70 rounded-2xl p-3 shadow-inner transition-all cursor-text flex flex-col justify-between" onclick="setActiveInput('base')">
       
-      <!-- 頂部列：台幣標示與小計預覽 -->
       <div class="flex justify-between items-start">
-        <div class="flex items-center gap-2 px-1 py-0.5">
-          <span class="text-2xl">🇹🇼</span>
+        <button class="flex items-center gap-2 bg-slate-700/60 hover:bg-slate-600/60 px-2.5 py-1 rounded-xl border border-slate-600/60 active:scale-95 transition-all" onclick="event.stopPropagation(); openCurrencySheet('base')">
+          <span id="baseFlag" class="text-2xl">🇹🇼</span>
           <div class="flex items-baseline gap-1.5">
-            <span class="text-base font-bold text-white">TWD</span>
-            <span class="text-sm font-bold text-slate-200">新台幣</span>
+            <span id="baseCode" class="text-base font-bold text-white">TWD</span>
+            <span id="baseName" class="text-sm font-bold text-slate-200">新台幣</span>
           </div>
-        </div>
+          <svg class="w-3.5 h-3.5 text-slate-300 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+        </button>
         <div id="baseCalcPreview" class="text-xs font-mono text-slate-300 mt-1"></div>
       </div>
 
-      <!-- 底部列：隱形佔位與主輸入框 -->
       <div class="flex justify-between items-end gap-2">
         <div class="opacity-0 pointer-events-none">
           <div class="text-xs">即時匯率</div>
@@ -134,7 +131,7 @@
     </div>
   </div>
 
-  <!-- 3. 明細與附加費率 (中文字體放大為 text-sm / text-xs 粗體) -->
+  <!-- 3. 明細與附加費率 -->
   <div class="px-3.5 flex flex-col flex-1 relative pt-1 pb-1 justify-center">
     <div id="breakdownBox" class="hidden bg-slate-950 border border-slate-800 rounded-xl p-2.5 mb-2 text-xs font-mono font-bold shadow-inner space-y-1 fade-in">
       <div class="flex justify-between text-slate-300">
@@ -191,7 +188,7 @@
     </div>
   </div>
 
-  <!-- 5. 抽屜式外幣選擇選單 (中文字體放大) -->
+  <!-- 5. 抽屜式外幣選擇選單 -->
   <div id="currencySheetOverlay" class="absolute inset-0 bg-black/60 z-40 hidden opacity-0 transition-opacity duration-300" onclick="closeCurrencySheet()"></div>
   <div id="currencySheet" class="absolute bottom-0 left-0 right-0 bg-slate-900 rounded-t-2xl h-[65%] z-50 sheet-closed transition-transform duration-300 flex flex-col border-t border-slate-700">
     <div class="px-4 py-3 border-b border-slate-800 flex justify-between items-center">
@@ -222,15 +219,20 @@ const defaultRates = {
 };
 
 let currentRates = JSON.parse(localStorage.getItem('global_rates_cache')) || defaultRates;
-let customRates = JSON.parse(localStorage.getItem('custom_rates_cache')) || {};
+// 全新自訂匯率儲存方式 (支援雙向組合，如 JPY_TWD)
+let customCrossRates = JSON.parse(localStorage.getItem('custom_pairs_cache')) || {};
+
+// 初始化預設幣別 (下方永遠預設 TWD)
+let targetCode = 'JPY';
+let baseCode = 'TWD';
 
 let feeRate = parseFloat(localStorage.getItem('custom_fee_rate')) || 1.5;
 let taxRate = parseFloat(localStorage.getItem('custom_tax_rate')) || 10.0;
 
-let activeCurrencyCode = 'JPY'; 
 let activeInputType = 'target'; 
 let applyFee = false;
 let applyTaxFree = false;
+let sheetMode = 'target'; // 記錄是哪一個卡片打開了選單
 
 const baseInput = document.getElementById('baseInput');
 const targetInput = document.getElementById('targetInput');
@@ -322,15 +324,25 @@ function setActiveInput(type) {
   render();
 }
 
+// 一鍵上下對調幣別
+function swapCurrencies() {
+  let temp = targetCode;
+  targetCode = baseCode;
+  baseCode = temp;
+  render();
+}
+
 function promptCustomRate() {
-  const currentLive = currentRates[activeCurrencyCode].rate.toFixed(4);
-  const userRate = prompt(`請輸入您自訂的 ${activeCurrencyCode} 匯率：\n(目前即時匯率為 ${currentLive})`, customRates[activeCurrencyCode] || currentLive);
+  const liveRate = (currentRates[targetCode].rate / currentRates[baseCode].rate);
+  const pairKey = `${targetCode}_${baseCode}`;
+  
+  const userRate = prompt(`請輸入您自訂的匯率：\n(目前即時匯率: 1 ${targetCode} = ${liveRate.toFixed(4)} ${baseCode})`, customCrossRates[pairKey] || liveRate.toFixed(4));
   
   if (userRate !== null) {
     const parsed = parseFloat(userRate);
     if (!isNaN(parsed) && parsed > 0) {
-      customRates[activeCurrencyCode] = parsed;
-      localStorage.setItem('custom_rates_cache', JSON.stringify(customRates));
+      customCrossRates[pairKey] = parsed;
+      localStorage.setItem('custom_pairs_cache', JSON.stringify(customCrossRates));
       render();
     } else {
       alert("請輸入有效的數字匯率！");
@@ -339,21 +351,31 @@ function promptCustomRate() {
 }
 
 function resetToLiveRate() {
-  delete customRates[activeCurrencyCode];
-  localStorage.setItem('custom_rates_cache', JSON.stringify(customRates));
+  const pairKey = `${targetCode}_${baseCode}`;
+  delete customCrossRates[pairKey];
+  localStorage.setItem('custom_pairs_cache', JSON.stringify(customCrossRates));
   render();
 }
 
 function render() {
-  const isCustom = customRates[activeCurrencyCode] !== undefined;
-  const rateValue = isCustom ? customRates[activeCurrencyCode] : (currentRates[activeCurrencyCode].rate || 1.0);
+  // 自動換算任意兩種幣別的交叉匯率
+  const liveRate = currentRates[targetCode].rate / currentRates[baseCode].rate;
+  const pairKey = `${targetCode}_${baseCode}`;
+  const isCustom = customCrossRates[pairKey] !== undefined;
+  const rateValue = isCustom ? customCrossRates[pairKey] : liveRate;
   
-  document.getElementById('targetFlag').textContent = currentRates[activeCurrencyCode].flag;
-  document.getElementById('targetCode').textContent = activeCurrencyCode;
-  document.getElementById('targetName').textContent = currentRates[activeCurrencyCode].name;
+  // 更新上方卡片 UI
+  document.getElementById('targetFlag').textContent = currentRates[targetCode].flag;
+  document.getElementById('targetCode').textContent = targetCode;
+  document.getElementById('targetName').textContent = currentRates[targetCode].name;
+  
+  // 更新下方卡片 UI
+  document.getElementById('baseFlag').textContent = currentRates[baseCode].flag;
+  document.getElementById('baseCode').textContent = baseCode;
+  document.getElementById('baseName').textContent = currentRates[baseCode].name;
   
   const rateInfoEl = document.getElementById('targetRateInfo');
-  rateInfoEl.textContent = `${isCustom ? '自訂匯率' : '即時匯率'}: 1 ${activeCurrencyCode} = ${rateValue.toFixed(4)} TWD`;
+  rateInfoEl.textContent = `${isCustom ? '自訂匯率' : '即時匯率'}: 1 ${targetCode} = ${rateValue.toFixed(4)} ${baseCode}`;
   
   if (isCustom) {
     rateInfoEl.classList.add('text-amber-400');
@@ -410,7 +432,8 @@ function render() {
   const bdBox = document.getElementById('breakdownBox');
   if (applyTaxFree || applyFee) {
     bdBox.classList.remove('hidden');
-    const symbol = activeInputType === 'target' ? "TWD" : activeCurrencyCode;
+    // 明細的幣別符號會根據計算方向動態變化
+    const symbol = activeInputType === 'target' ? baseCode : targetCode;
     document.getElementById('bdRaw').textContent = `${rawConverted.toFixed(2)} ${symbol}`;
     
     if (applyTaxFree) {
@@ -465,7 +488,9 @@ document.querySelectorAll('.key-btn').forEach(btn => {
 const sheetOverlay = document.getElementById('currencySheetOverlay');
 const sheet = document.getElementById('currencySheet');
 
-function openCurrencySheet() {
+function openCurrencySheet(mode) {
+  sheetMode = mode;
+  buildSheetList();
   sheetOverlay.classList.remove('hidden');
   void sheetOverlay.offsetWidth;
   sheetOverlay.classList.add('opacity-100');
@@ -486,25 +511,26 @@ function buildSheetList() {
   const container = document.getElementById('sheetList');
   container.innerHTML = ''; 
   
-  Object.keys(currentRates).filter(c => c !== 'TWD').forEach(code => {
+  Object.keys(currentRates).forEach(code => {
     const info = currentRates[code];
-    const btn = document.createElement('button');
-    const activeStyle = code === activeCurrencyCode ? 'border-emerald-500 bg-emerald-900/30' : 'border-slate-700 bg-slate-800';
+    const activeCode = sheetMode === 'target' ? targetCode : baseCode;
+    const activeStyle = code === activeCode ? 'border-emerald-500 bg-emerald-900/30' : 'border-slate-700 bg-slate-800';
     
-    const isCustom = customRates[code] !== undefined;
-    const customBadge = isCustom ? `<span class="bg-amber-500/20 text-amber-400 text-xs px-1.5 py-0.5 rounded ml-2 font-bold">自訂</span>` : '';
-
+    const btn = document.createElement('button');
     btn.className = `flex items-center gap-3 p-3 rounded-xl border text-left transition-all active:scale-95 ${activeStyle}`;
     btn.innerHTML = `
       <span class="text-3xl">${info.flag}</span>
       <div class="flex-1">
-        <div class="font-bold text-base text-white leading-none flex items-center">${code} ${customBadge}</div>
+        <div class="font-bold text-base text-white leading-none">${code}</div>
         <div class="text-sm font-bold text-slate-300 mt-1">${info.name}</div>
       </div>
     `;
     btn.onclick = () => {
-      activeCurrencyCode = code;
-      buildSheetList(); 
+      if (sheetMode === 'target') {
+        targetCode = code;
+      } else {
+        baseCode = code;
+      }
       closeCurrencySheet();
       render();
     };
@@ -528,6 +554,7 @@ async function fetchRates() {
       
       Object.keys(currentRates).forEach(code => {
         if (code !== 'TWD' && data.rates[code]) {
+          // 以 TWD 為底，計算 1 外幣等於多少 TWD
           const twdRate = 1 / data.rates[code];
           currentRates[code].rate = parseFloat(twdRate.toFixed(4));
           hasUpdate = true;
@@ -547,14 +574,13 @@ async function fetchRates() {
     updateTimeText.textContent = "使用離線快取資料";
   }
 
-  buildSheetList();
+  render();
   updateAddonButtons();
 }
 
 document.getElementById('refreshBtn').addEventListener('click', fetchRates);
 
 setActiveInput('target');
-buildSheetList();
 fetchRates();
 </script>
 </body>
