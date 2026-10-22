@@ -353,7 +353,7 @@
     </div>
   </div>
 
-  <!-- ================== 彈出視窗：旅遊清單表單 (新增明顯手續費切換列) ================== -->
+  <!-- ================== 彈出視窗：旅遊清單表單 ================== -->
   <div id="travelFormModal" class="absolute inset-0 bg-black/80 z-50 hidden opacity-0 transition-opacity duration-300 flex items-end sm:items-center justify-center">
     <div class="bg-slate-900 border-t sm:border border-slate-700 rounded-t-3xl sm:rounded-3xl w-full max-w-md p-5 flex flex-col shadow-2xl transform translate-y-full sm:translate-y-0 transition-transform duration-300 max-h-[88dvh] overflow-y-auto" id="travelFormBox">
       <h3 class="text-[16px] font-bold text-white mb-3" id="tvlModalTitle">新增旅遊花費</h3>
@@ -585,6 +585,10 @@ let members = JSON.parse(localStorage.getItem('app_members')) || ['我', '老婆
 let travelRecords = JSON.parse(localStorage.getItem('app_travel_records')) || [];
 let shopRecords = JSON.parse(localStorage.getItem('app_shop_records')) || [];
 
+function escHTML(str) {
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 // ================= 備份與還原邏輯 =================
 function openBackupModal() {
   document.getElementById('restoreCodeInput').value = '';
@@ -602,9 +606,11 @@ function restoreFromCode() {
     const obj = JSON.parse(decodeURIComponent(atob(code)));
     if (obj.travelRecords) { travelRecords = obj.travelRecords; localStorage.setItem('app_travel_records', JSON.stringify(travelRecords)); }
     if (obj.shopRecords) { shopRecords = obj.shopRecords; localStorage.setItem('app_shop_records', JSON.stringify(shopRecords)); }
-    if (obj.members) { members = obj.members; localStorage.setItem('app_members', JSON.stringify(members)); }
+    if (obj.members && obj.members.length > 0) { members = obj.members; localStorage.setItem('app_members', JSON.stringify(members)); }
     if (obj.customCrossRates) { customCrossRates = obj.customCrossRates; localStorage.setItem('custom_pairs_cache', JSON.stringify(customCrossRates)); }
-    renderTravelList(); renderShopList(); render();
+    if (!isNaN(parseFloat(obj.feeRate))) { feeRate = parseFloat(obj.feeRate); localStorage.setItem('custom_fee_rate', feeRate); }
+    if (!isNaN(parseFloat(obj.taxRate))) { taxRate = parseFloat(obj.taxRate); localStorage.setItem('custom_tax_rate', taxRate); }
+    updateAddonButtons(); renderTravelList(); renderShopList();
     closeModal('backupModal', 'backupBox');
     alert("✅ 帳本資料已成功還原！");
   } catch (e) {
@@ -652,20 +658,24 @@ function updateAddonButtons() {
   const inactClass = "px-3 py-2 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 text-sm font-bold font-mono active:scale-95 transition-all shadow-sm whitespace-nowrap";
   document.getElementById('toggleFee').className = applyFee ? actClass : inactClass; document.getElementById('toggleTax').className = applyTaxFree ? actClass : inactClass;
   document.getElementById('bdTaxLabel').textContent = `免稅退稅 (${taxRate}%)：`; document.getElementById('bdFeeLabel').textContent = `海外刷卡 (${feeRate}%)：`;
+  updateTvlFeeUI(); updateShopFeeUI();
   render();
 }
 function promptCustomAddon() {
-  const newTax = prompt(`設定【退稅】百分比：`, taxRate); if (newTax !== null && !isNaN(parseFloat(newTax))) { taxRate = parseFloat(newTax); localStorage.setItem('custom_tax_rate', taxRate); }
-  const newFee = prompt(`設定【海外刷卡手續費】百分比：`, feeRate); if (newFee !== null && !isNaN(parseFloat(newFee))) { feeRate = parseFloat(newFee); localStorage.setItem('custom_fee_rate', feeRate); }
+  const newTax = prompt(`設定【退稅】百分比：`, taxRate); if (newTax !== null && !isNaN(parseFloat(newTax)) && parseFloat(newTax) >= 0) { taxRate = parseFloat(newTax); localStorage.setItem('custom_tax_rate', taxRate); }
+  const newFee = prompt(`設定【海外刷卡手續費】百分比：`, feeRate); if (newFee !== null && !isNaN(parseFloat(newFee)) && parseFloat(newFee) >= 0) { feeRate = parseFloat(newFee); localStorage.setItem('custom_fee_rate', feeRate); }
   updateAddonButtons();
 }
 document.getElementById('toggleFee').addEventListener('click', () => { applyFee = !applyFee; updateAddonButtons(); });
 document.getElementById('toggleTax').addEventListener('click', () => { applyTaxFree = !applyTaxFree; updateAddonButtons(); });
 
+// 修正：% 百分比為後綴運算，不可在結尾被誤刪
 function evalSafe(expr) {
   try {
-    let san = String(expr).replace(/[^\d.+\-*/%]/g, '').replace(/[+\-*/%]+$/, '').replace(/(\d+(\.\d+)?)%/g, '($1*0.01)');
-    if (!san) return 0; const res = new Function(`return (${san});`)(); return isFinite(res) ? Math.max(0, res) : 0;
+    let san = String(expr).replace(/[^\d.+\-*/%]/g, '').replace(/[+\-*/.]+$/, '').replace(/(\d+(\.\d+)?)%/g, '($1*0.01)');
+    if (!san) return 0;
+    const res = new Function(`return (${san});`)();
+    return isFinite(res) ? Math.max(0, res) : 0;
   } catch { return 0; }
 }
 
@@ -748,14 +758,24 @@ function handleKeyPress(val) {
   else if (val === '⌫') el.value = cur.length > 1 ? cur.slice(0, -1) : "0";
   else if (val === '=') el.value = String(Number(evalSafe(cur).toFixed(4)));
   else {
-    // 小數點防呆：同一組數字不允許出現兩個小數點
+    const binOps = ['+', '-', '*', '/'];
+    const last = cur.slice(-1);
     if (val === '.') {
       const parts = cur.split(/[+\-*/%]/);
       if (parts[parts.length - 1].includes('.')) return;
+      if (binOps.includes(last) || last === '%') el.value += '0.';
+      else el.value += '.';
+    } else if (val === '%') {
+      if (/\d/.test(last)) el.value += '%';
+    } else if (binOps.includes(val)) {
+      if (binOps.includes(last)) el.value = cur.slice(0, -1) + val;
+      else if (last === '.') el.value = cur.slice(0, -1) + val;
+      else el.value += val;
+    } else {
+      if (cur === "0") el.value = val;
+      else if (last === '%') el.value += '*' + val;
+      else el.value += val;
     }
-    const ops = ['+', '-', '*', '/', '%'];
-    if (cur === "0" && !ops.includes(val) && val !== '.') el.value = val;
-    else { const last = cur.slice(-1); if (ops.includes(last) && ops.includes(val)) el.value = cur.slice(0, -1) + val; else el.value += val; }
   }
   render();
 }
@@ -816,11 +836,11 @@ function closeModal(bgId, boxId) {
 function openRecordChoiceModal() {
   editingTravelId = null; editingShopId = null;
   document.getElementById('recordAmountDisplay').textContent = `${snapOrigAmount.toLocaleString()} ${snapOrigCode}`;
-  document.getElementById('recordSubAmountDisplay').textContent = `計算成本 ≈ NT$ ${snapTwdAmount.toLocaleString()}`;
+  document.getElementById('recordSubAmountDisplay').textContent = `計算成本 ≈ NT$ ${snapTwdAmount.toLocaleString()}${applyFee ? ` (已含${feeRate}%刷卡)` : ''}`;
   showModal('recordChoiceModal', 'recordChoiceBox');
 }
 
-// ==== 旅遊清單與手續費切換邏輯 ====
+// ==== 旅遊清單與手續費切換邏輯 (含狀態記憶防重複加計) ====
 function updateTvlFeeUI() {
   const btn = document.getElementById('tvlFeeToggleBtn');
   const icon = document.getElementById('tvlFeeCheckIcon');
@@ -852,13 +872,13 @@ function updateTvlFeeUI() {
 
 function onTvlTwdInput() {
   tvlFeeApplied = false;
-  tvlBaseTwd = parseInt(document.getElementById('tvlTwdAmount').value) || 0;
+  tvlBaseTwd = Math.round(parseFloat(document.getElementById('tvlTwdAmount').value) || 0);
   updateTvlFeeUI();
 }
 
 function toggleTvlFee() {
   if (!tvlFeeApplied) {
-    tvlBaseTwd = parseInt(document.getElementById('tvlTwdAmount').value) || 0;
+    tvlBaseTwd = Math.round(parseFloat(document.getElementById('tvlTwdAmount').value) || 0);
     document.getElementById('tvlTwdAmount').value = Math.round(tvlBaseTwd * (1 + feeRate / 100));
     tvlFeeApplied = true;
   } else {
@@ -870,17 +890,28 @@ function toggleTvlFee() {
 
 function syncTvlEditAmount() {
   const orig = parseFloat(document.getElementById('tvlOrigAmount').value) || 0;
-  const r = editingTravelId ? (travelRecords.find(x => x.id === editingTravelId)?.usedRate || snapUsedRate) : snapUsedRate;
-  tvlBaseTwd = Math.round(orig * r);
+  let baseRate = snapUsedRate;
+  if (editingTravelId) {
+    const rec = travelRecords.find(x => x.id === editingTravelId);
+    if (rec) {
+      const recBase = rec.baseTwd !== undefined ? rec.baseTwd : rec.twdAmount;
+      baseRate = rec.origAmount > 0 ? (recBase / rec.origAmount) : (rec.usedRate || snapUsedRate);
+    }
+  } else if (applyFee) {
+    baseRate = snapUsedRate / (1 + feeRate / 100);
+  }
+  tvlBaseTwd = Math.round(orig * baseRate);
   document.getElementById('tvlTwdAmount').value = tvlFeeApplied ? Math.round(tvlBaseTwd * (1 + feeRate / 100)) : tvlBaseTwd;
   updateTvlFeeUI();
 }
 
 function buildTravelMemberInputs(selectedPayer, selectedSplitters) {
   const payerSel = document.getElementById('tvlPayer'); payerSel.innerHTML = ''; const splitDiv = document.getElementById('tvlSplitters'); splitDiv.innerHTML = '';
-  members.forEach(m => {
-    payerSel.innerHTML += `<option value="${m}" ${(m === selectedPayer) ? 'selected' : ''}>${m}</option>`;
-    splitDiv.innerHTML += `<label class="flex items-center gap-1.5 bg-slate-800 border border-slate-700 px-3 py-2 rounded-lg text-[14px] text-white cursor-pointer select-none has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-900/30 transition-all whitespace-nowrap"><input type="checkbox" value="${m}" ${selectedSplitters.includes(m) ? 'checked' : ''} class="accent-indigo-500 w-4 h-4"> ${m}</label>`;
+  const allMembers = Array.from(new Set([...members, selectedPayer, ...(selectedSplitters || [])])).filter(Boolean);
+  allMembers.forEach(m => {
+    const safeM = escHTML(m);
+    payerSel.innerHTML += `<option value="${safeM}" ${(m === selectedPayer) ? 'selected' : ''}>${safeM}</option>`;
+    splitDiv.innerHTML += `<label class="flex items-center gap-1.5 bg-slate-800 border border-slate-700 px-3 py-2 rounded-lg text-[14px] text-white cursor-pointer select-none has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-900/30 transition-all whitespace-nowrap"><input type="checkbox" value="${safeM}" ${(selectedSplitters || []).includes(m) ? 'checked' : ''} class="accent-indigo-500 w-4 h-4"> ${safeM}</label>`;
   });
 }
 function selectOnlyMe() { const p = document.getElementById('tvlPayer').value || members[0]; document.querySelectorAll('#tvlSplitters input').forEach(cb => { cb.checked = (cb.value === p); }); }
@@ -893,8 +924,14 @@ function openTravelForm() {
   document.getElementById('tvlOrigAmount').value = snapOrigAmount;
   document.getElementById('tvlTwdAmount').value = snapTwdAmount;
   document.getElementById('tvlItem').value = '';
-  tvlFeeApplied = false;
-  tvlBaseTwd = snapTwdAmount;
+  // 若計算機已點亮 +1.5% 刷卡，自動同步為「已加手續費」狀態，防止重複加計
+  if (applyFee) {
+    tvlFeeApplied = true;
+    tvlBaseTwd = Math.round(snapTwdAmount / (1 + feeRate / 100));
+  } else {
+    tvlFeeApplied = false;
+    tvlBaseTwd = snapTwdAmount;
+  }
   updateTvlFeeUI();
   buildTravelMemberInputs(members[0], members);
   setTimeout(() => showModal('travelFormModal', 'travelFormBox'), 200);
@@ -908,8 +945,8 @@ function editTravelRecord(id) {
   document.getElementById('tvlOrigAmount').value = rec.origAmount;
   document.getElementById('tvlTwdAmount').value = rec.twdAmount;
   document.getElementById('tvlItem').value = rec.item;
-  tvlFeeApplied = false;
-  tvlBaseTwd = rec.twdAmount;
+  tvlFeeApplied = !!rec.feeApplied;
+  tvlBaseTwd = rec.baseTwd !== undefined ? rec.baseTwd : (tvlFeeApplied ? Math.round(rec.twdAmount / (1 + feeRate / 100)) : rec.twdAmount);
   updateTvlFeeUI();
   buildTravelMemberInputs(rec.payer, rec.splitters);
   showModal('travelFormModal', 'travelFormBox');
@@ -918,17 +955,31 @@ function editTravelRecord(id) {
 function saveTravelRecord() {
   const item = document.getElementById('tvlItem').value.trim() || '未命名消費';
   const origVal = parseFloat(document.getElementById('tvlOrigAmount').value) || 0;
-  const twdVal = parseInt(document.getElementById('tvlTwdAmount').value) || 0;
+  const twdVal = Math.round(parseFloat(document.getElementById('tvlTwdAmount').value) || 0);
   const payer = document.getElementById('tvlPayer').value;
   const splitters = Array.from(document.querySelectorAll('#tvlSplitters input:checked')).map(cb => cb.value);
   if(splitters.length === 0) return alert('至少需選擇一位分攤人！');
   
   if (editingTravelId) {
     const idx = travelRecords.findIndex(r => r.id === editingTravelId);
-    if (idx > -1) { travelRecords[idx].item = item; travelRecords[idx].origAmount = origVal; travelRecords[idx].twdAmount = twdVal; if (origVal > 0) travelRecords[idx].usedRate = twdVal / origVal; travelRecords[idx].payer = payer; travelRecords[idx].splitters = splitters; }
+    if (idx > -1) {
+      travelRecords[idx].item = item;
+      travelRecords[idx].origAmount = origVal;
+      travelRecords[idx].twdAmount = twdVal;
+      travelRecords[idx].feeApplied = tvlFeeApplied;
+      travelRecords[idx].baseTwd = tvlFeeApplied ? tvlBaseTwd : twdVal;
+      if (origVal > 0) travelRecords[idx].usedRate = twdVal / origVal;
+      travelRecords[idx].payer = payer;
+      travelRecords[idx].splitters = splitters;
+    }
     editingTravelId = null;
   } else {
-    travelRecords.push({ id: Date.now(), item, origAmount: origVal, origCode: snapOrigCode, twdAmount: twdVal, usedRate: origVal > 0 ? (twdVal / origVal) : snapUsedRate, payer, splitters, date: new Date().toLocaleDateString() });
+    travelRecords.push({
+      id: Date.now(), item, origAmount: origVal, origCode: snapOrigCode,
+      twdAmount: twdVal, feeApplied: tvlFeeApplied, baseTwd: tvlFeeApplied ? tvlBaseTwd : twdVal,
+      usedRate: origVal > 0 ? (twdVal / origVal) : snapUsedRate,
+      payer, splitters, date: new Date().toLocaleDateString()
+    });
   }
   localStorage.setItem('app_travel_records', JSON.stringify(travelRecords)); closeModal('travelFormModal', 'travelFormBox'); switchTab('tabTravel');
 }
@@ -987,8 +1038,8 @@ function renderTravelList() {
     else if (currencyViewMode === 'foreign') displayHTML = foreignText ? foreignText : `NT$ ${Math.abs(netTwd).toLocaleString()}`;
     else displayHTML = `NT$ ${Math.abs(netTwd).toLocaleString()}`;
 
-    if (netTwd >= 0) resultHTML += `<div class="flex justify-between items-center py-1.5"><span class="text-white font-bold text-[15px]">${m}</span><span class="text-emerald-400 font-bold font-mono text-[15px] text-right">應收回 ${displayHTML}</span></div>`;
-    else resultHTML += `<div class="flex justify-between items-center py-1.5"><span class="text-white font-bold text-[15px]">${m}</span><span class="text-rose-400 font-bold font-mono text-[15px] text-right">須支付 ${displayHTML}</span></div>`;
+    if (netTwd >= 0) resultHTML += `<div class="flex justify-between items-center py-1.5"><span class="text-white font-bold text-[15px]">${escHTML(m)}</span><span class="text-emerald-400 font-bold font-mono text-[15px] text-right">應收回 ${displayHTML}</span></div>`;
+    else resultHTML += `<div class="flex justify-between items-center py-1.5"><span class="text-white font-bold text-[15px]">${escHTML(m)}</span><span class="text-rose-400 font-bold font-mono text-[15px] text-right">須支付 ${displayHTML}</span></div>`;
   });
   summary.innerHTML = resultHTML || '<div class="text-slate-400 text-center py-2 text-[14px]">結清完成！大家已互不相欠 🎉</div>';
 
@@ -999,11 +1050,11 @@ function renderTravelList() {
     else priceHTML = `<div class="text-emerald-400 font-mono font-bold text-[17px]">NT$ ${r.twdAmount.toLocaleString()}</div>`;
 
     const isPersonal = (r.splitters.length === 1 && r.splitters[0] === r.payer);
-    const splitBadge = isPersonal ? `<span class="text-indigo-300 font-bold">[個人私帳]</span>` : `${r.payer} ➔ 平分給 ${r.splitters.join(', ')}`;
+    const splitBadge = isPersonal ? `<span class="text-indigo-300 font-bold">[個人私帳]</span>` : `${escHTML(r.payer)} ➔ 平分給 ${r.splitters.map(escHTML).join(', ')}`;
 
     list.innerHTML += `
       <div class="bg-slate-800/60 p-3.5 rounded-xl border border-slate-700/50 flex justify-between items-center shadow-sm relative pr-[78px]">
-        <div class="min-w-0 pr-2"><div class="text-white font-bold text-[16px] truncate">${r.item}</div><div class="text-[12px] text-slate-400 mt-1 truncate">${splitBadge}</div></div>
+        <div class="min-w-0 pr-2"><div class="text-white font-bold text-[16px] truncate">${escHTML(r.item)}</div><div class="text-[12px] text-slate-400 mt-1 truncate">${splitBadge}</div></div>
         ${priceHTML}
         <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
           <button onclick="editTravelRecord(${r.id})" class="p-2 text-slate-400 hover:text-amber-400 active:scale-90 transition-all">✏️</button>
@@ -1028,11 +1079,15 @@ function copyTravelSummary() {
 
 function manageMembers() {
   const res = prompt(`請輸入旅伴名單（請用逗號隔開，第1位預設為您自己）：`, members.join('，'));
-  if (res) { members = res.split(/[,，]/).map(s => s.trim()).filter(s => s); localStorage.setItem('app_members', JSON.stringify(members)); renderTravelList(); }
+  if (res !== null) {
+    const list = res.split(/[,，]/).map(s => s.trim()).filter(s => s);
+    if (list.length === 0) return alert('至少需保留一位旅伴！');
+    members = list; localStorage.setItem('app_members', JSON.stringify(members)); renderTravelList();
+  }
 }
 function clearTravel() { if(confirm('確定要清空所有旅遊帳目嗎？')) { travelRecords = []; localStorage.setItem('app_travel_records', '[]'); renderTravelList(); } }
 
-// ==== 代購清單與後台手續費切換邏輯 ====
+// ==== 代購清單與後台手續費切換邏輯 (含記憶狀態防重複加計) ====
 function updateShopFeeUI() {
   const btn = document.getElementById('shopFeeToggleBtn');
   const icon = document.getElementById('shopFeeCheckIcon');
@@ -1071,9 +1126,12 @@ function syncShopOrigCost() {
   const prevTwdCost = Math.round(prevOrig * uRate);
   const unitTwdCost = Math.round(modalOrigAmount * uRate);
   document.getElementById('shopTwdCostText').textContent = `NT$ ${unitTwdCost.toLocaleString()}`;
-  shopBaseActualTwd = Math.round(modalOrigAmount * aRate);
+
+  const finalActualUnit = Math.round(modalOrigAmount * aRate);
+  shopBaseActualTwd = shopFeeApplied ? Math.round(finalActualUnit / (1 + feeRate / 100)) : finalActualUnit;
   const actIn = document.getElementById('shopActualCostInput');
-  if(actIn) actIn.value = shopFeeApplied ? Math.round(shopBaseActualTwd * (1 + feeRate / 100)) : shopBaseActualTwd;
+  if(actIn) actIn.value = finalActualUnit;
+
   const curSell = parseInt(document.getElementById('shopSellUnit').value) || 0;
   if (!editingShopId || curSell === 0 || curSell === prevTwdCost) {
     document.getElementById('shopSellUnit').value = unitTwdCost;
@@ -1104,7 +1162,7 @@ function syncShopActualRate() {
 
 function onShopActualCostInput() {
   shopFeeApplied = false;
-  shopBaseActualTwd = parseFloat(document.getElementById('shopActualCostInput').value) || 0;
+  shopBaseActualTwd = Math.round(parseFloat(document.getElementById('shopActualCostInput').value) || 0);
   modalOrigAmount = parseFloat(document.getElementById('shopOrigCostInput').value) || 0;
   let aRate = modalOrigAmount > 0 ? (shopBaseActualTwd / modalOrigAmount) : snapActualRate;
   document.getElementById('shopActualRate').value = aRate.toFixed(4);
@@ -1115,7 +1173,7 @@ function onShopActualCostInput() {
 function toggleShopFee() {
   modalOrigAmount = parseFloat(document.getElementById('shopOrigCostInput').value) || 0;
   if (!shopFeeApplied) {
-    shopBaseActualTwd = parseFloat(document.getElementById('shopActualCostInput').value) || 0;
+    shopBaseActualTwd = Math.round(parseFloat(document.getElementById('shopActualCostInput').value) || 0);
     const withFee = Math.round(shopBaseActualTwd * (1 + feeRate / 100));
     document.getElementById('shopActualCostInput').value = withFee;
     if (modalOrigAmount > 0) document.getElementById('shopActualRate').value = (withFee / modalOrigAmount).toFixed(4);
@@ -1136,14 +1194,11 @@ function recalcShopFinal() {
   const qty = Math.max(1, parseInt(document.getElementById('shopQty').value) || 1);
   const uRate = parseFloat(document.getElementById('shopUsedRate').value) || 0;
   const unitQuoteCost = Math.round(modalOrigAmount * uRate);
-  const sellUnit = parseInt(document.getElementById('shopSellUnit').value) || 0;
+  const sellUnit = Math.round(parseFloat(document.getElementById('shopSellUnit').value) || 0);
   
-  let unitActualCost = parseFloat(document.getElementById('shopActualCostInput').value) || 0;
-  let actRate = modalOrigAmount > 0 ? (unitActualCost / modalOrigAmount) : snapActualRate;
-  
+  let unitActualCost = Math.round(parseFloat(document.getElementById('shopActualCostInput').value) || 0);
   if (document.getElementById('shopActualRateContainer').classList.contains('hidden')) {
-    actRate = snapActualRate;
-    unitActualCost = Math.round(modalOrigAmount * actRate);
+    unitActualCost = Math.round(modalOrigAmount * snapActualRate);
   }
 
   const totalSell = sellUnit * qty;
@@ -1180,9 +1235,15 @@ function openShopForm() {
   
   document.getElementById('shopUsedRate').value = snapUsedRate.toFixed(4);
   document.getElementById('shopActualRate').value = snapActualRate.toFixed(4);
-  shopFeeApplied = false;
-  shopBaseActualTwd = Math.round(modalOrigAmount * snapActualRate);
-  document.getElementById('shopActualCostInput').value = shopBaseActualTwd;
+  const initActCost = Math.round(modalOrigAmount * snapActualRate);
+  if (applyFee) {
+    shopFeeApplied = true;
+    shopBaseActualTwd = Math.round(initActCost / (1 + feeRate / 100));
+  } else {
+    shopFeeApplied = false;
+    shopBaseActualTwd = initActCost;
+  }
+  document.getElementById('shopActualCostInput').value = initActCost;
   document.getElementById('shopSellUnit').value = Math.round(modalOrigAmount * snapUsedRate); 
   
   updateShopFeeUI();
@@ -1211,8 +1272,8 @@ function editShopRecord(id) {
   
   document.getElementById('shopUsedRate').value = uRate.toFixed(4);
   document.getElementById('shopActualRate').value = aRate.toFixed(4);
-  shopFeeApplied = false;
-  shopBaseActualTwd = actCost;
+  shopFeeApplied = !!rec.feeApplied;
+  shopBaseActualTwd = rec.baseActualCost !== undefined ? rec.baseActualCost : (shopFeeApplied ? Math.round(actCost / (1 + feeRate / 100)) : actCost);
   document.getElementById('shopActualCostInput').value = actCost;
   
   const unitTwdCost = Math.round(modalOrigAmount * uRate);
@@ -1239,10 +1300,10 @@ function saveShopRecord() {
   
   let actCostIn = document.getElementById('shopActualCostInput');
   const actualCostUnit = (!document.getElementById('shopActualRateContainer').classList.contains('hidden') && actCostIn) 
-    ? parseFloat(actCostIn.value) || Math.round(modalOrigAmount * actualRate) 
+    ? Math.round(parseFloat(actCostIn.value) || 0) 
     : Math.round(modalOrigAmount * actualRate);
     
-  const sellUnit = parseInt(document.getElementById('shopSellUnit').value) || 0;
+  const sellUnit = Math.round(parseFloat(document.getElementById('shopSellUnit').value) || 0);
 
   if (editingShopId) {
     const idx = shopRecords.findIndex(r => r.id === editingShopId);
@@ -1251,11 +1312,20 @@ function saveShopRecord() {
       shopRecords[idx].origCost = modalOrigAmount; shopRecords[idx].usedRate = usedRate; shopRecords[idx].twdCost = twdCostUnit;
       shopRecords[idx].actualRate = modalOrigAmount > 0 ? (actualCostUnit / modalOrigAmount) : actualRate;
       shopRecords[idx].actualCost = actualCostUnit;
+      shopRecords[idx].feeApplied = shopFeeApplied;
+      shopRecords[idx].baseActualCost = shopFeeApplied ? shopBaseActualTwd : actualCostUnit;
       shopRecords[idx].sellUnit = sellUnit; shopRecords[idx].sell = sellUnit; 
     }
     editingShopId = null;
   } else {
-    shopRecords.push({ id: Date.now(), buyer, item, qty, isBought, origCost: modalOrigAmount, origCode: modalOrigCode, usedRate: usedRate, actualRate: actualRate, twdCost: twdCostUnit, actualCost: actualCostUnit, sellUnit: sellUnit, sell: sellUnit, isPaid: false });
+    shopRecords.push({
+      id: Date.now(), buyer, item, qty, isBought,
+      origCost: modalOrigAmount, origCode: modalOrigCode,
+      usedRate: usedRate, actualRate: actualRate,
+      twdCost: twdCostUnit, actualCost: actualCostUnit,
+      feeApplied: shopFeeApplied, baseActualCost: shopFeeApplied ? shopBaseActualTwd : actualCostUnit,
+      sellUnit: sellUnit, sell: sellUnit, isPaid: false
+    });
   }
   localStorage.setItem('app_shop_records', JSON.stringify(shopRecords)); closeModal('shopFormModal', 'shopFormBox'); switchTab('tabShop');
 }
@@ -1351,7 +1421,7 @@ function renderShopList() {
           <div class="flex flex-col py-3.5 border-b ${itemBorder} last:border-0 relative">
             <div class="flex justify-between items-start gap-2 mb-2.5 pr-[72px]">
               <div class="flex flex-wrap items-center gap-1.5">
-                <span class="text-white text-[16px] font-bold">${r.item}</span>
+                <span class="text-white text-[16px] font-bold">${escHTML(r.item)}</span>
                 <span class="text-[14px] text-emerald-300 font-mono font-bold">x${qty}</span>
                 ${boughtBadge}
                 ${paidBadge}
@@ -1394,7 +1464,7 @@ function renderShopList() {
       list.innerHTML += `
         <div class="${bgClass} p-4 rounded-2xl border transition-all shadow-sm mb-4">
           <div class="flex justify-between items-center mb-1.5 pb-2.5 border-b border-slate-600/50">
-            <div class="text-white font-bold text-[18px] flex items-center gap-1.5">👤 ${buyer}</div>
+            <div class="text-white font-bold text-[18px] flex items-center gap-1.5">👤 ${escHTML(buyer)}</div>
             <button onclick="copyBuyerInvoice(${bIdx})" class="text-[13px] bg-indigo-600/90 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-md active:scale-95 transition-all font-bold">📋 單客請款</button>
           </div>
           <div class="mb-2">${itemsHTML}</div>
