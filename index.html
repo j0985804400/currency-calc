@@ -273,7 +273,7 @@
   <!-- ================== 彈出視窗：旅遊清單表單 ================== -->
   <div id="travelFormModal" class="absolute inset-0 bg-black/80 z-50 hidden opacity-0 transition-opacity duration-300 flex items-end sm:items-center justify-center">
     <div class="bg-slate-900 border-t sm:border border-slate-700 rounded-t-3xl sm:rounded-3xl w-full max-w-md p-6 flex flex-col shadow-2xl transform translate-y-full sm:translate-y-0 transition-transform duration-300" id="travelFormBox">
-      <h3 class="text-base font-bold text-white mb-3" id="tvlModalTitle">新增旅遊花費 (雙幣存檔)</h3>
+      <h3 class="text-base font-bold text-white mb-3" id="tvlModalTitle">新增旅遊花費</h3>
       <div class="space-y-3">
         <div>
           <label class="text-xs text-slate-400 font-bold block mb-1">品項名稱</label>
@@ -311,12 +311,11 @@
     </div>
   </div>
 
-  <!-- ================== 彈出視窗：代購清單表單 (極簡乾淨版) ================== -->
+  <!-- ================== 彈出視窗：代購清單表單 (極簡乾淨、後台可改實際匯率) ================== -->
   <div id="shopFormModal" class="absolute inset-0 bg-black/80 z-50 hidden opacity-0 transition-opacity duration-300 flex items-end sm:items-center justify-center">
     <div class="bg-slate-900 border-t sm:border border-slate-700 rounded-t-3xl sm:rounded-3xl w-full max-w-md p-6 flex flex-col shadow-2xl transform translate-y-full sm:translate-y-0 transition-transform duration-300" id="shopFormBox">
       <h3 class="text-base font-bold text-white mb-3" id="shopModalTitle">新增代購接單</h3>
       <div class="space-y-3">
-        
         <div class="flex gap-2">
           <div class="flex-1">
             <label class="text-xs text-slate-400 font-bold block mb-1">買家姓名</label>
@@ -329,41 +328,40 @@
         </div>
         
         <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-3">
-          <!-- 1. 外幣原價 -->
+          
+          <!-- 外幣與報價匯率 (新增時只顯示這個) -->
           <div class="flex justify-between items-center">
             <span class="text-xs text-slate-400 font-bold">外幣原價 (<span id="shopOrigCodeLabel">JPY</span>)</span>
             <span class="text-sm text-white font-mono font-bold" id="shopOrigCostText">0</span>
           </div>
-
-          <!-- 2. 您自己填寫的報價/自訂成本 -->
           <div class="flex justify-between items-center">
             <div class="flex flex-col">
-              <label class="text-[10px] text-amber-300/90 font-bold mb-0.5">✎ 自訂/報價匯率</label>
+              <label class="text-[10px] text-amber-300/90 font-bold mb-0.5">自訂/報價匯率</label>
               <input type="number" step="0.0001" id="shopUsedRate" oninput="syncShopCost()" class="w-24 bg-slate-800 border border-amber-500/50 rounded-lg px-2 py-1 text-amber-300 font-mono text-sm outline-none focus:border-amber-500" />
             </div>
             <div class="flex flex-col items-end">
               <span class="text-[10px] text-amber-300/90 font-bold mb-1">折合報價成本</span>
-              <span class="text-sm text-amber-300/70 font-mono font-bold line-through" id="shopTwdCostText">NT$ 0</span>
+              <span class="text-sm text-amber-300/70 font-mono font-bold" id="shopTwdCostText">NT$ 0</span>
             </div>
           </div>
 
-          <!-- 3. 向客人收費 -->
+          <!-- 向客收費 -->
           <div class="border-t border-slate-800 pt-3 flex justify-between items-center">
             <span class="text-xs text-white font-bold">👉 向客人收費 (NT$)</span>
-            <input type="number" id="shopSell" oninput="calcShopProfit()" class="w-28 bg-slate-800 border border-emerald-500/50 rounded-lg px-2.5 py-1.5 text-emerald-400 font-mono font-bold text-right outline-none focus:border-emerald-500 text-sm" />
+            <input type="number" id="shopSell" class="w-28 bg-slate-800 border border-emerald-500/50 rounded-lg px-2.5 py-1.5 text-emerald-400 font-mono font-bold text-right outline-none focus:border-emerald-500 text-sm" />
           </div>
 
-          <!-- 4. 實際成本與最終淨利 (隱藏在底下自動算) -->
-          <div class="bg-slate-900 border border-slate-800 rounded-lg p-2 mt-2 space-y-2">
-            <div class="flex justify-between items-center text-[10px] text-slate-400">
-              <span id="shopActualRateLabel">實際成本 (即時匯率 --)</span>
-              <span id="shopActualCostText" class="font-mono">NT$ 0</span>
-            </div>
-            <div class="flex justify-between items-center text-xs text-emerald-400 font-bold pt-1.5 border-t border-slate-800/50">
-              <span>實賺總淨利 (收費 - 實際成本)</span>
-              <span id="shopProfitText" class="font-mono text-sm">+0</span>
+          <!-- 隱藏的實際匯率編輯區 (僅在編輯模式出現，供後台算真實利潤用) -->
+          <div id="shopActualRateContainer" class="hidden border-t border-slate-800 pt-3 mt-2">
+            <div class="flex justify-between items-center">
+              <div class="flex flex-col">
+                <label class="text-[10px] text-sky-400 font-bold mb-0.5">後台: 實際結帳匯率</label>
+                <input type="number" step="0.0001" id="shopActualRate" class="w-24 bg-slate-800 border border-sky-500/50 rounded-lg px-2 py-1 text-sky-400 font-mono text-sm outline-none focus:border-sky-500" />
+              </div>
+              <span class="text-[10px] text-slate-500 w-32 text-right">*(供後台算真實利潤用，如付現可手動改)*</span>
             </div>
           </div>
+
         </div>
       </div>
       <div class="flex gap-2.5 mt-5">
@@ -408,7 +406,6 @@ let customCrossRates = JSON.parse(localStorage.getItem('custom_pairs_cache')) ||
 let feeRate = parseFloat(localStorage.getItem('custom_fee_rate')) || 1.5;
 let taxRate = parseFloat(localStorage.getItem('custom_tax_rate')) || 10.0;
 
-// 自動記憶最後選擇的幣別
 let targetCode = localStorage.getItem('app_target_code') || 'JPY';
 let baseCode = localStorage.getItem('app_base_code') || 'TWD';
 if (!currentRates[targetCode]) targetCode = 'JPY';
@@ -417,15 +414,12 @@ if (!currentRates[baseCode]) baseCode = 'TWD';
 let activeInputType = 'target', applyFee = false, applyTaxFree = false, sheetMode = 'target';
 let currencyViewMode = localStorage.getItem('app_curr_view_mode') || 'dual';
 
-// 暫存當前快照數據 (包含表面報價匯率/成本 與 實際匯率/成本)
-let snapOrigAmount = 0, snapOrigCode = 'JPY', snapTwdAmount = 0, snapActualTwdAmount = 0;
-let snapUsedRate = 0.2185, snapActualRate = 0.2185, snapIsCustom = false;
+// 暫存當前快照數據
+let snapOrigAmount = 0, snapOrigCode = 'JPY', snapTwdAmount = 0;
+let snapUsedRate = 0.2185, snapActualRate = 0.2185;
 
-// 編輯模式與動態實際成本追蹤
 let editingTravelId = null;
 let editingShopId = null;
-let activeShopTwdCost = 0; // 報價成本
-let activeShopActualTwdCost = 0; // 真實成本
 
 const baseInput = document.getElementById('baseInput');
 const targetInput = document.getElementById('targetInput');
@@ -471,7 +465,6 @@ function toggleCurrencyView() {
   if (currencyViewMode === 'dual') currencyViewMode = 'foreign';
   else if (currencyViewMode === 'foreign') currencyViewMode = 'twd';
   else currencyViewMode = 'dual';
-
   localStorage.setItem('app_curr_view_mode', currencyViewMode);
   updateCurrencyViewBtn();
   renderTravelList();
@@ -544,7 +537,7 @@ function swapCurrencies() {
 function promptCustomRate() {
   const live = (currentRates[targetCode].rate / currentRates[baseCode].rate);
   const pk = `${targetCode}_${baseCode}`;
-  const ur = prompt(`輸入自訂/固定匯率：\n(目前即時匯率: 1 ${targetCode} = ${live.toFixed(4)} ${baseCode})`, customCrossRates[pk] || live.toFixed(4));
+  const ur = prompt(`輸入自訂/報價匯率：\n(即時: 1 ${targetCode} = ${live.toFixed(4)} ${baseCode})`, customCrossRates[pk] || live.toFixed(4));
   if (ur !== null) {
     if (!isNaN(parseFloat(ur)) && parseFloat(ur) > 0) { customCrossRates[pk] = parseFloat(ur); localStorage.setItem('custom_pairs_cache', JSON.stringify(customCrossRates)); render(); }
     else alert("請輸入有效數字！");
@@ -566,7 +559,7 @@ function render() {
   document.getElementById('baseName').textContent = currentRates[baseCode].name;
   
   const rInfo = document.getElementById('targetRateInfo');
-  rInfo.textContent = `${isCus ? '固定匯率' : '即時匯率'}: 1 ${targetCode} = ${rVal.toFixed(4)} ${baseCode}`;
+  rInfo.textContent = `${isCus ? '自訂匯率' : '即時匯率'}: 1 ${targetCode} = ${rVal.toFixed(4)} ${baseCode}`;
   if (isCus) { rInfo.classList.add('text-amber-400'); rInfo.classList.remove('text-slate-300'); document.getElementById('editRateBtn').classList.add('hidden'); document.getElementById('resetRateBtn').classList.remove('hidden'); } 
   else { rInfo.classList.add('text-slate-300'); rInfo.classList.remove('text-amber-400'); document.getElementById('editRateBtn').classList.remove('hidden'); document.getElementById('resetRateBtn').classList.add('hidden'); }
 
@@ -598,12 +591,6 @@ function render() {
   }
   snapTwdAmount = Math.round(snapTwdAmount);
 
-  // 計算不含自訂匯差的「實際進貨台幣成本」
-  let actCurAmt = snapOrigAmount * snapActualRate;
-  if (applyTaxFree) actCurAmt -= actCurAmt * (taxRate / 100);
-  if (applyFee) actCurAmt += actCurAmt * (feeRate / 100);
-  snapActualTwdAmount = Math.round(actCurAmt);
-
   const bdBox = document.getElementById('breakdownBox');
   if (applyTaxFree || applyFee) {
     bdBox.classList.remove('hidden');
@@ -631,6 +618,7 @@ function handleKeyPress(val) {
 }
 document.querySelectorAll('.key-btn').forEach(btn => btn.addEventListener('click', () => handleKeyPress(btn.getAttribute('data-val'))));
 
+// 選單
 function openCurrencySheet(mode) {
   sheetMode = mode; buildSheetList();
   document.getElementById('currencySheetOverlay').classList.remove('hidden');
@@ -865,17 +853,8 @@ function clearTravel() { if(confirm('確定要清空所有旅遊帳目嗎？')) 
 // ==== 代購清單 (極簡乾淨表單版) ====
 function syncShopCost() {
   const rate = parseFloat(document.getElementById('shopUsedRate').value) || 0;
-  activeShopTwdCost = Math.round(snapOrigAmount * rate);
-  document.getElementById('shopTwdCostText').textContent = `NT$ ${activeShopTwdCost.toLocaleString()}`;
-  calcShopProfit();
-}
-
-function calcShopProfit() {
-  const sell = parseInt(document.getElementById('shopSell').value) || 0;
-  const profit = sell - activeShopActualTwdCost; // 利潤永遠基於實際成本
-  const pEl = document.getElementById('shopProfitText');
-  pEl.textContent = profit >= 0 ? `+${profit.toLocaleString()}` : profit.toLocaleString();
-  pEl.className = profit >= 0 ? "font-mono text-sm text-emerald-400" : "font-mono text-sm text-rose-400";
+  const newCost = Math.round(snapOrigAmount * rate);
+  document.getElementById('shopTwdCostText').textContent = `NT$ ${newCost.toLocaleString()}`;
 }
 
 function openShopForm() {
@@ -883,45 +862,44 @@ function openShopForm() {
   document.getElementById('shopModalTitle').textContent = '新增代購接單';
   document.getElementById('shopBuyer').value = ''; document.getElementById('shopItem').value = '';
   
-  // 原價與實際成本背景鎖定
+  // 原價顯示
   document.getElementById('shopOrigCodeLabel').textContent = snapOrigCode;
   document.getElementById('shopOrigCostText').textContent = snapOrigAmount.toLocaleString();
-  document.getElementById('shopActualRateLabel').textContent = `實際成本 (即時匯率 ${snapActualRate.toFixed(4)})`;
-  activeShopActualTwdCost = snapActualTwdAmount;
-  document.getElementById('shopActualCostText').textContent = `NT$ ${activeShopActualTwdCost.toLocaleString()}`;
   
-  // 開放編輯您自己的報價匯率
+  // 開放編輯您自己報價的匯率
   document.getElementById('shopUsedRate').value = snapUsedRate.toFixed(4);
   syncShopCost();
-  document.getElementById('shopSell').value = activeShopTwdCost; 
-  calcShopProfit();
+  
+  // 隱藏實際匯率欄位 (新增時不顯示)
+  document.getElementById('shopActualRateContainer').classList.add('hidden');
+  
+  // 收費預設帶入成本
+  document.getElementById('shopSell').value = document.getElementById('shopTwdCostText').textContent.replace(/[^\d.-]/g, ''); 
   setTimeout(() => showModal('shopFormModal', 'shopFormBox'), 200);
 }
 
 function editShopRecord(id) {
   const rec = shopRecords.find(r => r.id === id); if (!rec) return;
   editingShopId = id;
-  snapOrigAmount = rec.origCost;
-  snapOrigCode = rec.origCode;
+  snapOrigAmount = rec.origCost; snapOrigCode = rec.origCode;
   
   document.getElementById('shopModalTitle').textContent = '✏️ 編輯代購接單';
   document.getElementById('shopBuyer').value = rec.buyer; document.getElementById('shopItem').value = rec.item;
-  
   document.getElementById('shopOrigCodeLabel').textContent = rec.origCode;
   document.getElementById('shopOrigCostText').textContent = rec.origCost.toLocaleString();
-  
-  const actCost = rec.actualCost !== undefined ? rec.actualCost : rec.twdCost;
-  const aRate = rec.actualRate !== undefined ? rec.actualRate : (actCost / (rec.origCost || 1));
-  activeShopActualTwdCost = actCost;
-  document.getElementById('shopActualRateLabel').textContent = `實際成本 (紀錄匯率 ${aRate.toFixed(4)})`;
-  document.getElementById('shopActualCostText').textContent = `NT$ ${activeShopActualTwdCost.toLocaleString()}`;
   
   const uRate = rec.usedRate !== undefined ? rec.usedRate : (rec.twdCost / (rec.origCost || 1));
   document.getElementById('shopUsedRate').value = uRate.toFixed(4);
   syncShopCost();
+
+  const actCost = rec.actualCost !== undefined ? rec.actualCost : rec.twdCost;
+  const aRate = rec.actualRate !== undefined ? rec.actualRate : (actCost / (rec.origCost || 1));
+  
+  // 顯示後台實際匯率編輯區
+  document.getElementById('shopActualRateContainer').classList.remove('hidden');
+  document.getElementById('shopActualRate').value = aRate.toFixed(4);
   
   document.getElementById('shopSell').value = rec.sell;
-  calcShopProfit();
   showModal('shopFormModal', 'shopFormBox');
 }
 
@@ -929,18 +907,24 @@ function saveShopRecord() {
   const buyer = document.getElementById('shopBuyer').value.trim() || '未署名買家';
   const item = document.getElementById('shopItem').value.trim() || '代購商品';
   const usedRate = parseFloat(document.getElementById('shopUsedRate').value) || snapUsedRate;
+  const twdCost = Math.round(snapOrigAmount * usedRate);
   const sell = parseInt(document.getElementById('shopSell').value) || 0;
 
   if (editingShopId) {
     const idx = shopRecords.findIndex(r => r.id === editingShopId);
     if (idx > -1) {
+      const actRate = parseFloat(document.getElementById('shopActualRate').value) || shopRecords[idx].actualRate;
       shopRecords[idx].buyer = buyer; shopRecords[idx].item = item;
-      shopRecords[idx].usedRate = usedRate; shopRecords[idx].twdCost = activeShopTwdCost;
+      shopRecords[idx].usedRate = usedRate; shopRecords[idx].twdCost = twdCost;
+      shopRecords[idx].actualRate = actRate; shopRecords[idx].actualCost = Math.round(snapOrigAmount * actRate);
       shopRecords[idx].sell = sell;
     }
     editingShopId = null;
   } else {
-    shopRecords.push({ id: Date.now(), buyer, item, origCost: snapOrigAmount, origCode: snapOrigCode, usedRate: usedRate, actualRate: snapActualRate, twdCost: activeShopTwdCost, actualCost: activeShopActualTwdCost, sell, isPaid: false });
+    // 新增時，實際匯率預設等於當下的 snapActualRate
+    let actRate = snapActualRate;
+    let actCost = Math.round(snapOrigAmount * actRate);
+    shopRecords.push({ id: Date.now(), buyer, item, origCost: snapOrigAmount, origCode: snapOrigCode, usedRate: usedRate, actualRate: actRate, twdCost: twdCost, actualCost: actCost, sell, isPaid: false });
   }
   localStorage.setItem('app_shop_records', JSON.stringify(shopRecords)); closeModal('shopFormModal', 'shopFormBox'); switchTab('tabShop');
 }
@@ -984,7 +968,6 @@ function renderShopList() {
       g.records.forEach(r => {
         const actualCost = r.actualCost !== undefined ? r.actualCost : r.twdCost;
         const profit = r.sell - actualCost;
-        const rateDiffProfit = r.twdCost - actualCost;
         const paidBadge = r.isPaid ? `<span class="bg-emerald-900/50 text-emerald-400 border border-emerald-800 text-[9px] px-1 py-0.5 rounded ml-1">已付</span>` : '';
         const uRate = r.usedRate !== undefined ? r.usedRate : (r.twdCost / (r.origCost || 1));
         const aRate = r.actualRate !== undefined ? r.actualRate : (actualCost / (r.origCost || 1));
@@ -1004,11 +987,10 @@ function renderShopList() {
                 <span>外幣原價：</span><span class="font-bold text-white">${r.origCost.toLocaleString()} ${r.origCode}</span>
               </div>
               <div class="flex justify-between text-amber-300/90">
-                <span>自訂報價 (${uRate.toFixed(4)})：</span><span class="font-bold">NT$ ${r.twdCost.toLocaleString()}</span>
+                <span>自訂報價 (${uRate.toFixed(4)})：</span><span class="font-bold line-through">NT$ ${r.twdCost.toLocaleString()}</span>
               </div>
               <div class="flex justify-between text-sky-400">
-                <span>實際成本 (${aRate.toFixed(4)})：</span>
-                <span class="font-bold">NT$ ${actualCost.toLocaleString()} <span class="${rateDiffProfit>=0?'text-emerald-400':'text-rose-400'} ml-1">(匯差 ${rateDiffProfit>=0?'+':''}${rateDiffProfit})</span></span>
+                <span>實際成本 (${aRate.toFixed(4)})：</span><span class="font-bold">NT$ ${actualCost.toLocaleString()}</span>
               </div>
             </div>
 
@@ -1018,7 +1000,7 @@ function renderShopList() {
                 <span class="text-sm text-emerald-400 font-mono font-bold">NT$ ${r.sell.toLocaleString()}</span>
               </div>
               <div class="text-xs ${profit>=0?'text-emerald-500 border-emerald-800/50':'text-rose-400 border-rose-800/50'} font-mono font-bold bg-slate-900 border px-2 py-1 rounded-lg">
-                總淨利 ${profit>=0?'+':''}${profit.toLocaleString()}
+                實賺淨利 ${profit>=0?'+':''}${profit.toLocaleString()}
               </div>
             </div>
           </div>
