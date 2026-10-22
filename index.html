@@ -181,7 +181,7 @@
         <div class="flex gap-1.5 shrink-0">
           <button onclick="toggleCurrencyView()" id="currencyViewBtn" class="text-xs bg-slate-800 text-emerald-400 px-3 py-2 rounded-lg border border-slate-700 active:scale-95 font-bold shadow-sm whitespace-nowrap">🔀 雙幣對照</button>
           <button onclick="manageMembers()" class="text-xs bg-slate-800 text-slate-200 px-3 py-2 rounded-lg border border-slate-700 active:scale-95 font-bold shadow-sm whitespace-nowrap">👥 旅伴</button>
-          <button onclick="backupRestoreData()" class="text-sm bg-slate-800 text-amber-300 px-2.5 py-2 rounded-lg border border-slate-700 active:scale-95 font-bold shadow-sm whitespace-nowrap" title="備份/還原">💾</button>
+          <button onclick="openBackupModal()" class="text-sm bg-slate-800 text-amber-300 px-2.5 py-2 rounded-lg border border-slate-700 active:scale-95 font-bold shadow-sm whitespace-nowrap" title="備份/還原">💾</button>
         </div>
       </div>
 
@@ -220,7 +220,7 @@
         </div>
         <div class="flex gap-2 shrink-0">
           <button onclick="copyAllShopInvoices()" class="text-xs bg-emerald-700/90 hover:bg-emerald-600 text-white px-3 py-2 rounded-lg font-bold active:scale-95 shadow-sm whitespace-nowrap">📋 全部彙整</button>
-          <button onclick="backupRestoreData()" class="text-sm bg-slate-800 text-amber-300 px-2.5 py-2 rounded-lg border border-slate-700 active:scale-95 font-bold shadow-sm whitespace-nowrap" title="備份/還原">💾</button>
+          <button onclick="openBackupModal()" class="text-sm bg-slate-800 text-amber-300 px-2.5 py-2 rounded-lg border border-slate-700 active:scale-95 font-bold shadow-sm whitespace-nowrap" title="備份/還原">💾</button>
           <button onclick="clearShop()" class="text-xs text-rose-400 bg-rose-950/30 px-3 py-2 rounded-lg border border-rose-900/50 font-bold active:scale-95 shadow-sm whitespace-nowrap">🗑️ 清空</button>
         </div>
       </div>
@@ -353,7 +353,7 @@
     </div>
   </div>
 
-  <!-- ================== 彈出視窗：旅遊清單表單 ================== -->
+  <!-- ================== 彈出視窗：旅遊清單表單 (新增明顯手續費切換列) ================== -->
   <div id="travelFormModal" class="absolute inset-0 bg-black/80 z-50 hidden opacity-0 transition-opacity duration-300 flex items-end sm:items-center justify-center">
     <div class="bg-slate-900 border-t sm:border border-slate-700 rounded-t-3xl sm:rounded-3xl w-full max-w-md p-5 flex flex-col shadow-2xl transform translate-y-full sm:translate-y-0 transition-transform duration-300 max-h-[88dvh] overflow-y-auto" id="travelFormBox">
       <h3 class="text-[16px] font-bold text-white mb-3" id="tvlModalTitle">新增旅遊花費</h3>
@@ -362,19 +362,29 @@
           <label class="text-[13px] text-slate-300 font-bold block mb-1.5">品項名稱</label>
           <input type="text" id="tvlItem" placeholder="例如：午餐燒肉、計程車" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-[15px] text-white focus:outline-none focus:border-emerald-500" />
         </div>
-        <div class="grid grid-cols-2 gap-3 bg-slate-950 p-3 rounded-xl border border-slate-800">
-          <div>
-            <span class="text-[11px] text-slate-400 block font-bold" id="tvlOrigLabel">當地外幣金額</span>
-            <input type="number" step="any" id="tvlOrigAmount" oninput="syncTvlEditAmount()" class="w-full bg-transparent text-white font-mono font-bold text-[18px] outline-none mt-1 border-b border-slate-800 focus:border-indigo-500 pb-0.5" />
-          </div>
-          <div>
-            <span class="text-[11px] text-slate-400 block font-bold">折合台幣 (NT$)</span>
-            <div class="flex items-center gap-1 mt-1 border-b border-slate-800 focus-within:border-emerald-500 pb-0.5">
-               <button type="button" id="tvlAddFeeBtn" onclick="addTvlFee()" class="text-[10px] bg-emerald-900/50 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-700 shrink-0 font-bold active:scale-90">+1.5%</button>
-               <input type="number" id="tvlTwdAmount" class="w-full bg-transparent text-emerald-400 font-mono font-bold text-[18px] outline-none text-right" />
+        
+        <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2.5">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <span class="text-[12px] text-slate-400 block font-bold" id="tvlOrigLabel">當地外幣金額</span>
+              <input type="number" step="any" id="tvlOrigAmount" oninput="syncTvlEditAmount()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-mono font-bold text-[18px] outline-none mt-1 focus:border-indigo-500" />
+            </div>
+            <div>
+              <span class="text-[12px] text-slate-400 block font-bold">折合台幣 (可改刷卡金額)</span>
+              <input type="number" id="tvlTwdAmount" oninput="onTvlTwdInput()" class="w-full bg-slate-900 border border-emerald-500/60 rounded-lg px-2.5 py-1.5 text-emerald-400 font-mono font-bold text-[18px] outline-none mt-1 focus:border-emerald-400 text-right" />
             </div>
           </div>
+
+          <!-- 全寬度明顯的海外刷卡手續費切換列 -->
+          <button type="button" id="tvlFeeToggleBtn" onclick="toggleTvlFee()" class="w-full py-2.5 px-3 rounded-xl border border-slate-700 bg-slate-900 flex justify-between items-center transition-all active:scale-95">
+            <span class="text-[13px] font-bold text-slate-200 flex items-center gap-2">
+              <span id="tvlFeeCheckIcon" class="w-4 h-4 rounded border border-slate-500 flex items-center justify-center text-[11px] font-bold"></span>
+              <span id="tvlFeeBtnText">💳 點此加計 1.5% 刷卡手續費</span>
+            </span>
+            <span id="tvlFeePreviewText" class="text-[12px] font-mono font-bold text-amber-400">+NT$ 0 ➔ 0</span>
+          </button>
         </div>
+
         <div>
           <label class="text-[13px] text-slate-300 font-bold block mb-1.5">由誰先墊付？</label>
           <select id="tvlPayer" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-[15px] text-white focus:outline-none appearance-none"></select>
@@ -459,15 +469,21 @@
                 <input type="number" step="0.0001" id="shopActualRate" oninput="syncShopActualRate()" class="w-24 bg-slate-800 border border-sky-500/50 rounded-lg px-2.5 py-1.5 text-sky-400 font-mono text-[14px] outline-none focus:border-sky-500" />
               </div>
               <div class="flex flex-col items-end">
-                <span class="text-[11px] text-sky-400 font-bold mb-1.5">單件實際台幣 (NT$)</span>
-                <div class="flex items-center gap-1 border-b border-sky-500/50 pb-0.5">
-                   <button type="button" id="shopAddFeeBtn" onclick="addShopActualFee()" class="text-[10px] bg-sky-900/50 text-sky-300 px-1.5 py-0.5 rounded border border-sky-700 font-bold active:scale-90">+1.5%</button>
-                   <input type="number" id="shopActualCostInput" oninput="syncShopActualCost()" class="w-24 bg-transparent text-sky-400 font-mono font-bold text-[16px] text-right outline-none focus:border-sky-400" />
-                </div>
+                <span class="text-[11px] text-sky-400 font-bold mb-1">單件實際台幣 (可改刷卡金額)</span>
+                <input type="number" id="shopActualCostInput" oninput="onShopActualCostInput()" class="w-28 bg-slate-800 border border-sky-500/50 rounded-lg px-2.5 py-1.5 text-sky-400 font-mono font-bold text-[16px] text-right outline-none focus:border-sky-400" />
               </div>
             </div>
 
-            <div class="bg-slate-900 rounded-lg p-2.5 border border-slate-800 text-xs font-mono space-y-1 mt-1">
+            <!-- 代購後台專屬：全寬度刷卡手續費切換列 -->
+            <button type="button" id="shopFeeToggleBtn" onclick="toggleShopFee()" class="w-full py-2 px-3 rounded-xl border border-slate-700 bg-slate-900 flex justify-between items-center transition-all active:scale-95">
+              <span class="text-[12px] font-bold text-slate-200 flex items-center gap-1.5">
+                <span id="shopFeeCheckIcon" class="w-4 h-4 rounded border border-slate-500 flex items-center justify-center text-[10px] font-bold"></span>
+                <span id="shopFeeBtnText">💳 點此加計 1.5% 刷卡手續費</span>
+              </span>
+              <span id="shopFeePreviewText" class="text-[11px] font-mono font-bold text-sky-300">+NT$ 0 ➔ 0</span>
+            </button>
+
+            <div class="bg-slate-900 rounded-lg p-2.5 border border-slate-800 text-xs font-mono space-y-1 mt-0.5">
               <div class="flex justify-between text-amber-300">
                 <span>中間賺取匯差 (報價-實際)：</span>
                 <span id="shopEditRateDiffText" class="font-bold">+0 NT$</span>
@@ -483,6 +499,27 @@
       <div class="flex gap-2.5 mt-5">
         <button onclick="closeModal('shopFormModal', 'shopFormBox')" class="flex-1 bg-slate-800 text-slate-300 py-3 rounded-xl text-[14px] font-bold active:scale-95 transition-all">取消</button>
         <button onclick="saveShopRecord()" class="flex-1 bg-rose-600 text-white py-3 rounded-xl text-[14px] font-bold active:scale-95 transition-all shadow-md">儲存接單</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================== 彈出視窗：💾 帳本備份與還原 ================== -->
+  <div id="backupModal" class="absolute inset-0 bg-black/80 z-50 hidden opacity-0 transition-opacity duration-300 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-sm p-5 flex flex-col gap-3.5 shadow-2xl transform scale-95 transition-transform duration-300" id="backupBox">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-2.5">
+        <h3 class="text-[16px] font-bold text-white">💾 帳本資料備份與還原</h3>
+        <button onclick="closeModal('backupModal', 'backupBox')" class="text-slate-400 hover:text-white text-sm font-bold px-2">✕</button>
+      </div>
+      <p class="text-[12px] text-slate-300 leading-relaxed">可將目前的旅遊與代購帳本轉為備份碼，貼到 LINE Keep 或記事本保存；換手機或清快取後貼回下方即可完整還原。</p>
+      <button onclick="copyBackupCode()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-bold text-[14px] active:scale-95 transition-all shadow-md">
+        📋 一鍵複製目前帳本備份碼
+      </button>
+      <div class="border-t border-slate-800 pt-3 space-y-2">
+        <label class="text-[12px] text-amber-300 font-bold block">📥 貼上備份碼還原：</label>
+        <textarea id="restoreCodeInput" rows="3" placeholder="請在此長按貼上您先前保存的備份碼..." class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-[12px] text-white font-mono focus:outline-none focus:border-amber-500"></textarea>
+        <button onclick="restoreFromCode()" class="w-full bg-amber-600 hover:bg-amber-500 text-white py-2.5 rounded-xl font-bold text-[14px] active:scale-95 transition-all shadow-md">
+          🔄 確認還原帳本資料
+        </button>
       </div>
     </div>
   </div>
@@ -537,6 +574,10 @@ let modalOrigAmount = 0, modalOrigCode = 'JPY';
 let editingTravelId = null;
 let editingShopId = null;
 
+// 刷卡手續費切換狀態追蹤 (防止重複疊加)
+let tvlFeeApplied = false, tvlBaseTwd = 0;
+let shopFeeApplied = false, shopBaseActualTwd = 0;
+
 const baseInput = document.getElementById('baseInput');
 const targetInput = document.getElementById('targetInput');
 
@@ -544,22 +585,30 @@ let members = JSON.parse(localStorage.getItem('app_members')) || ['我', '老婆
 let travelRecords = JSON.parse(localStorage.getItem('app_travel_records')) || [];
 let shopRecords = JSON.parse(localStorage.getItem('app_shop_records')) || [];
 
-function backupRestoreData() {
-  const action = prompt("【💾 帳本備份與還原】\n輸入 1：複製備份碼\n輸入 2：貼上備份碼還原", "1");
-  if (action === "1") {
-    const backupObj = { members, travelRecords, shopRecords, customCrossRates };
-    copyTextToClipboard(btoa(encodeURIComponent(JSON.stringify(backupObj))), "✅ 已複製備份碼！請貼到 LINE Keep 或記事本保存。");
-  } else if (action === "2") {
-    const code = prompt("請貼上備份碼：");
-    if (code) {
-      try {
-        const obj = JSON.parse(decodeURIComponent(atob(code.trim())));
-        if (obj.travelRecords) { travelRecords = obj.travelRecords; localStorage.setItem('app_travel_records', JSON.stringify(travelRecords)); }
-        if (obj.shopRecords) { shopRecords = obj.shopRecords; localStorage.setItem('app_shop_records', JSON.stringify(shopRecords)); }
-        if (obj.members) { members = obj.members; localStorage.setItem('app_members', JSON.stringify(members)); }
-        renderTravelList(); renderShopList(); alert("✅ 帳本已成功還原！");
-      } catch (e) { alert("❌ 備份碼無效！"); }
-    }
+// ================= 備份與還原邏輯 =================
+function openBackupModal() {
+  document.getElementById('restoreCodeInput').value = '';
+  showModal('backupModal', 'backupBox');
+}
+function copyBackupCode() {
+  const backupObj = { members, travelRecords, shopRecords, customCrossRates, feeRate, taxRate };
+  const code = btoa(encodeURIComponent(JSON.stringify(backupObj)));
+  copyTextToClipboard(code, "✅ 已複製帳本備份碼！請貼到 LINE Keep 或記事本保存。");
+}
+function restoreFromCode() {
+  const code = document.getElementById('restoreCodeInput').value.trim();
+  if (!code) return alert("請先在框內貼上備份碼！");
+  try {
+    const obj = JSON.parse(decodeURIComponent(atob(code)));
+    if (obj.travelRecords) { travelRecords = obj.travelRecords; localStorage.setItem('app_travel_records', JSON.stringify(travelRecords)); }
+    if (obj.shopRecords) { shopRecords = obj.shopRecords; localStorage.setItem('app_shop_records', JSON.stringify(shopRecords)); }
+    if (obj.members) { members = obj.members; localStorage.setItem('app_members', JSON.stringify(members)); }
+    if (obj.customCrossRates) { customCrossRates = obj.customCrossRates; localStorage.setItem('custom_pairs_cache', JSON.stringify(customCrossRates)); }
+    renderTravelList(); renderShopList(); render();
+    closeModal('backupModal', 'backupBox');
+    alert("✅ 帳本資料已成功還原！");
+  } catch (e) {
+    alert("❌ 備份碼格式無效，請確認是否複製完整！");
   }
 }
 
@@ -599,8 +648,6 @@ function updateCurrencyViewBtn() {
 
 function updateAddonButtons() {
   document.getElementById('toggleFee').textContent = `+${feeRate}%刷卡`; document.getElementById('toggleTax').textContent = `-${taxRate}%退稅`;
-  const tvlFeeBtn = document.getElementById('tvlAddFeeBtn'); if (tvlFeeBtn) tvlFeeBtn.textContent = `+${feeRate}%`;
-  const shopFeeBtn = document.getElementById('shopAddFeeBtn'); if (shopFeeBtn) shopFeeBtn.textContent = `+${feeRate}%`;
   const actClass = "px-3 py-2 rounded-lg border border-emerald-500 bg-emerald-950 text-emerald-300 text-sm font-bold font-mono active:scale-95 transition-all shadow-sm whitespace-nowrap";
   const inactClass = "px-3 py-2 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 text-sm font-bold font-mono active:scale-95 transition-all shadow-sm whitespace-nowrap";
   document.getElementById('toggleFee').className = applyFee ? actClass : inactClass; document.getElementById('toggleTax').className = applyTaxFree ? actClass : inactClass;
@@ -697,8 +744,19 @@ function render() {
 
 function handleKeyPress(val) {
   const el = activeInputType === 'target' ? targetInput : baseInput; let cur = el.value;
-  if (val === 'C') el.value = "0"; else if (val === '⌫') el.value = cur.length > 1 ? cur.slice(0, -1) : "0"; else if (val === '=') el.value = String(Number(evalSafe(cur).toFixed(4)));
-  else { const ops = ['+', '-', '*', '/', '%']; if (cur === "0" && !ops.includes(val) && val !== '.') el.value = val; else { const last = cur.slice(-1); if (ops.includes(last) && ops.includes(val)) el.value = cur.slice(0, -1) + val; else el.value += val; } }
+  if (val === 'C') el.value = "0";
+  else if (val === '⌫') el.value = cur.length > 1 ? cur.slice(0, -1) : "0";
+  else if (val === '=') el.value = String(Number(evalSafe(cur).toFixed(4)));
+  else {
+    // 小數點防呆：同一組數字不允許出現兩個小數點
+    if (val === '.') {
+      const parts = cur.split(/[+\-*/%]/);
+      if (parts[parts.length - 1].includes('.')) return;
+    }
+    const ops = ['+', '-', '*', '/', '%'];
+    if (cur === "0" && !ops.includes(val) && val !== '.') el.value = val;
+    else { const last = cur.slice(-1); if (ops.includes(last) && ops.includes(val)) el.value = cur.slice(0, -1) + val; else el.value += val; }
+  }
   render();
 }
 document.querySelectorAll('.key-btn').forEach(btn => btn.addEventListener('click', () => handleKeyPress(btn.getAttribute('data-val'))));
@@ -762,7 +820,62 @@ function openRecordChoiceModal() {
   showModal('recordChoiceModal', 'recordChoiceBox');
 }
 
-// ==== 旅遊清單 ====
+// ==== 旅遊清單與手續費切換邏輯 ====
+function updateTvlFeeUI() {
+  const btn = document.getElementById('tvlFeeToggleBtn');
+  const icon = document.getElementById('tvlFeeCheckIcon');
+  const txt = document.getElementById('tvlFeeBtnText');
+  const prev = document.getElementById('tvlFeePreviewText');
+  if (!btn) return;
+
+  const totalWithFee = Math.round(tvlBaseTwd * (1 + feeRate / 100));
+  const feeAmt = totalWithFee - tvlBaseTwd;
+
+  if (tvlFeeApplied) {
+    btn.className = "w-full py-2.5 px-3 rounded-xl border border-emerald-500 bg-emerald-950/60 flex justify-between items-center transition-all active:scale-95 shadow-sm";
+    icon.className = "w-4 h-4 rounded bg-emerald-500 border border-emerald-400 text-slate-950 flex items-center justify-center text-[11px] font-bold";
+    icon.textContent = "✓";
+    txt.className = "text-emerald-300 font-bold";
+    txt.textContent = `💳 已加 ${feeRate}% 手續費 (點擊還原)`;
+    prev.className = "text-[12px] font-mono font-bold text-emerald-400";
+    prev.textContent = `未稅 ${tvlBaseTwd.toLocaleString()} + 費 ${feeAmt.toLocaleString()}`;
+  } else {
+    btn.className = "w-full py-2.5 px-3 rounded-xl border border-slate-700 bg-slate-900 hover:bg-slate-800 flex justify-between items-center transition-all active:scale-95";
+    icon.className = "w-4 h-4 rounded border border-slate-500 flex items-center justify-center text-[11px] font-bold";
+    icon.textContent = "";
+    txt.className = "text-slate-200 font-bold";
+    txt.textContent = `💳 點此加計 ${feeRate}% 刷卡手續費`;
+    prev.className = "text-[12px] font-mono font-bold text-amber-400";
+    prev.textContent = `+NT$ ${feeAmt.toLocaleString()} ➔ ${totalWithFee.toLocaleString()}`;
+  }
+}
+
+function onTvlTwdInput() {
+  tvlFeeApplied = false;
+  tvlBaseTwd = parseInt(document.getElementById('tvlTwdAmount').value) || 0;
+  updateTvlFeeUI();
+}
+
+function toggleTvlFee() {
+  if (!tvlFeeApplied) {
+    tvlBaseTwd = parseInt(document.getElementById('tvlTwdAmount').value) || 0;
+    document.getElementById('tvlTwdAmount').value = Math.round(tvlBaseTwd * (1 + feeRate / 100));
+    tvlFeeApplied = true;
+  } else {
+    document.getElementById('tvlTwdAmount').value = tvlBaseTwd;
+    tvlFeeApplied = false;
+  }
+  updateTvlFeeUI();
+}
+
+function syncTvlEditAmount() {
+  const orig = parseFloat(document.getElementById('tvlOrigAmount').value) || 0;
+  const r = editingTravelId ? (travelRecords.find(x => x.id === editingTravelId)?.usedRate || snapUsedRate) : snapUsedRate;
+  tvlBaseTwd = Math.round(orig * r);
+  document.getElementById('tvlTwdAmount').value = tvlFeeApplied ? Math.round(tvlBaseTwd * (1 + feeRate / 100)) : tvlBaseTwd;
+  updateTvlFeeUI();
+}
+
 function buildTravelMemberInputs(selectedPayer, selectedSplitters) {
   const payerSel = document.getElementById('tvlPayer'); payerSel.innerHTML = ''; const splitDiv = document.getElementById('tvlSplitters'); splitDiv.innerHTML = '';
   members.forEach(m => {
@@ -772,15 +885,17 @@ function buildTravelMemberInputs(selectedPayer, selectedSplitters) {
 }
 function selectOnlyMe() { const p = document.getElementById('tvlPayer').value || members[0]; document.querySelectorAll('#tvlSplitters input').forEach(cb => { cb.checked = (cb.value === p); }); }
 function selectAllMembers() { document.querySelectorAll('#tvlSplitters input').forEach(cb => { cb.checked = true; }); }
-function syncTvlEditAmount() { const orig = parseFloat(document.getElementById('tvlOrigAmount').value) || 0; const r = editingTravelId ? (travelRecords.find(x => x.id === editingTravelId)?.usedRate || snapUsedRate) : snapUsedRate; document.getElementById('tvlTwdAmount').value = Math.round(orig * r); }
-
-function addTvlFee() { let twd = parseFloat(document.getElementById('tvlTwdAmount').value) || 0; document.getElementById('tvlTwdAmount').value = Math.round(twd * (1 + feeRate / 100)); }
 
 function openTravelForm() {
   closeModal('recordChoiceModal', 'recordChoiceBox'); editingTravelId = null;
   document.getElementById('tvlModalTitle').textContent = '新增旅遊花費';
   document.getElementById('tvlOrigLabel').textContent = `當地外幣金額 (${snapOrigCode})`;
-  document.getElementById('tvlOrigAmount').value = snapOrigAmount; document.getElementById('tvlTwdAmount').value = snapTwdAmount; document.getElementById('tvlItem').value = '';
+  document.getElementById('tvlOrigAmount').value = snapOrigAmount;
+  document.getElementById('tvlTwdAmount').value = snapTwdAmount;
+  document.getElementById('tvlItem').value = '';
+  tvlFeeApplied = false;
+  tvlBaseTwd = snapTwdAmount;
+  updateTvlFeeUI();
   buildTravelMemberInputs(members[0], members);
   setTimeout(() => showModal('travelFormModal', 'travelFormBox'), 200);
 }
@@ -790,7 +905,12 @@ function editTravelRecord(id) {
   editingTravelId = id;
   document.getElementById('tvlModalTitle').textContent = '✏️ 編輯旅遊花費';
   document.getElementById('tvlOrigLabel').textContent = `當地外幣金額 (${rec.origCode})`;
-  document.getElementById('tvlOrigAmount').value = rec.origAmount; document.getElementById('tvlTwdAmount').value = rec.twdAmount; document.getElementById('tvlItem').value = rec.item;
+  document.getElementById('tvlOrigAmount').value = rec.origAmount;
+  document.getElementById('tvlTwdAmount').value = rec.twdAmount;
+  document.getElementById('tvlItem').value = rec.item;
+  tvlFeeApplied = false;
+  tvlBaseTwd = rec.twdAmount;
+  updateTvlFeeUI();
   buildTravelMemberInputs(rec.payer, rec.splitters);
   showModal('travelFormModal', 'travelFormBox');
 }
@@ -833,16 +953,20 @@ function renderTravelList() {
     if (r.splitters.includes(myName)) myShareTotalTwd += (r.twdAmount / r.splitters.length);
     if(!balances[r.payer]) balances[r.payer] = { TWD: 0 };
     balances[r.payer].TWD += r.twdAmount;
-    if(!balances[r.payer][r.origCode]) balances[r.payer][r.origCode] = 0;
-    balances[r.payer][r.origCode] += r.origAmount;
+    if (r.origCode !== 'TWD') {
+      if(!balances[r.payer][r.origCode]) balances[r.payer][r.origCode] = 0;
+      balances[r.payer][r.origCode] += r.origAmount;
+    }
 
     const splitTwd = r.twdAmount / r.splitters.length;
     const splitOrig = r.origAmount / r.splitters.length;
     r.splitters.forEach(s => {
       if(!balances[s]) balances[s] = { TWD: 0 };
       balances[s].TWD -= splitTwd;
-      if(!balances[s][r.origCode]) balances[s][r.origCode] = 0;
-      balances[s][r.origCode] -= splitOrig;
+      if (r.origCode !== 'TWD') {
+        if(!balances[s][r.origCode]) balances[s][r.origCode] = 0;
+        balances[s][r.origCode] -= splitOrig;
+      }
     });
   });
 
@@ -908,7 +1032,36 @@ function manageMembers() {
 }
 function clearTravel() { if(confirm('確定要清空所有旅遊帳目嗎？')) { travelRecords = []; localStorage.setItem('app_travel_records', '[]'); renderTravelList(); } }
 
-// ==== 代購清單 ====
+// ==== 代購清單與後台手續費切換邏輯 ====
+function updateShopFeeUI() {
+  const btn = document.getElementById('shopFeeToggleBtn');
+  const icon = document.getElementById('shopFeeCheckIcon');
+  const txt = document.getElementById('shopFeeBtnText');
+  const prev = document.getElementById('shopFeePreviewText');
+  if (!btn) return;
+
+  const totalWithFee = Math.round(shopBaseActualTwd * (1 + feeRate / 100));
+  const feeAmt = totalWithFee - shopBaseActualTwd;
+
+  if (shopFeeApplied) {
+    btn.className = "w-full py-2 px-3 rounded-xl border border-sky-500 bg-sky-950/60 flex justify-between items-center transition-all active:scale-95 shadow-sm";
+    icon.className = "w-4 h-4 rounded bg-sky-400 border border-sky-300 text-slate-950 flex items-center justify-center text-[10px] font-bold";
+    icon.textContent = "✓";
+    txt.className = "text-sky-300 font-bold";
+    txt.textContent = `💳 已加 ${feeRate}% 手續費 (點擊還原)`;
+    prev.className = "text-[11px] font-mono font-bold text-sky-300";
+    prev.textContent = `未稅 ${shopBaseActualTwd.toLocaleString()} + 費 ${feeAmt.toLocaleString()}`;
+  } else {
+    btn.className = "w-full py-2 px-3 rounded-xl border border-slate-700 bg-slate-900 hover:bg-slate-800 flex justify-between items-center transition-all active:scale-95";
+    icon.className = "w-4 h-4 rounded border border-slate-500 flex items-center justify-center text-[10px] font-bold";
+    icon.textContent = "";
+    txt.className = "text-slate-200 font-bold";
+    txt.textContent = `💳 點此加計 ${feeRate}% 刷卡手續費`;
+    prev.className = "text-[11px] font-mono font-bold text-amber-400";
+    prev.textContent = `+NT$ ${feeAmt.toLocaleString()} ➔ ${totalWithFee.toLocaleString()}`;
+  }
+}
+
 function syncShopOrigCost() {
   const prevOrig = modalOrigAmount;
   const el = document.getElementById('shopOrigCostInput');
@@ -918,12 +1071,14 @@ function syncShopOrigCost() {
   const prevTwdCost = Math.round(prevOrig * uRate);
   const unitTwdCost = Math.round(modalOrigAmount * uRate);
   document.getElementById('shopTwdCostText').textContent = `NT$ ${unitTwdCost.toLocaleString()}`;
+  shopBaseActualTwd = Math.round(modalOrigAmount * aRate);
   const actIn = document.getElementById('shopActualCostInput');
-  if(actIn) actIn.value = Math.round(modalOrigAmount * aRate);
+  if(actIn) actIn.value = shopFeeApplied ? Math.round(shopBaseActualTwd * (1 + feeRate / 100)) : shopBaseActualTwd;
   const curSell = parseInt(document.getElementById('shopSellUnit').value) || 0;
   if (!editingShopId || curSell === 0 || curSell === prevTwdCost) {
     document.getElementById('shopSellUnit').value = unitTwdCost;
   }
+  updateShopFeeUI();
   recalcShopFinal();
 }
 
@@ -939,24 +1094,39 @@ function syncShopUsedRate() {
 function syncShopActualRate() {
   modalOrigAmount = parseFloat(document.getElementById('shopOrigCostInput').value) || 0;
   const aRate = parseFloat(document.getElementById('shopActualRate').value) || snapActualRate;
-  const unitActualCost = Math.round(modalOrigAmount * aRate);
+  shopFeeApplied = false;
+  shopBaseActualTwd = Math.round(modalOrigAmount * aRate);
   const actIn = document.getElementById('shopActualCostInput');
-  if(actIn) actIn.value = unitActualCost;
+  if(actIn) actIn.value = shopBaseActualTwd;
+  updateShopFeeUI();
   recalcShopFinal();
 }
 
-function syncShopActualCost() {
+function onShopActualCostInput() {
+  shopFeeApplied = false;
+  shopBaseActualTwd = parseFloat(document.getElementById('shopActualCostInput').value) || 0;
   modalOrigAmount = parseFloat(document.getElementById('shopOrigCostInput').value) || 0;
-  const unitActualCost = parseFloat(document.getElementById('shopActualCostInput').value) || 0;
-  let aRate = modalOrigAmount > 0 ? (unitActualCost / modalOrigAmount) : snapActualRate;
+  let aRate = modalOrigAmount > 0 ? (shopBaseActualTwd / modalOrigAmount) : snapActualRate;
   document.getElementById('shopActualRate').value = aRate.toFixed(4);
+  updateShopFeeUI();
   recalcShopFinal();
 }
 
-function addShopActualFee() {
-  let currentCost = parseFloat(document.getElementById('shopActualCostInput').value) || 0;
-  document.getElementById('shopActualCostInput').value = Math.round(currentCost * (1 + feeRate / 100));
-  syncShopActualCost();
+function toggleShopFee() {
+  modalOrigAmount = parseFloat(document.getElementById('shopOrigCostInput').value) || 0;
+  if (!shopFeeApplied) {
+    shopBaseActualTwd = parseFloat(document.getElementById('shopActualCostInput').value) || 0;
+    const withFee = Math.round(shopBaseActualTwd * (1 + feeRate / 100));
+    document.getElementById('shopActualCostInput').value = withFee;
+    if (modalOrigAmount > 0) document.getElementById('shopActualRate').value = (withFee / modalOrigAmount).toFixed(4);
+    shopFeeApplied = true;
+  } else {
+    document.getElementById('shopActualCostInput').value = shopBaseActualTwd;
+    if (modalOrigAmount > 0) document.getElementById('shopActualRate').value = (shopBaseActualTwd / modalOrigAmount).toFixed(4);
+    shopFeeApplied = false;
+  }
+  updateShopFeeUI();
+  recalcShopFinal();
 }
 
 function syncShopSellUnit() { recalcShopFinal(); }
@@ -1010,9 +1180,12 @@ function openShopForm() {
   
   document.getElementById('shopUsedRate').value = snapUsedRate.toFixed(4);
   document.getElementById('shopActualRate').value = snapActualRate.toFixed(4);
-  document.getElementById('shopActualCostInput').value = Math.round(modalOrigAmount * snapActualRate);
+  shopFeeApplied = false;
+  shopBaseActualTwd = Math.round(modalOrigAmount * snapActualRate);
+  document.getElementById('shopActualCostInput').value = shopBaseActualTwd;
   document.getElementById('shopSellUnit').value = Math.round(modalOrigAmount * snapUsedRate); 
   
+  updateShopFeeUI();
   syncShopUsedRate(); 
   setTimeout(() => showModal('shopFormModal', 'shopFormBox'), 200);
 }
@@ -1038,6 +1211,8 @@ function editShopRecord(id) {
   
   document.getElementById('shopUsedRate').value = uRate.toFixed(4);
   document.getElementById('shopActualRate').value = aRate.toFixed(4);
+  shopFeeApplied = false;
+  shopBaseActualTwd = actCost;
   document.getElementById('shopActualCostInput').value = actCost;
   
   const unitTwdCost = Math.round(modalOrigAmount * uRate);
@@ -1046,6 +1221,7 @@ function editShopRecord(id) {
   const sellUnit = rec.sellUnit !== undefined ? rec.sellUnit : rec.sell; 
   document.getElementById('shopSellUnit').value = sellUnit;
   
+  updateShopFeeUI();
   recalcShopFinal();
   showModal('shopFormModal', 'shopFormBox');
 }
@@ -1073,7 +1249,8 @@ function saveShopRecord() {
     if (idx > -1) {
       shopRecords[idx].buyer = buyer; shopRecords[idx].item = item; shopRecords[idx].qty = qty; shopRecords[idx].isBought = isBought;
       shopRecords[idx].origCost = modalOrigAmount; shopRecords[idx].usedRate = usedRate; shopRecords[idx].twdCost = twdCostUnit;
-      shopRecords[idx].actualRate = actualRate; shopRecords[idx].actualCost = actualCostUnit;
+      shopRecords[idx].actualRate = modalOrigAmount > 0 ? (actualCostUnit / modalOrigAmount) : actualRate;
+      shopRecords[idx].actualCost = actualCostUnit;
       shopRecords[idx].sellUnit = sellUnit; shopRecords[idx].sell = sellUnit; 
     }
     editingShopId = null;
