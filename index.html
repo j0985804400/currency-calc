@@ -308,7 +308,8 @@
       </div>
 
       <!-- 子頁籤 B：5大類鞋服褲尺寸表 -->
-      <div id="subTabSize" class="hidden space-y-3 pb-6">
+      
+      <div id="subTabSize" class="hidden space-y-4 pb-6">
         <div class="grid grid-cols-5 gap-1.5">
           <button onclick="renderSizeTable('women')" id="szBtnWomen" class="py-2 rounded-lg text-[12px] font-bold bg-indigo-600 text-white">👩女鞋</button>
           <button onclick="renderSizeTable('men')" id="szBtnMen" class="py-2 rounded-lg text-[12px] font-bold bg-slate-800 text-slate-300">👨男鞋</button>
@@ -357,7 +358,7 @@
 
   <!-- ================== 彈出視窗：旅遊清單表單 ================== -->
   <div id="travelFormModal" class="absolute inset-0 bg-black/80 z-50 hidden opacity-0 transition-opacity duration-300 flex items-end sm:items-center justify-center">
-    <div class="bg-slate-900 border-t sm:border border-slate-700 rounded-t-3xl sm:rounded-3xl w-full max-w-md p-5 flex flex-col shadow-2xl transform translate-y-full sm:translate-y-0 transition-transform duration-300" id="travelFormBox">
+    <div class="bg-slate-900 border-t sm:border border-slate-700 rounded-t-3xl sm:rounded-3xl w-full max-w-md p-5 flex flex-col shadow-2xl transform translate-y-full sm:translate-y-0 transition-transform duration-300" id="travelFormBox" style="max-height:88dvh;overflow-y:auto;">
       <h3 class="text-[16px] font-bold text-white mb-3" id="tvlModalTitle">新增旅遊花費</h3>
       <div class="space-y-3">
         <div>
@@ -398,7 +399,7 @@
 
   <!-- ================== 彈出視窗：代購清單表單 ================== -->
   <div id="shopFormModal" class="absolute inset-0 bg-black/80 z-50 hidden opacity-0 transition-opacity duration-300 flex items-end sm:items-center justify-center">
-    <div class="bg-slate-900 border-t sm:border border-slate-700 rounded-t-3xl sm:rounded-3xl w-full max-w-md p-5 flex flex-col shadow-2xl transform translate-y-full sm:translate-y-0 transition-transform duration-300" id="shopFormBox">
+    <div class="bg-slate-900 border-t sm:border border-slate-700 rounded-t-3xl sm:rounded-3xl w-full max-w-md p-5 flex flex-col shadow-2xl transform translate-y-full sm:translate-y-0 transition-transform duration-300" id="shopFormBox" style="max-height:88dvh;overflow-y:auto;">
       <h3 class="text-[16px] font-bold text-white mb-3" id="shopModalTitle">新增代購接單</h3>
       <div class="space-y-3">
         
@@ -1468,6 +1469,82 @@ updateCurrencyViewBtn();
 convertWeight('kg');
 convertLength('cm');
 fetchRates();
+</script>
+<script>
+// === 完美修復補丁：退稅手續費同步、原價連動、防呆索引、5大類尺寸表 ===
+const _origRender = render;
+render = function() {
+  _origRender();
+  let mod = (applyTaxFree ? (1 - taxRate / 100) : 1) * (applyFee ? (1 + feeRate / 100) : 1);
+  let baseLive = (targetCode !== 'TWD') ? currentRates[targetCode].rate : currentRates[baseCode].rate;
+  snapActualRate = baseLive * mod;
+};
+
+function addTvlFee() {
+  let twd = parseFloat(document.getElementById('tvlTwdAmount').value) || 0;
+  document.getElementById('tvlTwdAmount').value = Math.round(twd * (1 + feeRate / 100));
+  syncTvlTwdToRate();
+}
+function syncTvlTwdToRate() {
+  const twd = parseFloat(document.getElementById('tvlTwdAmount').value) || 0;
+  const orig = parseFloat(document.getElementById('tvlOrigAmount').value) || 0;
+  if(orig > 0 && editingTravelId) {
+    const idx = travelRecords.findIndex(r => r.id === editingTravelId);
+    if(idx > -1) travelRecords[idx].usedRate = twd / orig;
+  }
+}
+
+function syncShopOrigCost() {
+  const el = document.getElementById('shopOrigCostInput');
+  if(el) modalOrigAmount = parseFloat(el.value) || 0;
+  const uRate = parseFloat(document.getElementById('shopUsedRate').value) || 0;
+  const aRate = parseFloat(document.getElementById('shopActualRate').value) || snapActualRate;
+  const unitTwdCost = Math.round(modalOrigAmount * uRate);
+  document.getElementById('shopTwdCostText').textContent = 'NT$ ' + unitTwdCost.toLocaleString();
+  const actIn = document.getElementById('shopActualCostInput');
+  if(actIn) actIn.value = Math.round(modalOrigAmount * aRate);
+  if (!editingShopId) document.getElementById('shopSellUnit').value = unitTwdCost;
+  recalcShopFinal();
+}
+
+const sizeDataFixed = {
+  women: [{ title: '👩 女鞋尺寸對照表', headers: ['台灣/日本(cm)', '歐洲(EU)', '美國(US)', '英國(UK)'], rows: [['22.0','34.5','5.0','2.5'],['22.5','35','5.5','3.0'],['23.0','36','6.0','3.5'],['23.5','37','6.5','4.0'],['24.0','38','7.0','4.5'],['24.5','38.5','7.5','5.0'],['25.0','39','8.0','5.5'],['25.5','40','8.5','6.0'],['26.0','40.5','9.0','6.5']] }],
+  men: [{ title: '👨 男鞋尺寸對照表 (27cm = EU 42 = US 9)', headers: ['台灣/日本(cm)', '歐洲(EU)', '美國(US)', '英國(UK)'], rows: [['25.0','40','7.0','6.0'],['25.5','40.5','7.5','6.5'],['26.0','41','8.0','7.0'],['26.5','41.5','8.5','7.5'],['27.0','42','9.0','8.0'],['27.5','42.5','9.5','8.5'],['28.0','43','10.0','9.0'],['28.5','43.5','10.5','9.5'],['29.0','44','11.0','10.0'],['30.0','45','12.0','11.0']] }],
+  tops: [
+    { title: '👨 男裝 / 通用上衣 (含韓國號)', headers: ['國際碼', '韓國號', '歐碼(EU)', '胸圍(cm)', '參考身高'], rows: [['S','90','44~46','86~92','165~170'],['M','95','48','92~96','170~175'],['L','100','50','96~102','175~180'],['XL','105','52','102~108','180~185'],['XXL','110','54','108~114','185~190']] },
+    { title: '👩 女裝上衣 / 洋裝 (含日韓歐美)', headers: ['國際碼', '日本(JP)', '韓國號', '歐洲(EU)', '美國(US)'], rows: [['XS','5~7','44(80)','32~34','0~2'],['S','7~9','55(85)','34~36','4~6'],['M','9~11','66(90)','38~40','8~10'],['L','11~13','77(95)','42','12'],['XL','13~15','88(100)','44','14~16']] }
+  ],
+  pants: [{ title: '👖 褲子 / 牛仔褲腰圍對照表', headers: ['腰圍(吋)', '實際腰圍(cm)', '大陸市尺', '國際碼', '歐碼'], rows: [['26"','66 cm','1尺98','XS','34'],['27"','68.5 cm','2尺05','S','36'],['28"','71 cm','2尺13','S','36~38'],['29"','73.5 cm','2尺20','M','38'],['30"','76 cm','2尺28','M','38~40'],['31"','78.5 cm','2尺35','L','40'],['32"','81 cm','2尺43','L','40~42'],['33"','83.5 cm','2尺50','XL','42'],['34"','86.5 cm','2尺60','XL','44'],['36"','91.5 cm','2尺75','XXL','46'],['38"','96.5 cm','2尺90','3XL','48']] }],
+  kids: [
+    { title: '🧒 童鞋尺寸對照表', headers: ['日本/台灣(cm)', '歐洲(EU)', '美國(US)', '參考年齡'], rows: [['13.0','21','6C','1~2歲'],['14.0','22.5','7C','2~3歲'],['15.0','24','8C','3~4歲'],['16.0','25','9C','4~5歲'],['17.0','27','10C','5~6歲'],['18.0','28','11C','6~7歲'],['19.0','30','12C','7~8歲'],['20.0','31','13C','8~9歲'],['21.0','32.5','1Y','9~10歲']] },
+    { title: '🧒 童裝身高尺碼表', headers: ['日韓/台灣碼', '歐美碼', '適合身高(cm)', '適合體重'], rows: [['90碼','2T','85~95','11~14kg'],['100碼','3T~4T','95~105','14~17kg'],['110碼','4~5','105~115','17~20kg'],['120碼','6~7','115~125','20~24kg'],['130碼','8','125~135','24~29kg'],['140碼','10','135~145','29~35kg'],['150碼','12','145~155','35~42kg']] }
+  ]
+};
+
+renderSizeTable = function(type) {
+  ['szBtnWomen','szBtnMen','szBtnTops','szBtnPants','szBtnKids'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.className = "py-2 rounded-lg text-[12px] font-bold bg-slate-800 text-slate-300 transition-all";
+  });
+  const btnMap = { women:'szBtnWomen', men:'szBtnMen', tops:'szBtnTops', pants:'szBtnPants', kids:'szBtnKids' };
+  const act = document.getElementById(btnMap[type] || 'szBtnMen');
+  if(act) act.className = "py-2 rounded-lg text-[12px] font-bold bg-indigo-600 text-white shadow-sm transition-all";
+  const tables = sizeDataFixed[type] || sizeDataFixed.men;
+  const box = document.getElementById('sizeTableContainer');
+  if(!box) return;
+  box.innerHTML = tables.map(t => `
+    <div class="bg-slate-800/80 rounded-2xl border border-slate-700 overflow-hidden shadow-lg">
+      <div class="bg-slate-900 px-3 py-2 text-[13px] font-bold text-indigo-300 border-b border-slate-700">${t.title}</div>
+      <table class="w-full text-center text-[13px]">
+        <thead class="bg-slate-950 text-slate-300 font-bold border-b border-slate-700">
+          <tr>${t.headers.map(h => `<th class="py-2.5 px-1 text-[11px]">${h}</th>`).join('')}</tr>
+        </thead>
+        <tbody class="divide-y divide-slate-700/60 font-mono">
+          ${t.rows.map(r => `<tr class="hover:bg-slate-700/40">${r.map((c,i) => `<td class="py-2.5 px-1 ${i===0?'font-bold text-emerald-400':i===1?'font-bold text-white':i===2?'text-amber-300':'text-slate-300'}">${c}</td>`).join('')}</tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`).join('');
+};
 </script>
 </body>
 </html>
