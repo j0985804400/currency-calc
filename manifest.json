@@ -1,7 +1,7 @@
 {
   "name": "全球匯率與雙幣記帳神器",
   "short_name": "匯率記帳",
-  "start_url": "./index.html",
+  "start_url": "/currency-calc/",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#0f172a",
