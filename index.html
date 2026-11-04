@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>全球匯率與雙幣記帳神器</title>
 
-  <!-- iOS / Apple 專屬 PWA 全螢幕設定 -->
+  <!-- 正式連結實體的 manifest.json，確保 Android/三星 完美安裝 PWA -->
+  <link rel="manifest" href="manifest.json">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#0f172a">
@@ -39,40 +40,17 @@
     .calc-input-text { font-size: clamp(26px, 4.5vh, 40px); }
     .key-btn { font-size: clamp(18px, 3.2vh, 24px); }
     .safe-bottom { padding-bottom: max(4px, env(safe-area-inset-bottom)); }
+    
+    /* 終極防護：確保隔離層不被任何東西蓋住 */
+    .isolate-layer { isolation: isolate; }
   </style>
-
-  <!-- PWA 動態生成腳本 (破解三星/Chrome無法讀取 data URI 的限制) -->
-  <script>
-    const pwaManifest = {
-      name: "匯率記帳神器",
-      short_name: "匯率記帳",
-      start_url: window.location.href.split('?')[0] || ".",
-      display: "standalone",
-      background_color: "#0f172a",
-      theme_color: "#0f172a",
-      icons: [{
-        src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230f172a'/%3E%3Ctext y='.9em' font-size='80' x='10'%3E%F0%9F%A7%AE%3C/text%3E%3C/svg%3E",
-        sizes: "192x192",
-        type: "image/svg+xml"
-      }, {
-        src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230f172a'/%3E%3Ctext y='.9em' font-size='80' x='10'%3E%F0%9F%A7%AE%3C/text%3E%3C/svg%3E",
-        sizes: "512x512",
-        type: "image/svg+xml"
-      }]
-    };
-    const blob = new Blob([JSON.stringify(pwaManifest)], {type: 'application/manifest+json'});
-    const manifestLink = document.createElement('link');
-    manifestLink.rel = 'manifest';
-    manifestLink.href = URL.createObjectURL(blob);
-    document.head.appendChild(manifestLink);
-  </script>
 </head>
 <body class="bg-slate-950 text-slate-100 flex justify-center items-center w-full sm:p-2">
 
 <div class="w-full max-w-md bg-slate-900 sm:rounded-3xl h-full flex flex-col shadow-2xl relative overflow-hidden sm:border border-slate-800">
 
   <!-- 頂部狀態列 -->
-  <header class="px-3.5 py-2 bg-slate-900 border-b border-slate-800 flex justify-between items-center z-20 shrink-0 relative">
+  <header class="px-3.5 py-2 bg-slate-900 border-b border-slate-800 flex justify-between items-center z-10 shrink-0">
     <div class="min-w-0 pr-2">
       <div class="flex items-center gap-2">
         <span id="statusIndicator" class="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0"></span>
@@ -81,7 +59,7 @@
       <p id="rateUpdateTime" class="text-[11px] text-slate-300 mt-0.5 font-medium truncate">正在同步最新匯率...</p>
     </div>
     <div class="flex items-center shrink-0">
-      <button id="refreshBtn" class="px-2.5 py-1.5 text-slate-200 hover:text-white bg-slate-800 rounded-lg border border-slate-700 active:scale-95 transition-all text-[12px] font-bold flex items-center gap-1 shadow-sm relative z-50">
+      <button id="refreshBtn" class="px-2.5 py-1.5 text-slate-200 hover:text-white bg-slate-800 rounded-lg border border-slate-700 active:scale-95 transition-all text-[12px] font-bold flex items-center gap-1 shadow-sm">
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
         重整
       </button>
@@ -92,13 +70,11 @@
   <div id="mainContent" class="flex-1 flex flex-col relative min-h-0 overflow-hidden">
     
     <!-- ================== 分頁一：🧮 計算機 ================== -->
-    <div id="tabCalc" class="flex flex-col h-full min-h-0 fade-in bg-slate-900 relative">
-      
-      <!-- 區塊 A：彈性雙幣卡片 -->
-      <div class="flex-1 flex flex-col p-3 gap-2 min-h-0 relative z-10">
-        <div id="targetCard" class="flex-1 min-h-0 bg-slate-800/60 border-2 border-transparent rounded-2xl px-2.5 py-1.5 shadow-sm transition-all cursor-text flex flex-col justify-between overflow-hidden relative z-20" onclick="setActiveInput('target')">
+    <div id="tabCalc" class="flex flex-col h-full min-h-0 fade-in">
+      <div class="px-3 pt-1.5 pb-1 flex flex-col gap-1.5 relative flex-[3.8] min-h-[168px] max-h-[260px] z-10">
+        <div id="targetCard" class="flex-1 min-h-0 bg-slate-800/60 border-2 border-transparent rounded-2xl px-2.5 py-1.5 shadow-sm transition-all cursor-text flex flex-col justify-between overflow-hidden" onclick="setActiveInput('target')">
           <div class="flex justify-between items-center gap-2">
-            <button class="flex items-center gap-1.5 bg-slate-700/70 hover:bg-slate-600/70 px-2 py-0.5 rounded-xl border border-slate-600/70 active:scale-95 transition-all shrink-0 relative z-50" onclick="event.stopPropagation(); openCurrencySheet('target')">
+            <button class="flex items-center gap-1.5 bg-slate-700/70 hover:bg-slate-600/70 px-2 py-0.5 rounded-xl border border-slate-600/70 active:scale-95 transition-all shrink-0" onclick="event.stopPropagation(); openCurrencySheet('target')">
               <span id="targetFlag" class="text-xl leading-none">🇯🇵</span>
               <div class="flex items-baseline gap-1">
                 <span id="targetCode" class="text-[15px] font-bold text-white">JPY</span>
@@ -112,23 +88,23 @@
             <div class="flex flex-col gap-0.5 shrink-0 z-10">
               <div id="targetRateInfo" class="text-[11px] text-slate-200 font-bold truncate">即時: --</div>
               <div class="flex gap-1">
-                <button id="editRateBtn" class="bg-slate-700 text-white px-2 py-0.5 rounded border border-slate-500 text-[11px] font-bold active:scale-95 shadow-sm relative z-50" onclick="event.stopPropagation(); promptCustomRate()">✎自訂匯率</button>
-                <button id="resetRateBtn" class="hidden bg-rose-900/80 text-rose-200 px-2 py-0.5 rounded border border-rose-700 text-[11px] font-bold active:scale-95 shadow-sm relative z-50" onclick="event.stopPropagation(); resetToLiveRate()">↺恢復即時</button>
+                <button id="editRateBtn" class="bg-slate-700 text-white px-2 py-0.5 rounded border border-slate-500 text-[11px] font-bold active:scale-95 shadow-sm" onclick="event.stopPropagation(); promptCustomRate()">✎自訂匯率</button>
+                <button id="resetRateBtn" class="hidden bg-rose-900/80 text-rose-200 px-2 py-0.5 rounded border border-rose-700 text-[11px] font-bold active:scale-95 shadow-sm" onclick="event.stopPropagation(); resetToLiveRate()">↺恢復即時</button>
               </div>
             </div>
             <input id="targetInput" type="text" inputmode="none" readonly value="1000" placeholder="0" class="calc-input-text flex-1 w-0 min-w-0 bg-transparent font-mono font-bold tracking-tight text-white text-right outline-none focus:ring-0 leading-none truncate" />
           </div>
         </div>
 
-        <button onclick="swapCurrencies()" class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-slate-900 border-[3px] border-slate-900 rounded-full z-50 active:scale-90 transition-transform shadow-sm cursor-pointer">
+        <button onclick="swapCurrencies()" class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-slate-900 border-[3px] border-slate-900 rounded-full z-20 active:scale-90 transition-transform shadow-sm">
           <div class="bg-slate-800 w-7 h-7 rounded-full flex items-center justify-center text-emerald-400 hover:bg-slate-700 transition-colors">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path></svg>
           </div>
         </button>
 
-        <div id="baseCard" class="flex-1 min-h-0 bg-slate-850 border-2 border-emerald-500/70 rounded-2xl px-2.5 py-1.5 shadow-inner transition-all cursor-text flex flex-col justify-between overflow-hidden relative z-20" onclick="setActiveInput('base')">
+        <div id="baseCard" class="flex-1 min-h-0 bg-slate-850 border-2 border-emerald-500/70 rounded-2xl px-2.5 py-1.5 shadow-inner transition-all cursor-text flex flex-col justify-between overflow-hidden" onclick="setActiveInput('base')">
           <div class="flex justify-between items-center gap-2">
-            <button class="flex items-center gap-1.5 bg-slate-700/70 hover:bg-slate-600/70 px-2 py-0.5 rounded-xl border border-slate-600/70 active:scale-95 transition-all shrink-0 relative z-50" onclick="event.stopPropagation(); openCurrencySheet('base')">
+            <button class="flex items-center gap-1.5 bg-slate-700/70 hover:bg-slate-600/70 px-2 py-0.5 rounded-xl border border-slate-600/70 active:scale-95 transition-all shrink-0" onclick="event.stopPropagation(); openCurrencySheet('base')">
               <span id="baseFlag" class="text-xl leading-none">🇹🇼</span>
               <div class="flex items-baseline gap-1">
                 <span id="baseCode" class="text-[15px] font-bold text-white">TWD</span>
@@ -145,29 +121,30 @@
         </div>
       </div>
 
-      <!-- 區塊 B：附加功能按鈕 (極致 Z-index 防護，移除滑動劫持) -->
-      <div class="px-3 pb-2 flex flex-col shrink-0 relative z-50">
+      <!-- 區塊 B：附加功能按鈕 (徹底強制穿透隔離層) -->
+      <div class="px-3 pb-2 flex flex-col shrink-0 relative z-50 isolate-layer">
         <div id="breakdownBox" class="hidden bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1 mb-1 text-[11px] font-mono font-bold shadow-inner space-y-0.5 fade-in">
           <div class="flex justify-between text-slate-300"><span>原始折合：</span><span id="bdRaw">0.00</span></div>
           <div id="bdTaxRow" class="flex justify-between text-emerald-400 hidden"><span id="bdTaxLabel">免稅退稅 (10%)：</span><span id="bdTax">-0.00</span></div>
           <div id="bdFeeRow" class="flex justify-between text-rose-400 hidden"><span id="bdFeeLabel">海外刷卡 (1.5%)：</span><span id="bdFee">+0.00</span></div>
         </div>
-        <!-- 移除了 overflow-x-auto，改用緊湊排列確保點擊 100% 成功 -->
+
         <div class="flex items-center justify-between w-full">
           <div class="flex items-center gap-1.5 shrink-0">
-            <button onclick="promptCustomAddon()" class="flex items-center justify-center w-7 h-7 bg-slate-800 hover:bg-slate-700 rounded-full border border-slate-600 active:scale-95 transition-all text-slate-200 shadow-sm text-xs shrink-0 cursor-pointer relative z-50">⚙️</button>
-            <button id="toggleFee" class="px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 text-[12px] font-bold font-mono active:scale-95 transition-all shadow-sm whitespace-nowrap cursor-pointer relative z-50">+1.5%刷卡</button>
-            <button id="toggleTax" class="px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 text-[12px] font-bold font-mono active:scale-95 transition-all shadow-sm whitespace-nowrap cursor-pointer relative z-50">-10%退稅</button>
+            <!-- 移除所有相對定位，還原純粹按鈕行為 -->
+            <button onclick="promptCustomAddon()" class="flex items-center justify-center w-7 h-7 bg-slate-800 hover:bg-slate-700 rounded-full border border-slate-600 active:scale-95 transition-all text-slate-200 shadow-sm text-xs shrink-0 cursor-pointer">⚙️</button>
+            <button id="toggleFee" class="px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 text-[12px] font-bold font-mono active:scale-95 transition-all shadow-sm whitespace-nowrap cursor-pointer">+1.5%刷卡</button>
+            <button id="toggleTax" class="px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 text-[12px] font-bold font-mono active:scale-95 transition-all shadow-sm whitespace-nowrap cursor-pointer">-10%退稅</button>
           </div>
-          <button onclick="openRecordChoiceModal()" class="flex items-center justify-center gap-1 px-3 py-1 rounded-lg border border-amber-500/80 bg-amber-900/50 text-amber-300 text-[13px] font-bold active:scale-95 transition-all shadow-sm shrink-0 whitespace-nowrap cursor-pointer relative z-50">
+          <button onclick="openRecordChoiceModal()" class="flex items-center justify-center gap-1 px-3 py-1 rounded-lg border border-amber-500/80 bg-amber-900/50 text-amber-300 text-[13px] font-bold active:scale-95 transition-all shadow-sm shrink-0 whitespace-nowrap cursor-pointer">
             📝 記一筆
           </button>
         </div>
       </div>
 
-      <!-- 區塊 C：鍵盤 (固定比例與陰影處理) -->
-      <div class="bg-slate-950 px-2 py-2 rounded-t-2xl border-t border-slate-800/90 shadow-[0_-5px_20px_rgba(0,0,0,0.4)] h-[40%] min-h-[220px] max-h-[300px] shrink-0 relative z-40">
-        <div class="grid grid-cols-4 grid-rows-5 gap-1.5 h-full font-semibold" id="calcKeyboard">
+      <!-- 區塊 C：計算機鍵盤 -->
+      <div class="bg-slate-950 px-2 pt-1.5 pb-1.5 rounded-t-2xl border-t border-slate-800/90 shadow-[0_-5px_20px_rgba(0,0,0,0.4)] flex-[5.2] flex flex-col min-h-[190px] relative z-10 pointer-events-auto">
+        <div class="grid grid-cols-4 grid-rows-5 gap-1.5 flex-1 min-h-0 font-semibold" id="calcKeyboard">
           <button class="key-btn h-full flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-rose-400 rounded-xl active:scale-95 transition-transform" data-val="C">C</button>
           <button class="key-btn h-full flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-emerald-400 rounded-xl active:scale-95 transition-transform" data-val="⌫">⌫</button>
           <button class="key-btn h-full flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-emerald-400 rounded-xl active:scale-95 transition-transform" data-val="%">%</button>
@@ -190,7 +167,7 @@
           
           <button class="key-btn h-full flex items-center justify-center bg-slate-800/50 hover:bg-slate-700/80 text-white rounded-xl col-span-2 active:scale-95 transition-transform" data-val="0">0</button>
           <button class="key-btn h-full flex items-center justify-center bg-slate-800/50 hover:bg-slate-700/80 text-white rounded-xl active:scale-95 transition-transform" data-val=".">.</button>
-          <button class="key-btn h-full flex items-center justify-center bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl active:scale-95 transition-transform" data-val="=">=</button>
+          <button class="key-btn h-full flex items-center justify-center bg-emerald-600 hover:bg-emerald-50 text-white font-bold rounded-xl active:scale-95 transition-transform" data-val="=">=</button>
         </div>
       </div>
     </div>
@@ -775,8 +752,8 @@ function renderCalculation() {
 
 function updateAddonButtons() {
   document.getElementById('toggleFee').textContent = `+${feeRate}%刷卡`; document.getElementById('toggleTax').textContent = `-${taxRate}%退稅`;
-  const actCls = "px-2.5 py-1 rounded-lg border border-emerald-500 bg-emerald-950 text-emerald-300 text-[12px] font-bold font-mono active:scale-95 transition-all shadow-sm whitespace-nowrap cursor-pointer relative z-50";
-  const inActCls = "px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 text-[12px] font-bold font-mono active:scale-95 transition-all shadow-sm whitespace-nowrap cursor-pointer relative z-50";
+  const actCls = "px-2.5 py-1 rounded-lg border border-emerald-500 bg-emerald-950 text-emerald-300 text-[12px] font-bold font-mono active:scale-95 transition-all shadow-sm whitespace-nowrap cursor-pointer";
+  const inActCls = "px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 text-[12px] font-bold font-mono active:scale-95 transition-all shadow-sm whitespace-nowrap cursor-pointer";
   document.getElementById('toggleFee').className = applyFee ? actCls : inActCls; document.getElementById('toggleTax').className = applyTaxFree ? actCls : inActCls;
   document.getElementById('bdTaxLabel').textContent = `免稅退稅 (${taxRate}%)：`; document.getElementById('bdFeeLabel').textContent = `海外刷卡 (${feeRate}%)：`;
   updateTvlFeeUI(); updateShopFeeUI(); renderCalculation();
