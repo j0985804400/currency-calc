@@ -177,18 +177,22 @@
           <button class="key-btn h-full flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-emerald-400 rounded-xl active:scale-95 transition-transform" data-val="⌫">⌫</button>
           <button class="key-btn h-full flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-emerald-400 rounded-xl active:scale-95 transition-transform" data-val="%">%</button>
           <button class="key-btn h-full flex items-center justify-center bg-emerald-700/80 hover:bg-emerald-600 text-white rounded-xl active:scale-95 transition-transform" data-val="/">÷</button>
+          
           <button class="key-btn h-full flex items-center justify-center bg-slate-800/50 hover:bg-slate-700/80 text-white rounded-xl active:scale-95 transition-transform" data-val="7">7</button>
           <button class="key-btn h-full flex items-center justify-center bg-slate-800/50 hover:bg-slate-700/80 text-white rounded-xl active:scale-95 transition-transform" data-val="8">8</button>
           <button class="key-btn h-full flex items-center justify-center bg-slate-800/50 hover:bg-slate-700/80 text-white rounded-xl active:scale-95 transition-transform" data-val="9">9</button>
           <button class="key-btn h-full flex items-center justify-center bg-emerald-700/80 hover:bg-emerald-600 text-white rounded-xl active:scale-95 transition-transform" data-val="*">×</button>
+          
           <button class="key-btn h-full flex items-center justify-center bg-slate-800/50 hover:bg-slate-700/80 text-white rounded-xl active:scale-95 transition-transform" data-val="4">4</button>
           <button class="key-btn h-full flex items-center justify-center bg-slate-800/50 hover:bg-slate-700/80 text-white rounded-xl active:scale-95 transition-transform" data-val="5">5</button>
           <button class="key-btn h-full flex items-center justify-center bg-slate-800/50 hover:bg-slate-700/80 text-white rounded-xl active:scale-95 transition-transform" data-val="6">6</button>
           <button class="key-btn h-full flex items-center justify-center bg-emerald-700/80 hover:bg-emerald-600 text-white rounded-xl active:scale-95 transition-transform" data-val="-">-</button>
+          
           <button class="key-btn h-full flex items-center justify-center bg-slate-800/50 hover:bg-slate-700/80 text-white rounded-xl active:scale-95 transition-transform" data-val="1">1</button>
           <button class="key-btn h-full flex items-center justify-center bg-slate-800/50 hover:bg-slate-700/80 text-white rounded-xl active:scale-95 transition-transform" data-val="2">2</button>
           <button class="key-btn h-full flex items-center justify-center bg-slate-800/50 hover:bg-slate-700/80 text-white rounded-xl active:scale-95 transition-transform" data-val="3">3</button>
           <button class="key-btn h-full flex items-center justify-center bg-emerald-700/80 hover:bg-emerald-600 text-white rounded-xl active:scale-95 transition-transform" data-val="+">+</button>
+          
           <button class="key-btn h-full flex items-center justify-center bg-slate-800/50 hover:bg-slate-700/80 text-white rounded-xl col-span-2 active:scale-95 transition-transform" data-val="0">0</button>
           <button class="key-btn h-full flex items-center justify-center bg-slate-800/50 hover:bg-slate-700/80 text-white rounded-xl active:scale-95 transition-transform" data-val=".">.</button>
           <button class="key-btn h-full flex items-center justify-center bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl active:scale-95 transition-transform" data-val="=">=</button>
@@ -538,41 +542,20 @@
 </div>
 
 <script>
-// ================= 動態鎖定真實可視高度 =================
-function syncAppHeight() {
-  const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-  document.documentElement.style.setProperty('--app-height', `${vh}px`);
-}
-window.addEventListener('resize', syncAppHeight);
-if (window.visualViewport) window.visualViewport.addEventListener('resize', syncAppHeight);
-syncAppHeight();
-
-// ================= 安全的 LocalStorage 封裝 =================
-const SafeStorage = {
-  get(key, def) {
-    try { const val = localStorage.getItem(key); return val ? JSON.parse(val) : def; } 
-    catch (e) { console.warn(`Storage Read Fail [${key}]`, e); return def; }
-  },
-  set(key, val) {
-    try { localStorage.setItem(key, JSON.stringify(val)); } 
-    catch (e) { console.error(`Storage Write Fail [${key}]`, e); }
-  }
-};
-
-// ================= PWA 強制觸發安裝機制 =================
+// ================= PWA 強制觸發安裝機制 (新增記憶與關閉按鈕) =================
 let deferredPrompt;
 const installBanner = document.getElementById('installBanner');
 const installAppBtn = document.getElementById('installAppBtn');
 const closeInstallBannerBtn = document.getElementById('closeInstallBannerBtn');
 
-// 檢查使用者是否已經永久關閉過提示
+// 從 LocalStorage 檢查是否已經點過隱藏
 const hideInstallBanner = SafeStorage.get('hideInstallBanner', false);
 
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
-  // 如果使用者沒有點過「✕」，才顯示橫幅
-  if (!hideInstallBanner) {
+  // 只有在未關閉過，且不是 PWA 模式時才顯示橫幅
+  if (!hideInstallBanner && !window.matchMedia('(display-mode: standalone)').matches && window.navigator.standalone !== true) {
     installBanner.classList.remove('hidden');
   }
 });
@@ -589,10 +572,9 @@ installAppBtn.addEventListener('click', async () => {
   }
 });
 
-// 使用者點擊「✕」關閉按鈕
+// 使用者點擊「✕」關閉橫幅並寫入記憶
 closeInstallBannerBtn.addEventListener('click', () => {
   installBanner.classList.add('hidden');
-  // 記錄使用者的選擇，未來不再顯示
   SafeStorage.set('hideInstallBanner', true);
 });
 
@@ -601,59 +583,28 @@ window.addEventListener('appinstalled', () => {
   console.log('App successfully installed');
 });
 
+// 確認是否為全螢幕模式
 if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
   installBanner.classList.add('hidden');
 }
 
-// ================= 核心設定與全域變數 =================
-const defaultRates = {
-  "TWD": { code: "TWD", name: "新台幣", flag: "🇹🇼", rate: 1.0 },
-  "USD": { code: "USD", name: "美金", flag: "🇺🇸", rate: 32.48 },
-  "JPY": { code: "JPY", name: "日圓", flag: "🇯🇵", rate: 0.2185 },
-  "EUR": { code: "EUR", name: "歐元", flag: "🇪🇺", rate: 35.25 },
-  "CNY": { code: "CNY", name: "人民幣", flag: "🇨🇳", rate: 4.52 },
-  "KRW": { code: "KRW", name: "韓元", flag: "🇰🇷", rate: 0.0252 },
-  "HKD": { code: "HKD", name: "港幣", flag: "🇭🇰", rate: 4.18 },
-  "GBP": { code: "GBP", name: "英鎊", flag: "🇬🇧", rate: 42.30 },
-  "AUD": { code: "AUD", name: "澳幣", flag: "🇦🇺", rate: 21.65 },
-  "CAD": { code: "CAD", name: "加拿大幣", flag: "🇨🇦", rate: 23.80 },
-  "SGD": { code: "SGD", name: "新加坡幣", flag: "🇸🇬", rate: 24.60 },
-  "THB": { code: "THB", name: "泰銖", flag: "🇹🇭", rate: 0.98 },
-  "VND": { code: "VND", name: "越南盾", flag: "🇻🇳", rate: 0.0014 }
-};
+// ================= 動態鎖定真實可視高度 =================
+function syncAppHeight() {
+  const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+  document.documentElement.style.setProperty('--app-height', `${vh}px`);
+}
+window.addEventListener('resize', syncAppHeight);
+if (window.visualViewport) window.visualViewport.addEventListener('resize', syncAppHeight);
+syncAppHeight();
 
-let currentRates = SafeStorage.get('global_rates_cache', defaultRates);
-let customCrossRates = SafeStorage.get('custom_pairs_cache', {});
-let feeRate = parseFloat(SafeStorage.get('custom_fee_rate', 1.5)) || 1.5;
-let taxRate = parseFloat(SafeStorage.get('custom_tax_rate', 10.0)) || 10.0;
-
-let targetCode = SafeStorage.get('app_target_code', 'JPY');
-let baseCode = SafeStorage.get('app_base_code', 'TWD');
-if (!currentRates[targetCode]) targetCode = 'JPY';
-if (!currentRates[baseCode]) baseCode = 'TWD';
-if (targetCode === baseCode) targetCode = (baseCode === 'TWD') ? 'JPY' : 'TWD';
-
-let activeInputType = 'target', applyFee = false, applyTaxFree = false, sheetMode = 'target';
-let currencyViewMode = SafeStorage.get('app_curr_view_mode', 'dual');
-
-let snapOrigAmount = 0, snapOrigCode = 'JPY', snapTwdAmount = 0;
-let snapUsedRate = 0.2185, snapActualRate = 0.2185;
-
-let modalOrigAmount = 0, modalOrigCode = 'JPY';
-let editingTravelId = null, editingShopId = null;
-let tvlFeeApplied = false, tvlBaseTwd = 0, shopFeeApplied = false, shopBaseActualTwd = 0;
-
-const baseInput = document.getElementById('baseInput'), targetInput = document.getElementById('targetInput');
-let members = SafeStorage.get('app_members', ['我', '老婆', '朋友A']);
-let travelRecords = SafeStorage.get('app_travel_records', []);
-let shopRecords = SafeStorage.get('app_shop_records', []);
-
-// ================= 資料與備份防護 =================
+// ================= 安全的 LocalStorage 封裝 =================
 function getCustomPairRate(tCode, bCode) {
   if (customCrossRates[`${tCode}_${bCode}`] !== undefined) return customCrossRates[`${tCode}_${bCode}`];
   if (customCrossRates[`${bCode}_${tCode}`] !== undefined && customCrossRates[`${bCode}_${tCode}`] > 0) return 1 / customCrossRates[`${bCode}_${tCode}`];
   return undefined;
 }
+
+function escHTML(str) { return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m])); }
 
 function openBackupModal() { document.getElementById('restoreCodeInput').value = ''; showModal('backupModal', 'backupBox'); }
 function copyBackupCode() {
@@ -824,8 +775,8 @@ function toggleGlobalTax() { applyTaxFree = !applyTaxFree; updateAddonButtons();
 
 function updateAddonButtons() {
   document.getElementById('toggleFee').textContent = `+${feeRate}%刷卡`; document.getElementById('toggleTax').textContent = `-${taxRate}%退稅`;
-  const actCls = "px-2.5 py-1 rounded-lg border border-emerald-500 bg-emerald-950 text-emerald-300 text-[12px] font-bold font-mono active:scale-95 transition-all shadow-sm whitespace-nowrap cursor-pointer";
-  const inActCls = "px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 text-[12px] font-bold font-mono active:scale-95 transition-all shadow-sm whitespace-nowrap cursor-pointer";
+  const actCls = "px-2.5 py-1 rounded-lg border border-emerald-500 bg-emerald-950 text-emerald-300 text-[12px] font-bold font-mono active:scale-95 transition-all shadow-sm whitespace-nowrap cursor-pointer relative z-50";
+  const inActCls = "px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 text-[12px] font-bold font-mono active:scale-95 transition-all shadow-sm whitespace-nowrap cursor-pointer relative z-50";
   document.getElementById('toggleFee').className = applyFee ? actCls : inActCls; document.getElementById('toggleTax').className = applyTaxFree ? actCls : inActCls;
   document.getElementById('bdTaxLabel').textContent = `免稅退稅 (${taxRate}%)：`; document.getElementById('bdFeeLabel').textContent = `海外刷卡 (${feeRate}%)：`;
   updateTvlFeeUI(); updateShopFeeUI(); renderCalculation();
