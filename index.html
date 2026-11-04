@@ -5,27 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>全球匯率與雙幣記帳神器</title>
 
-  <!-- PWA 核心宣告 -->
-  <link rel="manifest" href="./manifest.json">
-  <meta name="theme-color" content="#0f172a">
+  <!-- 終極修復：全部改用「絕對路徑」，確保三星瀏覽器絕對找得到設定檔 -->
+  <link rel="manifest" href="https://j0985804400.github.io/currency-calc/manifest.json">
   
-  <!-- iOS 專屬設定 -->
+  <meta name="theme-color" content="#0f172a">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230f172a'/%3E%3Ctext y='.9em' font-size='80' x='10'%3E%F0%9F%A7%AE%3C/text%3E%3C/svg%3E">
 
-  <!-- 針對三星瀏覽器的強效 Service Worker 註冊 -->
+  <!-- 終極修復：改用絕對路徑註冊 Service Worker -->
   <script>
     if ('serviceWorker' in navigator) {
-      // 確保在頁面完全載入後才註冊，避免干擾效能
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js', { scope: './' })
-          .then(registration => {
-            console.log('ServiceWorker 註冊成功，範圍:', registration.scope);
-          })
-          .catch(error => {
-            console.log('ServiceWorker 註冊失敗:', error);
-          });
+        navigator.serviceWorker.register('https://j0985804400.github.io/currency-calc/sw.js', { scope: '/currency-calc/' })
+          .then(reg => console.log('ServiceWorker 註冊成功，範圍:', reg.scope))
+          .catch(err => console.log('ServiceWorker 註冊失敗: ', err));
       });
     }
   </script>
@@ -63,7 +57,7 @@
 </head>
 <body class="bg-slate-950 text-slate-100 flex justify-center items-center w-full sm:p-2 relative">
 
-<!-- ================= 專屬安裝 PWA 提示列 (針對三星等瀏覽器強化) ================= -->
+<!-- ================= 專屬安裝 PWA 提示列 ================= -->
 <div id="installBanner" class="hidden absolute top-0 left-0 w-full bg-indigo-900/95 border-b border-indigo-700/50 px-4 py-3 flex justify-between items-center z-[100] shadow-md transition-all">
   <div class="flex items-center gap-3 text-indigo-100">
     <span class="text-2xl">📲</span>
@@ -160,11 +154,11 @@
 
         <div class="flex items-center justify-between w-full">
           <div class="flex items-center gap-1.5 shrink-0">
-            <button onclick="promptCustomAddon()" class="flex items-center justify-center w-7 h-7 bg-slate-800 hover:bg-slate-700 rounded-full border border-slate-600 active:scale-95 transition-all text-slate-200 shadow-sm text-xs shrink-0 cursor-pointer">⚙️</button>
-            <button id="toggleFee" onclick="toggleGlobalFee()" class="px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 text-[12px] font-bold font-mono active:scale-95 transition-all shadow-sm whitespace-nowrap cursor-pointer">+1.5%刷卡</button>
-            <button id="toggleTax" onclick="toggleGlobalTax()" class="px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 text-[12px] font-bold font-mono active:scale-95 transition-all shadow-sm whitespace-nowrap cursor-pointer">-10%退稅</button>
+            <button onclick="promptCustomAddon()" class="flex items-center justify-center w-7 h-7 bg-slate-800 hover:bg-slate-700 rounded-full border border-slate-600 active:scale-95 transition-all text-slate-200 shadow-sm text-xs shrink-0 cursor-pointer relative z-50">⚙️</button>
+            <button id="toggleFee" onclick="toggleGlobalFee()" class="px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 text-[12px] font-bold font-mono active:scale-95 transition-all shadow-sm whitespace-nowrap cursor-pointer relative z-50">+1.5%刷卡</button>
+            <button id="toggleTax" onclick="toggleGlobalTax()" class="px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 text-[12px] font-bold font-mono active:scale-95 transition-all shadow-sm whitespace-nowrap cursor-pointer relative z-50">-10%退稅</button>
           </div>
-          <button onclick="openRecordChoiceModal()" class="flex items-center justify-center gap-1 px-3 py-1 rounded-lg border border-amber-500/80 bg-amber-900/50 text-amber-300 text-[13px] font-bold active:scale-95 transition-all shadow-sm shrink-0 whitespace-nowrap cursor-pointer">
+          <button onclick="openRecordChoiceModal()" class="flex items-center justify-center gap-1 px-3 py-1 rounded-lg border border-amber-500/80 bg-amber-900/50 text-amber-300 text-[13px] font-bold active:scale-95 transition-all shadow-sm shrink-0 whitespace-nowrap cursor-pointer relative z-50">
             📝 記一筆
           </button>
         </div>
@@ -177,18 +171,22 @@
           <button class="key-btn h-full flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-emerald-400 rounded-xl active:scale-95 transition-transform" data-val="⌫">⌫</button>
           <button class="key-btn h-full flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-emerald-400 rounded-xl active:scale-95 transition-transform" data-val="%">%</button>
           <button class="key-btn h-full flex items-center justify-center bg-emerald-700/80 hover:bg-emerald-600 text-white rounded-xl active:scale-95 transition-transform" data-val="/">÷</button>
+          
           <button class="key-btn h-full flex items-center justify-center bg-slate-800/50 hover:bg-slate-700/80 text-white rounded-xl active:scale-95 transition-transform" data-val="7">7</button>
           <button class="key-btn h-full flex items-center justify-center bg-slate-800/50 hover:bg-slate-700/80 text-white rounded-xl active:scale-95 transition-transform" data-val="8">8</button>
           <button class="key-btn h-full flex items-center justify-center bg-slate-800/50 hover:bg-slate-700/80 text-white rounded-xl active:scale-95 transition-transform" data-val="9">9</button>
           <button class="key-btn h-full flex items-center justify-center bg-emerald-700/80 hover:bg-emerald-600 text-white rounded-xl active:scale-95 transition-transform" data-val="*">×</button>
+          
           <button class="key-btn h-full flex items-center justify-center bg-slate-800/50 hover:bg-slate-700/80 text-white rounded-xl active:scale-95 transition-transform" data-val="4">4</button>
           <button class="key-btn h-full flex items-center justify-center bg-slate-800/50 hover:bg-slate-700/80 text-white rounded-xl active:scale-95 transition-transform" data-val="5">5</button>
           <button class="key-btn h-full flex items-center justify-center bg-slate-800/50 hover:bg-slate-700/80 text-white rounded-xl active:scale-95 transition-transform" data-val="6">6</button>
           <button class="key-btn h-full flex items-center justify-center bg-emerald-700/80 hover:bg-emerald-600 text-white rounded-xl active:scale-95 transition-transform" data-val="-">-</button>
+          
           <button class="key-btn h-full flex items-center justify-center bg-slate-800/50 hover:bg-slate-700/80 text-white rounded-xl active:scale-95 transition-transform" data-val="1">1</button>
           <button class="key-btn h-full flex items-center justify-center bg-slate-800/50 hover:bg-slate-700/80 text-white rounded-xl active:scale-95 transition-transform" data-val="2">2</button>
           <button class="key-btn h-full flex items-center justify-center bg-slate-800/50 hover:bg-slate-700/80 text-white rounded-xl active:scale-95 transition-transform" data-val="3">3</button>
           <button class="key-btn h-full flex items-center justify-center bg-emerald-700/80 hover:bg-emerald-600 text-white rounded-xl active:scale-95 transition-transform" data-val="+">+</button>
+          
           <button class="key-btn h-full flex items-center justify-center bg-slate-800/50 hover:bg-slate-700/80 text-white rounded-xl col-span-2 active:scale-95 transition-transform" data-val="0">0</button>
           <button class="key-btn h-full flex items-center justify-center bg-slate-800/50 hover:bg-slate-700/80 text-white rounded-xl active:scale-95 transition-transform" data-val=".">.</button>
           <button class="key-btn h-full flex items-center justify-center bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl active:scale-95 transition-transform" data-val="=">=</button>
@@ -557,7 +555,6 @@ installAppBtn.addEventListener('click', async () => {
     deferredPrompt = null;
     installBanner.classList.add('hidden');
   } else {
-    // 如果攔截不到事件 (部分三星手機)，直接引導手動加入
     alert('請點擊瀏覽器右下方的「選單 (≡)」，選擇「加入主畫面」即可安裝為全螢幕 App！');
   }
 });
@@ -656,7 +653,6 @@ function restoreFromCode() {
   try {
     const obj = JSON.parse(decodeURIComponent(atob(code)));
     if (!obj || typeof obj !== 'object') throw new Error("無效的資料格式");
-    // 嚴密過濾資料結構防止 Crash
     if (Array.isArray(obj.travelRecords)) travelRecords = obj.travelRecords.filter(r => r && r.id && typeof r.twdAmount === 'number');
     if (Array.isArray(obj.shopRecords)) shopRecords = obj.shopRecords.filter(r => r && r.id && typeof r.twdCost === 'number');
     if (Array.isArray(obj.members) && obj.members.length > 0) members = obj.members.map(String).filter(m => m.trim() !== '');
@@ -814,8 +810,8 @@ function toggleGlobalTax() { applyTaxFree = !applyTaxFree; updateAddonButtons();
 
 function updateAddonButtons() {
   document.getElementById('toggleFee').textContent = `+${feeRate}%刷卡`; document.getElementById('toggleTax').textContent = `-${taxRate}%退稅`;
-  const actCls = "px-2.5 py-1 rounded-lg border border-emerald-500 bg-emerald-950 text-emerald-300 text-[12px] font-bold font-mono active:scale-95 transition-all shadow-sm whitespace-nowrap cursor-pointer relative z-50";
-  const inActCls = "px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 text-[12px] font-bold font-mono active:scale-95 transition-all shadow-sm whitespace-nowrap cursor-pointer relative z-50";
+  const actCls = "px-2.5 py-1 rounded-lg border border-emerald-500 bg-emerald-950 text-emerald-300 text-[12px] font-bold font-mono active:scale-95 transition-all shadow-sm whitespace-nowrap cursor-pointer";
+  const inActCls = "px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 text-[12px] font-bold font-mono active:scale-95 transition-all shadow-sm whitespace-nowrap cursor-pointer";
   document.getElementById('toggleFee').className = applyFee ? actCls : inActCls; document.getElementById('toggleTax').className = applyTaxFree ? actCls : inActCls;
   document.getElementById('bdTaxLabel').textContent = `免稅退稅 (${taxRate}%)：`; document.getElementById('bdFeeLabel').textContent = `海外刷卡 (${feeRate}%)：`;
   updateTvlFeeUI(); updateShopFeeUI(); renderCalculation();
