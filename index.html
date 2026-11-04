@@ -5,22 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>全球匯率與雙幣記帳神器</title>
 
-  <!-- PWA 核心宣告 -->
-  <link rel="manifest" href="./manifest.json">
+  <!-- 絕對路徑，確保三星瀏覽器不迷路 -->
+  <link rel="manifest" href="https://j0985804400.github.io/currency-calc/manifest.json">
   <meta name="theme-color" content="#0f172a">
   
-  <!-- iOS 專屬設定 -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230f172a'/%3E%3Ctext y='.9em' font-size='80' x='10'%3E%F0%9F%A7%AE%3C/text%3E%3C/svg%3E">
 
-  <!-- 針對三星瀏覽器的強效 Service Worker 註冊 -->
+  <!-- 絕對路徑註冊 SW，並加上 ?v=4 強制更新快取 -->
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('https://j0985804400.github.io/currency-calc/sw.js', { scope: '/currency-calc/' })
-          .then(reg => console.log('ServiceWorker 註冊成功，範圍:', reg.scope))
-          .catch(err => console.log('ServiceWorker 註冊失敗: ', err));
+        navigator.serviceWorker.register('https://j0985804400.github.io/currency-calc/sw.js?v=4', { scope: '/currency-calc/' })
+          .then(reg => console.log('SW OK:', reg.scope))
+          .catch(err => console.log('SW Fail:', err));
       });
     }
   </script>
@@ -58,7 +57,7 @@
 </head>
 <body class="bg-slate-950 text-slate-100 flex justify-center items-center w-full sm:p-2 relative">
 
-<!-- ================= 專屬安裝 PWA 提示列 (可手動關閉並記憶) ================= -->
+<!-- PWA 安裝提示列 (可關閉並記憶) -->
 <div id="installBanner" class="hidden absolute top-0 left-0 w-full bg-indigo-900/95 border-b border-indigo-700/50 px-4 py-3 flex justify-between items-center z-[100] shadow-md transition-all">
   <div class="flex items-center gap-3 text-indigo-100">
     <span class="text-2xl">📲</span>
@@ -96,10 +95,10 @@
     </div>
   </header>
 
-  <!-- 主內容切換區 -->
+  <!-- 主內容區 -->
   <div id="mainContent" class="flex-1 flex flex-col relative min-h-0 overflow-hidden">
     
-    <!-- ================== 分頁一：🧮 計算機 ================== -->
+    <!-- 分頁一：計算機 -->
     <div id="tabCalc" class="flex flex-col h-full min-h-0 fade-in relative">
       <div class="px-3 pt-1.5 pb-1 flex flex-col gap-1.5 relative flex-[3.8] min-h-[168px] max-h-[260px] z-10">
         <div id="targetCard" class="flex-1 min-h-0 bg-slate-800/60 border-2 border-transparent rounded-2xl px-2.5 py-1.5 shadow-sm transition-all cursor-text flex flex-col justify-between overflow-hidden relative z-20" onclick="setActiveInput('target')">
@@ -160,11 +159,11 @@
 
         <div class="flex items-center justify-between w-full">
           <div class="flex items-center gap-1.5 shrink-0">
-            <button onclick="promptCustomAddon()" class="flex items-center justify-center w-7 h-7 bg-slate-800 hover:bg-slate-700 rounded-full border border-slate-600 active:scale-95 transition-all text-slate-200 shadow-sm text-xs shrink-0 cursor-pointer">⚙️</button>
-            <button id="toggleFee" onclick="toggleGlobalFee()" class="px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 text-[12px] font-bold font-mono active:scale-95 transition-all shadow-sm whitespace-nowrap cursor-pointer">+1.5%刷卡</button>
-            <button id="toggleTax" onclick="toggleGlobalTax()" class="px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 text-[12px] font-bold font-mono active:scale-95 transition-all shadow-sm whitespace-nowrap cursor-pointer">-10%退稅</button>
+            <button onclick="promptCustomAddon()" class="flex items-center justify-center w-7 h-7 bg-slate-800 hover:bg-slate-700 rounded-full border border-slate-600 active:scale-95 transition-all text-slate-200 shadow-sm text-xs shrink-0 cursor-pointer relative z-50">⚙️</button>
+            <button id="toggleFee" onclick="toggleGlobalFee()" class="px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 text-[12px] font-bold font-mono active:scale-95 transition-all shadow-sm whitespace-nowrap cursor-pointer relative z-50">+1.5%刷卡</button>
+            <button id="toggleTax" onclick="toggleGlobalTax()" class="px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 text-[12px] font-bold font-mono active:scale-95 transition-all shadow-sm whitespace-nowrap cursor-pointer relative z-50">-10%退稅</button>
           </div>
-          <button onclick="openRecordChoiceModal()" class="flex items-center justify-center gap-1 px-3 py-1 rounded-lg border border-amber-500/80 bg-amber-900/50 text-amber-300 text-[13px] font-bold active:scale-95 transition-all shadow-sm shrink-0 whitespace-nowrap cursor-pointer">
+          <button onclick="openRecordChoiceModal()" class="flex items-center justify-center gap-1 px-3 py-1 rounded-lg border border-amber-500/80 bg-amber-900/50 text-amber-300 text-[13px] font-bold active:scale-95 transition-all shadow-sm shrink-0 whitespace-nowrap cursor-pointer relative z-50">
             📝 記一筆
           </button>
         </div>
@@ -177,22 +176,18 @@
           <button class="key-btn h-full flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-emerald-400 rounded-xl active:scale-95 transition-transform" data-val="⌫">⌫</button>
           <button class="key-btn h-full flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-emerald-400 rounded-xl active:scale-95 transition-transform" data-val="%">%</button>
           <button class="key-btn h-full flex items-center justify-center bg-emerald-700/80 hover:bg-emerald-600 text-white rounded-xl active:scale-95 transition-transform" data-val="/">÷</button>
-          
           <button class="key-btn h-full flex items-center justify-center bg-slate-800/50 hover:bg-slate-700/80 text-white rounded-xl active:scale-95 transition-transform" data-val="7">7</button>
           <button class="key-btn h-full flex items-center justify-center bg-slate-800/50 hover:bg-slate-700/80 text-white rounded-xl active:scale-95 transition-transform" data-val="8">8</button>
           <button class="key-btn h-full flex items-center justify-center bg-slate-800/50 hover:bg-slate-700/80 text-white rounded-xl active:scale-95 transition-transform" data-val="9">9</button>
           <button class="key-btn h-full flex items-center justify-center bg-emerald-700/80 hover:bg-emerald-600 text-white rounded-xl active:scale-95 transition-transform" data-val="*">×</button>
-          
           <button class="key-btn h-full flex items-center justify-center bg-slate-800/50 hover:bg-slate-700/80 text-white rounded-xl active:scale-95 transition-transform" data-val="4">4</button>
           <button class="key-btn h-full flex items-center justify-center bg-slate-800/50 hover:bg-slate-700/80 text-white rounded-xl active:scale-95 transition-transform" data-val="5">5</button>
           <button class="key-btn h-full flex items-center justify-center bg-slate-800/50 hover:bg-slate-700/80 text-white rounded-xl active:scale-95 transition-transform" data-val="6">6</button>
           <button class="key-btn h-full flex items-center justify-center bg-emerald-700/80 hover:bg-emerald-600 text-white rounded-xl active:scale-95 transition-transform" data-val="-">-</button>
-          
           <button class="key-btn h-full flex items-center justify-center bg-slate-800/50 hover:bg-slate-700/80 text-white rounded-xl active:scale-95 transition-transform" data-val="1">1</button>
           <button class="key-btn h-full flex items-center justify-center bg-slate-800/50 hover:bg-slate-700/80 text-white rounded-xl active:scale-95 transition-transform" data-val="2">2</button>
           <button class="key-btn h-full flex items-center justify-center bg-slate-800/50 hover:bg-slate-700/80 text-white rounded-xl active:scale-95 transition-transform" data-val="3">3</button>
           <button class="key-btn h-full flex items-center justify-center bg-emerald-700/80 hover:bg-emerald-600 text-white rounded-xl active:scale-95 transition-transform" data-val="+">+</button>
-          
           <button class="key-btn h-full flex items-center justify-center bg-slate-800/50 hover:bg-slate-700/80 text-white rounded-xl col-span-2 active:scale-95 transition-transform" data-val="0">0</button>
           <button class="key-btn h-full flex items-center justify-center bg-slate-800/50 hover:bg-slate-700/80 text-white rounded-xl active:scale-95 transition-transform" data-val=".">.</button>
           <button class="key-btn h-full flex items-center justify-center bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl active:scale-95 transition-transform" data-val="=">=</button>
@@ -200,7 +195,7 @@
       </div>
     </div>
 
-    <!-- ================== 分頁二：📒 旅遊清單 ================== -->
+    <!-- 分頁二：旅遊清單 -->
     <div id="tabTravel" class="hidden flex-col h-full fade-in p-4 overflow-y-auto no-scrollbar relative z-10 pointer-events-auto">
       <div class="flex justify-between items-center mb-4">
         <div>
@@ -237,7 +232,7 @@
       <div id="travelList" class="space-y-3 pb-6"></div>
     </div>
 
-    <!-- ================== 分頁三：🛍️ 代購清單 ================== -->
+    <!-- 分頁三：代購清單 -->
     <div id="tabShop" class="hidden flex-col h-full fade-in p-4 overflow-y-auto no-scrollbar relative z-10 pointer-events-auto">
       <div class="flex justify-between items-center mb-4">
         <div>
@@ -267,7 +262,7 @@
       <div id="shopList" class="space-y-4 pb-6"></div>
     </div>
 
-    <!-- ================== 分頁四：📏 單位與尺寸換算 ================== -->
+    <!-- 分頁四：單位換算 -->
     <div id="tabTools" class="hidden flex-col h-full fade-in p-4 overflow-y-auto no-scrollbar relative z-10 pointer-events-auto">
       <div class="flex justify-between items-center mb-4">
         <div>
@@ -340,7 +335,7 @@
     </div>
   </div>
 
-  <!-- 底部 4 分頁導覽列 -->
+  <!-- 底部導覽列 -->
   <nav class="w-full shrink-0 bg-slate-950 border-t border-slate-800 flex justify-around items-center z-50 shadow-[0_-5px_20px_rgba(0,0,0,0.5)] pt-1.5 safe-bottom relative pointer-events-auto">
     <button onclick="switchTab('tabCalc')" id="navCalc" class="flex flex-col items-center gap-0.5 w-1/4 text-emerald-400 transition-colors py-0.5 cursor-pointer">
       <span class="text-[18px] leading-none">🧮</span><span class="text-[11px] font-bold">匯率計算</span>
@@ -356,7 +351,7 @@
     </button>
   </nav>
 
-  <!-- 各類 Modal (對話框) -->
+  <!-- Modal 對話框 -->
   <div id="recordChoiceModal" class="absolute inset-0 bg-black/70 z-50 hidden opacity-0 transition-opacity duration-300 flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-sm p-6 flex flex-col gap-4 shadow-2xl transform scale-95 transition-transform duration-300" id="recordChoiceBox">
       <div class="text-center mb-1">
@@ -516,7 +511,7 @@
         <h3 class="text-[16px] font-bold text-white">💾 帳本資料備份與還原</h3>
         <button onclick="closeModal('backupModal', 'backupBox')" class="text-slate-400 hover:text-white text-sm font-bold px-2">✕</button>
       </div>
-      <p class="text-[12px] text-slate-300 leading-relaxed">可將目前的帳本轉為備份碼，貼到 LINE Keep 保存；換手機後貼回下方即可完整還原。</p>
+      <p class="text-[12px] text-slate-300 leading-relaxed">可將目前的帳本轉為備份碼保存；換手機後貼回下方即可完整還原。</p>
       <button onclick="copyBackupCode()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-bold text-[14px] active:scale-95 transition-all shadow-md">
         📋 一鍵複製目前帳本備份碼
       </button>
@@ -542,19 +537,37 @@
 </div>
 
 <script>
-// ================= PWA 強制觸發安裝機制 (新增記憶與關閉按鈕) =================
+// ================= 動態高度 =================
+function syncAppHeight() {
+  const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+  document.documentElement.style.setProperty('--app-height', `${vh}px`);
+}
+window.addEventListener('resize', syncAppHeight);
+if (window.visualViewport) window.visualViewport.addEventListener('resize', syncAppHeight);
+syncAppHeight();
+
+// ================= 安全儲存 =================
+const SafeStorage = {
+  get(key, def) {
+    try { const val = localStorage.getItem(key); return val ? JSON.parse(val) : def; } 
+    catch (e) { return def; }
+  },
+  set(key, val) {
+    try { localStorage.setItem(key, JSON.stringify(val)); } 
+    catch (e) {}
+  }
+};
+
+// ================= PWA 安裝提示控制 =================
 let deferredPrompt;
 const installBanner = document.getElementById('installBanner');
 const installAppBtn = document.getElementById('installAppBtn');
 const closeInstallBannerBtn = document.getElementById('closeInstallBannerBtn');
-
-// 從 LocalStorage 檢查是否已經點過隱藏
 const hideInstallBanner = SafeStorage.get('hideInstallBanner', false);
 
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
-  // 只有在未關閉過，且不是 PWA 模式時才顯示橫幅
   if (!hideInstallBanner && !window.matchMedia('(display-mode: standalone)').matches && window.navigator.standalone !== true) {
     installBanner.classList.remove('hidden');
   }
@@ -564,15 +577,13 @@ installAppBtn.addEventListener('click', async () => {
   if (deferredPrompt) {
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
-    console.log(`User response to the install prompt: ${outcome}`);
     deferredPrompt = null;
     installBanner.classList.add('hidden');
   } else {
-    alert('請點擊瀏覽器右下方的「選單 (≡)」，選擇「加入主畫面」即可安裝為全螢幕 App！');
+    alert('請點擊瀏覽器選單 (≡)，選擇「加入主畫面」即可安裝！');
   }
 });
 
-// 使用者點擊「✕」關閉橫幅並寫入記憶
 closeInstallBannerBtn.addEventListener('click', () => {
   installBanner.classList.add('hidden');
   SafeStorage.set('hideInstallBanner', true);
@@ -580,24 +591,84 @@ closeInstallBannerBtn.addEventListener('click', () => {
 
 window.addEventListener('appinstalled', () => {
   installBanner.classList.add('hidden');
-  console.log('App successfully installed');
 });
 
-// 確認是否為全螢幕模式
 if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
   installBanner.classList.add('hidden');
 }
 
-// ================= 動態鎖定真實可視高度 =================
-function syncAppHeight() {
-  const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-  document.documentElement.style.setProperty('--app-height', `${vh}px`);
-}
-window.addEventListener('resize', syncAppHeight);
-if (window.visualViewport) window.visualViewport.addEventListener('resize', syncAppHeight);
-syncAppHeight();
+// ================= 核心設定 =================
+const defaultRates = {
+  "TWD": { code: "TWD", name: "新台幣", flag: "🇹🇼", rate: 1.0 },
+  "USD": { code: "USD", name: "美金", flag: "🇺🇸", rate: 32.48 },
+  "JPY": { code: "JPY", name: "日圓", flag: "🇯🇵", rate: 0.2185 },
+  "EUR": { code: "EUR", name: "歐元", flag: "🇪🇺", rate: 35.25 },
+  "CNY": { code: "CNY", name: "人民幣", flag: "🇨🇳", rate: 4.52 },
+  "KRW": { code: "KRW", name: "韓元", flag: "🇰🇷", rate: 0.0252 },
+  "HKD": { code: "HKD", name: "港幣", flag: "🇭🇰", rate: 4.18 },
+  "GBP": { code: "GBP", name: "英鎊", flag: "🇬🇧", rate: 42.30 },
+  "AUD": { code: "AUD", name: "澳幣", flag: "🇦🇺", rate: 21.65 },
+  "CAD": { code: "CAD", name: "加拿大幣", flag: "🇨🇦", rate: 23.80 },
+  "SGD": { code: "SGD", name: "新加坡幣", flag: "🇸🇬", rate: 24.60 },
+  "THB": { code: "THB", name: "泰銖", flag: "🇹🇭", rate: 0.98 },
+  "VND": { code: "VND", name: "越南盾", flag: "🇻🇳", rate: 0.0014 }
+};
 
-// ================= 安全的 LocalStorage 封裝 =================
+let currentRates = SafeStorage.get('global_rates_cache', defaultRates);
+let customCrossRates = SafeStorage.get('custom_pairs_cache', {});
+let feeRate = parseFloat(SafeStorage.get('custom_fee_rate', 1.5)) || 1.5;
+let taxRate = parseFloat(SafeStorage.get('custom_tax_rate', 10.0)) || 10.0;
+
+let targetCode = SafeStorage.get('app_target_code', 'JPY');
+let baseCode = SafeStorage.get('app_base_code', 'TWD');
+if (!currentRates[targetCode]) targetCode = 'JPY';
+if (!currentRates[baseCode]) baseCode = 'TWD';
+if (targetCode === baseCode) targetCode = (baseCode === 'TWD') ? 'JPY' : 'TWD';
+
+let activeInputType = 'target', applyFee = false, applyTaxFree = false, sheetMode = 'target';
+let currencyViewMode = SafeStorage.get('app_curr_view_mode', 'dual');
+
+let snapOrigAmount = 0, snapOrigCode = 'JPY', snapTwdAmount = 0;
+let snapUsedRate = 0.2185, snapActualRate = 0.2185;
+
+let modalOrigAmount = 0, modalOrigCode = 'JPY';
+let editingTravelId = null, editingShopId = null;
+let tvlFeeApplied = false, tvlBaseTwd = 0, shopFeeApplied = false, shopBaseActualTwd = 0;
+
+const baseInput = document.getElementById('baseInput'), targetInput = document.getElementById('targetInput');
+let members = SafeStorage.get('app_members', ['我', '老婆', '朋友A']);
+let travelRecords = SafeStorage.get('app_travel_records', []);
+let shopRecords = SafeStorage.get('app_shop_records', []);
+
+// 資料自動相容與修復 (終極防護)
+shopRecords = shopRecords.map(r => {
+  if (!r) return null;
+  const cost = Number(r.origCost) || 0;
+  const sellUnit = Number(r.sellUnit ?? r.sell) || 0;
+  const usedRate = Number(r.usedRate) || (cost > 0 ? (Number(r.twdCost)||0) / cost : 0.2185);
+  const actualRate = Number(r.actualRate) || usedRate;
+  const twdCost = Number(r.twdCost) || Math.round(cost * usedRate);
+  const actualCost = Number(r.actualCost) || twdCost;
+  return {
+    ...r,
+    id: r.id || Date.now() + Math.random(),
+    buyer: String(r.buyer || '未署名買家').trim(),
+    item: String(r.item || '代購品項').trim(),
+    qty: Math.max(1, Number(r.qty) || 1),
+    isBought: r.isBought !== false,
+    isPaid: Boolean(r.isPaid),
+    origCost: cost,
+    origCode: r.origCode || 'JPY',
+    usedRate: usedRate,
+    actualRate: actualRate,
+    twdCost: twdCost,
+    actualCost: actualCost,
+    sellUnit: sellUnit,
+    sell: sellUnit
+  };
+}).filter(Boolean);
+SafeStorage.set('app_shop_records', shopRecords);
+
 function getCustomPairRate(tCode, bCode) {
   if (customCrossRates[`${tCode}_${bCode}`] !== undefined) return customCrossRates[`${tCode}_${bCode}`];
   if (customCrossRates[`${bCode}_${tCode}`] !== undefined && customCrossRates[`${bCode}_${tCode}`] > 0) return 1 / customCrossRates[`${bCode}_${tCode}`];
@@ -606,6 +677,7 @@ function getCustomPairRate(tCode, bCode) {
 
 function escHTML(str) { return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m])); }
 
+// ================= 備份與還原 =================
 function openBackupModal() { document.getElementById('restoreCodeInput').value = ''; showModal('backupModal', 'backupBox'); }
 function copyBackupCode() {
   const code = btoa(encodeURIComponent(JSON.stringify({ members, travelRecords, shopRecords, customCrossRates, feeRate, taxRate })));
@@ -616,12 +688,11 @@ function restoreFromCode() {
   if (!code) return alert("請貼上備份碼！");
   try {
     const obj = JSON.parse(decodeURIComponent(atob(code)));
-    if (!obj || typeof obj !== 'object') throw new Error("無效的資料格式");
-    // 嚴密過濾資料結構防止 Crash
-    if (Array.isArray(obj.travelRecords)) travelRecords = obj.travelRecords.filter(r => r && r.id && typeof r.twdAmount === 'number');
-    if (Array.isArray(obj.shopRecords)) shopRecords = obj.shopRecords.filter(r => r && r.id && typeof r.twdCost === 'number');
-    if (Array.isArray(obj.members) && obj.members.length > 0) members = obj.members.map(String).filter(m => m.trim() !== '');
-    if (obj.customCrossRates && typeof obj.customCrossRates === 'object') customCrossRates = obj.customCrossRates;
+    if (!obj || typeof obj !== 'object') throw new Error();
+    if (Array.isArray(obj.travelRecords)) travelRecords = obj.travelRecords;
+    if (Array.isArray(obj.shopRecords)) shopRecords = obj.shopRecords;
+    if (Array.isArray(obj.members) && obj.members.length > 0) members = obj.members;
+    if (obj.customCrossRates) customCrossRates = obj.customCrossRates;
     if (typeof obj.feeRate === 'number') feeRate = obj.feeRate;
     if (typeof obj.taxRate === 'number') taxRate = obj.taxRate;
 
@@ -662,11 +733,17 @@ function evalSafe(expr) {
 async function fetchRates() {
   const ind = document.getElementById('statusIndicator'), ut = document.getElementById('rateUpdateTime');
   ind.className = "w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse shrink-0"; ut.textContent = "連線全球即時匯率中...";
+  
+  // 加入隨機參數，確保 fetch 絕對不會吃到死快取
+  const url = `https://open.er-api.com/v6/latest/TWD?nocache=${new Date().getTime()}`;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 7000);
+  
   try {
-    const res = await fetch("https://open.er-api.com/v6/latest/TWD", { signal: controller.signal });
-    clearTimeout(timer); if (!res.ok) throw new Error("API failed");
+    const res = await fetch(url, { signal: controller.signal, cache: 'no-store' });
+    clearTimeout(timer); 
+    if (!res.ok) throw new Error();
+    
     const data = await res.json();
     if (data && data.result === "success" && data.rates) {
       let hasUp = false;
@@ -680,7 +757,7 @@ async function fetchRates() {
         ind.className = "w-2.5 h-2.5 rounded-full bg-emerald-400 shrink-0"; 
         ut.textContent = `匯率已同步 (${new Date().toLocaleTimeString('zh-TW', {hour:'2-digit',minute:'2-digit'})})`; 
       }
-    } else throw new Error("Format error");
+    }
   } catch (e) { 
     ind.className = "w-2.5 h-2.5 rounded-full bg-slate-500 shrink-0"; ut.textContent = "使用離線快取資料"; 
   }
@@ -775,8 +852,8 @@ function toggleGlobalTax() { applyTaxFree = !applyTaxFree; updateAddonButtons();
 
 function updateAddonButtons() {
   document.getElementById('toggleFee').textContent = `+${feeRate}%刷卡`; document.getElementById('toggleTax').textContent = `-${taxRate}%退稅`;
-  const actCls = "px-2.5 py-1 rounded-lg border border-emerald-500 bg-emerald-950 text-emerald-300 text-[12px] font-bold font-mono active:scale-95 transition-all shadow-sm whitespace-nowrap cursor-pointer relative z-50";
-  const inActCls = "px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 text-[12px] font-bold font-mono active:scale-95 transition-all shadow-sm whitespace-nowrap cursor-pointer relative z-50";
+  const actCls = "px-2.5 py-1 rounded-lg border border-emerald-500 bg-emerald-950 text-emerald-300 text-[12px] font-bold font-mono active:scale-95 transition-all shadow-sm whitespace-nowrap cursor-pointer";
+  const inActCls = "px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 text-[12px] font-bold font-mono active:scale-95 transition-all shadow-sm whitespace-nowrap cursor-pointer";
   document.getElementById('toggleFee').className = applyFee ? actCls : inActCls; document.getElementById('toggleTax').className = applyTaxFree ? actCls : inActCls;
   document.getElementById('bdTaxLabel').textContent = `免稅退稅 (${taxRate}%)：`; document.getElementById('bdFeeLabel').textContent = `海外刷卡 (${feeRate}%)：`;
   updateTvlFeeUI(); updateShopFeeUI(); renderCalculation();
@@ -800,7 +877,8 @@ function switchTab(tabId) {
   ['navCalc', 'navTravel', 'navShop', 'navTools'].forEach(id => document.getElementById(id).classList.replace('text-emerald-400', 'text-slate-500'));
   document.getElementById({ 'tabCalc': 'navCalc', 'tabTravel': 'navTravel', 'tabShop': 'navShop', 'tabTools': 'navTools' }[tabId]).classList.replace('text-slate-500', 'text-emerald-400');
   document.getElementById('topTitle').textContent = { 'tabCalc': '全球即時匯率 (雙向)', 'tabTravel': '旅遊清單與拆帳', 'tabShop': '代購接單管理', 'tabTools': '實用單位與尺寸換算' }[tabId];
-  if(tabId === 'tabTravel') renderTravelList(); if(tabId === 'tabShop') renderShopList();
+  if(tabId === 'tabTravel') renderTravelList(); 
+  if(tabId === 'tabShop') renderShopList();
 }
 
 let modalHideTimer = null;
@@ -813,7 +891,7 @@ function closeModal(bgId, boxId) {
   document.getElementById(boxId).classList.remove('scale-100', 'translate-y-0'); document.getElementById(boxId).classList.add('scale-95', 'translate-y-full');
   document.getElementById(bgId).classList.replace('opacity-100', 'opacity-0');
   if(modalHideTimer) clearTimeout(modalHideTimer);
-  modalHideTimer = setTimeout(() => document.getElementById(bgId).classList.add('hidden'), 300);
+  modalHideTimer = setTimeout(() => { document.getElementById(bgId).classList.add('hidden'); }, 300);
 }
 
 function openCurrencySheet(mode) {
@@ -939,15 +1017,20 @@ function renderTravelList() {
   
   let groupTotalTwd = 0, myShareTotalTwd = 0, balances = {}; members.forEach(m => balances[m] = { TWD: 0 });
   travelRecords.forEach(r => {
-    groupTotalTwd += r.twdAmount;
-    const splitCount = Math.max(1, r.splitters.length), splitTwd = r.twdAmount / splitCount, splitOrig = r.origAmount / splitCount;
-    if (r.splitters.includes(myName)) myShareTotalTwd += splitTwd;
-    if (!balances[r.payer]) balances[r.payer] = { TWD: 0 }; balances[r.payer].TWD += r.twdAmount;
-    if (r.origCode !== 'TWD') { if (!balances[r.payer][r.origCode]) balances[r.payer][r.origCode] = 0; balances[r.payer][r.origCode] += r.origAmount; }
-    r.splitters.forEach(s => {
-      if (!balances[s]) balances[s] = { TWD: 0 }; balances[s].TWD -= splitTwd;
-      if (r.origCode !== 'TWD') { if (!balances[s][r.origCode]) balances[s][r.origCode] = 0; balances[s][r.origCode] -= splitOrig; }
-    });
+    const twdAmt = Number(r.twdAmount) || 0;
+    const origAmt = Number(r.origAmount) || 0;
+    groupTotalTwd += twdAmt;
+    const splitCount = Math.max(1, (r.splitters && r.splitters.length) ? r.splitters.length : 1);
+    const splitTwd = twdAmt / splitCount, splitOrig = origAmt / splitCount;
+    if (r.splitters && r.splitters.includes(myName)) myShareTotalTwd += splitTwd;
+    if (!balances[r.payer]) balances[r.payer] = { TWD: 0 }; balances[r.payer].TWD += twdAmt;
+    if (r.origCode !== 'TWD') { if (!balances[r.payer][r.origCode]) balances[r.payer][r.origCode] = 0; balances[r.payer][r.origCode] += origAmt; }
+    if (r.splitters) {
+      r.splitters.forEach(s => {
+        if (!balances[s]) balances[s] = { TWD: 0 }; balances[s].TWD -= splitTwd;
+        if (r.origCode !== 'TWD') { if (!balances[s][r.origCode]) balances[s][r.origCode] = 0; balances[s][r.origCode] -= splitOrig; }
+      });
+    }
   });
 
   document.getElementById('tvlGroupTotal').textContent = `NT$ ${Math.round(groupTotalTwd).toLocaleString()}`; document.getElementById('tvlMyShareTotal').textContent = `NT$ ${Math.round(myShareTotalTwd).toLocaleString()}`;
@@ -965,22 +1048,34 @@ function renderTravelList() {
 
   const listHTML = [];
   [...travelRecords].reverse().forEach(r => {
-    const priceHTML = currencyViewMode === 'dual' ? `<div class="text-right"><div class="text-white font-mono font-bold text-[17px]">${r.origAmount.toLocaleString()} ${r.origCode}</div><div class="text-[13px] text-emerald-400 font-mono mt-0.5">≈ NT$ ${r.twdAmount.toLocaleString()}</div></div>` : (currencyViewMode === 'foreign' ? `<div class="text-white font-mono font-bold text-[17px]">${r.origAmount.toLocaleString()} ${r.origCode}</div>` : `<div class="text-emerald-400 font-mono font-bold text-[17px]">NT$ ${r.twdAmount.toLocaleString()}</div>`);
-    const splitBadge = (r.splitters.length === 1 && r.splitters[0] === r.payer) ? `<span class="text-indigo-300 font-bold">[個人私帳]</span>` : `${escHTML(r.payer)} ➔ 平分給 ${r.splitters.map(escHTML).join(', ')}`;
+    const oAmt = Number(r.origAmount) || 0;
+    const tAmt = Number(r.twdAmount) || 0;
+    const priceHTML = currencyViewMode === 'dual' ? `<div class="text-right"><div class="text-white font-mono font-bold text-[17px]">${oAmt.toLocaleString()} ${r.origCode}</div><div class="text-[13px] text-emerald-400 font-mono mt-0.5">≈ NT$ ${tAmt.toLocaleString()}</div></div>` : (currencyViewMode === 'foreign' ? `<div class="text-white font-mono font-bold text-[17px]">${oAmt.toLocaleString()} ${r.origCode}</div>` : `<div class="text-emerald-400 font-mono font-bold text-[17px]">NT$ ${tAmt.toLocaleString()}</div>`);
+    const splitters = r.splitters || [];
+    const splitBadge = (splitters.length === 1 && splitters[0] === r.payer) ? `<span class="text-indigo-300 font-bold">[個人私帳]</span>` : `${escHTML(r.payer)} ➔ 平分給 ${splitters.map(escHTML).join(', ')}`;
     listHTML.push(`<div class="bg-slate-800/60 p-3.5 rounded-xl border border-slate-700/50 flex justify-between items-center shadow-sm relative pr-[78px]"><div class="min-w-0 pr-2"><div class="text-white font-bold text-[16px] truncate">${escHTML(r.item)}</div><div class="text-[12px] text-slate-400 mt-1 truncate">${splitBadge}</div></div>${priceHTML}<div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1"><button onclick="editTravelRecord(${r.id})" class="p-2 text-slate-400 hover:text-amber-400 active:scale-90 transition-all">✏️</button><button onclick="deleteTravelRecord(${r.id})" class="p-2 text-slate-500 hover:text-rose-400 active:scale-90 transition-all"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button></div></div>`);
   });
   list.innerHTML = listHTML.join('');
 }
+
 function copyTravelSummary() {
   if (travelRecords.length === 0) return alert('目前沒有旅遊帳目！');
   let groupTotal = 0, balances = {}; members.forEach(m => balances[m] = 0);
-  travelRecords.forEach(r => { groupTotal += r.twdAmount; balances[r.payer] = (balances[r.payer]||0) + r.twdAmount; const split = r.twdAmount / Math.max(1, r.splitters.length); r.splitters.forEach(s => balances[s] = (balances[s]||0) - split); });
+  travelRecords.forEach(r => {
+    const twdAmt = Number(r.twdAmount) || 0;
+    groupTotal += twdAmt;
+    balances[r.payer] = (balances[r.payer]||0) + twdAmt;
+    const splitCount = Math.max(1, (r.splitters && r.splitters.length) ? r.splitters.length : 1);
+    const split = twdAmt / splitCount;
+    if (r.splitters) r.splitters.forEach(s => balances[s] = (balances[s]||0) - split);
+  });
   let lines = ['📒【旅遊花費與結算明細】', `💰 整團花費：NT$ ${Math.round(groupTotal).toLocaleString()}`, '------------------', '🤝【結算收付】'];
   Object.keys(balances).forEach(m => { const amt = Math.round(balances[m]); if (amt > 0) lines.push(`🟢 ${m}：應收回 NT$ ${amt.toLocaleString()}`); else if (amt < 0) lines.push(`🔴 ${m}：須支付 NT$ ${Math.abs(amt).toLocaleString()}`); });
   lines.push('------------------', '📝【消費明細】');
-  travelRecords.forEach((r, idx) => lines.push(`${idx+1}. ${r.item}：${r.origAmount.toLocaleString()} ${r.origCode} (NT$ ${r.twdAmount.toLocaleString()}) [${r.payer}墊]`));
+  travelRecords.forEach((r, idx) => lines.push(`${idx+1}. ${r.item}：${(Number(r.origAmount)||0).toLocaleString()} ${r.origCode} (NT$ ${(Number(r.twdAmount)||0).toLocaleString()}) [${r.payer}墊]`));
   copyTextToClipboard(lines.join('\n'), '✅ 已複製結算單！');
 }
+
 function manageMembers() { const res = prompt(`旅伴名單（逗號隔開）：`, members.join('，')); if (res) { const list = res.split(/[,，]/).map(s => s.trim()).filter(Boolean); if (list.length) { members = list; SafeStorage.set('app_members', members); renderTravelList(); } } }
 function clearTravel() { if(confirm('清空所有旅遊帳目？')) { travelRecords = []; SafeStorage.set('app_travel_records', []); renderTravelList(); } }
 
@@ -1024,86 +1119,215 @@ function openShopForm() {
 
 function editShopRecord(id) {
   const rec = shopRecords.find(r => r.id === id); if (!rec) return; editingShopId = id;
-  modalOrigAmount = rec.origCost; modalOrigCode = rec.origCode; document.getElementById('shopModalTitle').textContent = '✏️ 編輯代購 (顯示後台利潤)';
-  document.getElementById('shopBuyer').value = rec.buyer; document.getElementById('shopItem').value = rec.item; document.getElementById('shopQty').value = rec.qty || 1; document.getElementById('shopIsBought').value = (rec.isBought !== false) ? "true" : "false";
-  document.getElementById('shopOrigCodeLabel').textContent = rec.origCode; document.getElementById('shopOrigCostInput').value = rec.origCost;
-  const actCost = rec.actualCost ?? rec.twdCost, uRate = rec.usedRate ?? (rec.twdCost / (rec.origCost || 1)), aRate = rec.actualRate ?? (actCost / (rec.origCost || 1));
+  modalOrigAmount = Number(rec.origCost) || 0; modalOrigCode = rec.origCode || 'JPY'; document.getElementById('shopModalTitle').textContent = '✏️ 編輯代購 (顯示後台利潤)';
+  document.getElementById('shopBuyer').value = rec.buyer || ''; document.getElementById('shopItem').value = rec.item || ''; document.getElementById('shopQty').value = rec.qty || 1; document.getElementById('shopIsBought').value = rec.isBought ? "true" : "false";
+  document.getElementById('shopOrigCodeLabel').textContent = modalOrigCode; document.getElementById('shopOrigCostInput').value = modalOrigAmount;
+  const actCost = Number(rec.actualCost ?? rec.twdCost) || 0;
+  const uRate = Number(rec.usedRate) || (modalOrigAmount > 0 ? (Number(rec.twdCost)||0) / modalOrigAmount : 0.2185);
+  const aRate = Number(rec.actualRate) || (modalOrigAmount > 0 ? actCost / modalOrigAmount : 0.2185);
   document.getElementById('shopActualRateContainer').classList.replace('hidden', 'flex'); document.getElementById('shopUsedRate').value = uRate.toFixed(4); document.getElementById('shopActualRate').value = aRate.toFixed(4);
-  shopFeeApplied = !!rec.feeApplied; shopBaseActualTwd = rec.baseActualCost ?? (shopFeeApplied ? Math.round(actCost / (1 + feeRate / 100)) : actCost);
-  document.getElementById('shopActualCostInput').value = actCost; document.getElementById('shopTwdCostText').textContent = `NT$ ${Math.round(modalOrigAmount * uRate).toLocaleString()}`; document.getElementById('shopSellUnit').value = rec.sellUnit ?? rec.sell; 
+  shopFeeApplied = !!rec.feeApplied; shopBaseActualTwd = Number(rec.baseActualCost) || (shopFeeApplied ? Math.round(actCost / (1 + feeRate / 100)) : actCost);
+  document.getElementById('shopActualCostInput').value = actCost; document.getElementById('shopTwdCostText').textContent = `NT$ ${Math.round(modalOrigAmount * uRate).toLocaleString()}`; document.getElementById('shopSellUnit').value = Number(rec.sellUnit ?? rec.sell) || 0; 
   updateShopFeeUI(); recalcShopFinal(); showModal('shopFormModal', 'shopFormBox');
 }
 
 function saveShopRecord() {
-  const buyer = document.getElementById('shopBuyer').value.trim() || '未署名買家', item = document.getElementById('shopItem').value.trim() || '代購商品', qty = Math.max(1, parseInt(document.getElementById('shopQty').value) || 1), isBought = document.getElementById('shopIsBought').value === "true";
+  const buyer = document.getElementById('shopBuyer').value.trim() || '未署名買家', item = document.getElementById('shopItem').value.trim() || '代購品項', qty = Math.max(1, parseInt(document.getElementById('shopQty').value) || 1), isBought = document.getElementById('shopIsBought').value === "true";
   modalOrigAmount = parseFloat(document.getElementById('shopOrigCostInput').value) || 0;
   const usedRate = parseFloat(document.getElementById('shopUsedRate').value) || snapUsedRate, actualRate = parseFloat(document.getElementById('shopActualRate').value) || snapActualRate;
-  const actCostIn = document.getElementById('shopActualCostInput'); const actualCostUnit = (!document.getElementById('shopActualRateContainer').classList.contains('hidden') && actCostIn) ? Math.round(parseFloat(actCostIn.value) || 0) : Math.round(modalOrigAmount * actualRate);
+  const actCostIn = document.getElementById('shopActualCostInput'); 
+  const actualCostUnit = (!document.getElementById('shopActualRateContainer').classList.contains('hidden') && actCostIn) ? Math.round(parseFloat(actCostIn.value) || 0) : Math.round(modalOrigAmount * actualRate);
   const sellUnit = Math.round(parseFloat(document.getElementById('shopSellUnit').value) || 0);
+
   if (editingShopId) {
     const idx = shopRecords.findIndex(r => r.id === editingShopId);
-    if (idx > -1) Object.assign(shopRecords[idx], { buyer, item, qty, isBought, origCost: modalOrigAmount, usedRate, twdCost: Math.round(modalOrigAmount * usedRate), actualRate, actualCost: actualCostUnit, feeApplied: shopFeeApplied, baseActualCost: shopFeeApplied ? shopBaseActualTwd : actualCostUnit, sellUnit, sell: sellUnit });
+    if (idx > -1) {
+      Object.assign(shopRecords[idx], {
+        buyer, item, qty, isBought,
+        origCost: modalOrigAmount, origCode: modalOrigCode,
+        usedRate: usedRate, actualRate: actualRate,
+        twdCost: Math.round(modalOrigAmount * usedRate),
+        actualCost: actualCostUnit,
+        feeApplied: shopFeeApplied,
+        baseActualCost: shopFeeApplied ? shopBaseActualTwd : actualCostUnit,
+        sellUnit: sellUnit, sell: sellUnit
+      });
+    }
   } else {
-    shopRecords.push({ id: Date.now(), buyer, item, qty, isBought, origCost: modalOrigAmount, origCode: modalOrigCode, usedRate, actualRate, twdCost: Math.round(modalOrigAmount * usedRate), actualCost: actualCostUnit, feeApplied: shopFeeApplied, baseActualCost: shopFeeApplied ? shopBaseActualTwd : actualCostUnit, sellUnit, sell: sellUnit, isPaid: false });
+    shopRecords.push({
+      id: Date.now(), buyer, item, qty, isBought,
+      origCost: modalOrigAmount, origCode: modalOrigCode,
+      usedRate: usedRate, actualRate: actualRate,
+      twdCost: Math.round(modalOrigAmount * usedRate),
+      actualCost: actualCostUnit,
+      feeApplied: shopFeeApplied,
+      baseActualCost: shopFeeApplied ? shopBaseActualTwd : actualCostUnit,
+      sellUnit: sellUnit, sell: sellUnit, isPaid: false
+    });
   }
-  SafeStorage.set('app_shop_records', shopRecords); closeModal('shopFormModal', 'shopFormBox'); switchTab('tabShop');
+  SafeStorage.set('app_shop_records', shopRecords); 
+  closeModal('shopFormModal', 'shopFormBox'); 
+  switchTab('tabShop');
 }
 
 function toggleShopPaidById(id) { const rec = shopRecords.find(r => r.id === id); if(rec) { rec.isPaid = !rec.isPaid; SafeStorage.set('app_shop_records', shopRecords); renderShopList(); } }
-function toggleShopBoughtById(id) { const rec = shopRecords.find(r => r.id === id); if(rec) { rec.isBought = (rec.isBought === false) ? true : false; SafeStorage.set('app_shop_records', shopRecords); renderShopList(); } }
+function toggleShopBoughtById(id) { const rec = shopRecords.find(r => r.id === id); if(rec) { rec.isBought = !rec.isBought; SafeStorage.set('app_shop_records', shopRecords); renderShopList(); } }
 function deleteShopRecordById(id) { if (confirm('確定刪除這筆單？')) { shopRecords = shopRecords.filter(r => r.id !== id); SafeStorage.set('app_shop_records', shopRecords); renderShopList(); } }
 function markBuyerAllPaid(buyer) { shopRecords.forEach(r => { if(r.buyer === buyer) r.isPaid = true; }); SafeStorage.set('app_shop_records', shopRecords); renderShopList(); }
 
 function copyBuyerInvoice(buyer) {
   const recs = shopRecords.filter(r => r.buyer === buyer); let total = 0, lines = [`🛍️【代購請款單】\n👤 買家：${buyer}\n------------------`];
-  recs.forEach(r => { const t = (r.sellUnit ?? r.sell) * (r.qty || 1); lines.push(`• ${r.item} x${r.qty||1}：NT$ ${t.toLocaleString()} ${r.isPaid?'(已付)':''}`); if(!r.isPaid) total += t; });
-  lines.push('------------------', `💰 應付總額：NT$ ${total.toLocaleString()}`, `麻煩確認款項，謝謝！`); copyTextToClipboard(lines.join('\n'), `✅ 已複製「${buyer}」的請款單！`);
+  recs.forEach(r => { 
+    const t = (Number(r.sellUnit ?? r.sell) || 0) * (Number(r.qty) || 1); 
+    lines.push(`• ${r.item} x${r.qty||1}：NT$ ${t.toLocaleString()} ${r.isPaid?'(已付)':''}`); 
+    if(!r.isPaid) total += t; 
+  });
+  lines.push('------------------', `💰 應付總額：NT$ ${total.toLocaleString()}`, `麻煩確認款項，謝謝！`); 
+  copyTextToClipboard(lines.join('\n'), `✅ 已複製「${buyer}」的請款單！`);
 }
+
 function copyAllShopInvoices() {
   if (shopRecords.length === 0) return alert('沒有代購訂單！');
   let grouped = {}, lines = ['🛍️【代購總對帳單】'];
   [...shopRecords].reverse().forEach(r => {
     if (!grouped[r.buyer]) grouped[r.buyer] = { items: [], total: 0, isAllPaid: true };
-    const t = (r.sellUnit ?? r.sell) * (r.qty || 1); grouped[r.buyer].items.push(`  • ${r.item} x${r.qty||1}：NT$ ${t.toLocaleString()}${r.isPaid ? ' (已付)' : ''}`);
+    const t = (Number(r.sellUnit ?? r.sell) || 0) * (Number(r.qty) || 1); 
+    grouped[r.buyer].items.push(`  • ${r.item} x${r.qty||1}：NT$ ${t.toLocaleString()}${r.isPaid ? ' (已付)' : ''}`);
     if (!r.isPaid) { grouped[r.buyer].total += t; grouped[r.buyer].isAllPaid = false; }
   });
-  Object.keys(grouped).forEach(buyer => { const g = grouped[buyer]; lines.push('------------------', `👤 ${buyer}：`, ...g.items, g.isAllPaid ? `✅ 款項結清` : `💰 待收小計：NT$ ${g.total.toLocaleString()}`); });
+  Object.keys(grouped).forEach(buyer => { 
+    const g = grouped[buyer]; 
+    lines.push('------------------', `👤 ${buyer}：`, ...g.items, g.isAllPaid ? `✅ 款項結清` : `💰 待收小計：NT$ ${g.total.toLocaleString()}`); 
+  });
   copyTextToClipboard(lines.join('\n'), '✅ 已複製全部請款單！');
 }
 
 function renderShopList() {
-  const list = document.getElementById('shopList'); document.getElementById('shopTotalCount').textContent = `共 ${shopRecords.length} 筆接單`;
+  const list = document.getElementById('shopList'); 
+  document.getElementById('shopTotalCount').textContent = `共 ${shopRecords.length} 筆接單`;
   let totalActualCost = 0, totalUnpaid = 0, totalProfit = 0;
-  if (shopRecords.length === 0) { list.innerHTML = `<div class="text-center text-slate-500 py-10 text-[15px]">目前沒有代購接單</div>`; } 
-  else {
-    let grouped = {}, groupedKeys = [];
-    [...shopRecords].reverse().forEach((r) => {
-      if (!grouped[r.buyer]) { grouped[r.buyer] = { records: [], totalSell: 0, isAllPaid: true }; groupedKeys.push(r.buyer); }
-      grouped[r.buyer].records.push(r);
-      const tSell = (r.sellUnit ?? r.sell) * (r.qty || 1), actUnit = r.actualCost ?? r.twdCost;
-      if (!r.isPaid) { grouped[r.buyer].totalSell += tSell; grouped[r.buyer].isAllPaid = false; totalUnpaid += tSell; }
-      totalActualCost += (actUnit * (r.qty || 1)); totalProfit += (tSell - (actUnit * (r.qty || 1)));
+
+  if (shopRecords.length === 0) { 
+    list.innerHTML = `<div class="text-center text-slate-500 py-10 text-[15px]">目前沒有代購接單</div>`; 
+    document.getElementById('shopBoardCost').textContent = 'NT$ 0'; 
+    document.getElementById('shopBoardUnpaid').textContent = 'NT$ 0'; 
+    document.getElementById('shopTotalProfit').textContent = 'NT$ 0';
+    return;
+  } 
+
+  let grouped = {}, groupedKeys = [];
+  [...shopRecords].reverse().forEach((r) => {
+    const buyerName = r.buyer || '未署名買家';
+    if (!grouped[buyerName]) { 
+      grouped[buyerName] = { records: [], totalSell: 0, isAllPaid: true }; 
+      groupedKeys.push(buyerName); 
+    }
+    grouped[buyerName].records.push(r);
+
+    const qty = Number(r.qty) || 1;
+    const sellUnit = Number(r.sellUnit ?? r.sell) || 0;
+    const actUnit = Number(r.actualCost ?? r.twdCost) || 0;
+    const tSell = sellUnit * qty;
+
+    if (!r.isPaid) { 
+      grouped[buyerName].totalSell += tSell; 
+      grouped[buyerName].isAllPaid = false; 
+      totalUnpaid += tSell; 
+    }
+    totalActualCost += (actUnit * qty); 
+    totalProfit += (tSell - (actUnit * qty));
+  });
+
+  const listHTML = [];
+  groupedKeys.forEach((buyer) => {
+    const g = grouped[buyer];
+    const bgClass = g.isAllPaid ? 'bg-slate-800/30 border-slate-700/30 opacity-80' : 'bg-slate-800/80 border-slate-700';
+    let itemsHTML = [];
+
+    g.records.forEach(r => {
+      const qty = Number(r.qty) || 1;
+      const origCost = Number(r.origCost) || 0;
+      const sellUnit = Number(r.sellUnit ?? r.sell) || 0;
+      const twdCost = Number(r.twdCost) || 0;
+      const actUnit = Number(r.actualCost ?? twdCost) || 0;
+      
+      const tSell = sellUnit * qty;
+      const tQuote = twdCost * qty;
+      const tAct = actUnit * qty;
+      const profit = tSell - tAct;
+
+      const boughtBtn = r.isBought ? 
+        `<button onclick="toggleShopBoughtById(${r.id})" class="bg-emerald-900/50 text-emerald-300 border border-emerald-700 text-[11px] px-1.5 py-0.5 rounded font-bold active:scale-95 whitespace-nowrap">🛒 已購入</button>` : 
+        `<button onclick="toggleShopBoughtById(${r.id})" class="bg-amber-900/60 text-amber-300 border border-amber-600 text-[11px] px-1.5 py-0.5 rounded font-bold active:scale-95 whitespace-nowrap">📝 待購入</button>`;
+
+      const paidBtn = r.isPaid ? 
+        `<button onclick="toggleShopPaidById(${r.id})" class="bg-emerald-900/50 text-emerald-300 border border-emerald-700 text-[11px] px-1.5 py-0.5 rounded font-bold active:scale-95 whitespace-nowrap">✅ 已付</button>` : 
+        `<button onclick="toggleShopPaidById(${r.id})" class="bg-slate-700 text-slate-300 border border-slate-600 text-[11px] px-1.5 py-0.5 rounded font-bold active:scale-95 whitespace-nowrap">💰 待收</button>`;
+
+      itemsHTML.push(`
+        <div class="flex flex-col py-3.5 border-b ${r.isBought ? 'border-slate-700/50' : 'border-amber-500/60 border-dashed'} last:border-0 relative">
+          <div class="flex justify-between items-start gap-2 mb-2.5 pr-[72px]">
+            <div class="flex flex-wrap items-center gap-1.5">
+              <span class="text-white text-[16px] font-bold">${escHTML(r.item || '代購品項')}</span>
+              <span class="text-[14px] text-emerald-300 font-mono font-bold">x${qty}</span>
+              ${boughtBtn}
+              ${paidBtn}
+            </div>
+            <div class="absolute right-0 top-0 flex items-center gap-1 shrink-0 bg-slate-900 px-1.5 py-1 rounded-lg border border-slate-700">
+              <button onclick="editShopRecord(${r.id})" class="text-[14px] text-amber-400 active:scale-90 px-1.5 py-0.5">✏️</button>
+              <button onclick="deleteShopRecordById(${r.id})" class="text-[14px] text-rose-400 active:scale-90 px-1.5 py-0.5">🗑️</button>
+            </div>
+          </div>
+          <div class="bg-slate-950/90 rounded-lg p-3 border border-slate-800 text-[12px] font-mono space-y-1.5 mb-2.5 shadow-inner">
+            <div class="flex justify-between text-slate-300">
+              <span>外幣原價：</span><span class="font-bold text-white text-[14px]">${origCost.toLocaleString()} ${r.origCode || 'JPY'}</span>
+            </div>
+            <div class="flex justify-between text-amber-300">
+              <span>報價成本：</span><span class="font-bold">NT$ ${tQuote.toLocaleString()}</span>
+            </div>
+            <div class="flex justify-between text-sky-400">
+              <span>實際成本：</span><span class="font-bold text-[14px]">NT$ ${tAct.toLocaleString()}</span>
+            </div>
+          </div>
+          <div class="flex justify-between items-center px-1">
+            <div>
+              <span class="text-[13px] text-slate-300">客收總額：</span>
+              <span class="text-[16px] text-emerald-400 font-mono font-bold">NT$ ${tSell.toLocaleString()}</span>
+            </div>
+            <div class="text-[13px] ${profit >= 0 ? 'text-emerald-400 border-emerald-800/60' : 'text-rose-400 border-rose-800/60'} font-mono font-bold bg-slate-900 border px-2.5 py-1.5 rounded-lg shadow-sm">
+              總淨利 ${profit >= 0 ? '+' : ''}${profit.toLocaleString()}
+            </div>
+          </div>
+        </div>
+      `);
     });
 
-    const listHTML = [];
-    groupedKeys.forEach((buyer) => {
-      const g = grouped[buyer], bgClass = g.isAllPaid ? 'bg-slate-800/30 border-slate-700/30 opacity-80' : 'bg-slate-800/80 border-slate-700';
-      let itemsHTML = [];
-      g.records.forEach(r => {
-        const qty = r.qty || 1, sellUnit = r.sellUnit ?? r.sell, actUnit = r.actualCost ?? r.twdCost, tSell = sellUnit * qty, tQuote = r.twdCost * qty, tAct = actUnit * qty, profit = tSell - tAct;
-        const boughtBtn = r.isBought !== false ? `<button onclick="toggleShopBoughtById(${r.id})" class="bg-emerald-900/50 text-emerald-300 border border-emerald-700 text-[11px] px-1.5 py-0.5 rounded font-bold active:scale-95 whitespace-nowrap">🛒 已購入</button>` : `<button onclick="toggleShopBoughtById(${r.id})" class="bg-amber-900/60 text-amber-300 border border-amber-600 text-[11px] px-1.5 py-0.5 rounded font-bold active:scale-95 whitespace-nowrap">📝 待購入</button>`;
-        const paidBtn = r.isPaid ? `<button onclick="toggleShopPaidById(${r.id})" class="bg-emerald-900/50 text-emerald-300 border border-emerald-700 text-[11px] px-1.5 py-0.5 rounded font-bold active:scale-95 whitespace-nowrap">✅ 已付</button>` : `<button onclick="toggleShopPaidById(${r.id})" class="bg-slate-700 text-slate-300 border border-slate-600 text-[11px] px-1.5 py-0.5 rounded font-bold active:scale-95 whitespace-nowrap">💰 待收</button>`;
-        itemsHTML.push(`<div class="flex flex-col py-3.5 border-b ${r.isBought !== false ? 'border-slate-700/50' : 'border-amber-500/60 border-dashed'} last:border-0 relative"><div class="flex justify-between items-start gap-2 mb-2.5 pr-[72px]"><div class="flex flex-wrap items-center gap-1.5"><span class="text-white text-[16px] font-bold">${escHTML(r.item)}</span><span class="text-[14px] text-emerald-300 font-mono font-bold">x${qty}</span>${boughtBtn}${paidBtn}</div><div class="absolute right-0 top-0 flex items-center gap-1 shrink-0 bg-slate-900 px-1.5 py-1 rounded-lg border border-slate-700"><button onclick="editShopRecord(${r.id})" class="text-[14px] text-amber-400 active:scale-90 px-1.5 py-0.5">✏️</button><button onclick="deleteShopRecordById(${r.id})" class="text-[14px] text-rose-400 active:scale-90 px-1.5 py-0.5">🗑️</button></div></div><div class="bg-slate-950/90 rounded-lg p-3 border border-slate-800 text-[12px] font-mono space-y-1.5 mb-2.5 shadow-inner"><div class="flex justify-between text-slate-300"><span>外幣原價：</span><span class="font-bold text-white text-[14px]">${r.origCost.toLocaleString()} ${r.origCode}</span></div><div class="flex justify-between text-amber-300"><span>報價成本：</span><span class="font-bold">NT$ ${tQuote.toLocaleString()}</span></div><div class="flex justify-between text-sky-400"><span>實際成本：</span><span class="font-bold text-[14px]">NT$ ${tAct.toLocaleString()}</span></div></div><div class="flex justify-between items-center px-1"><div><span class="text-[13px] text-slate-300">客收總額：</span><span class="text-[16px] text-emerald-400 font-mono font-bold">NT$ ${tSell.toLocaleString()}</span></div><div class="text-[13px] ${profit>=0?'text-emerald-400 border-emerald-800/60':'text-rose-400 border-rose-800/60'} font-mono font-bold bg-slate-900 border px-2.5 py-1.5 rounded-lg shadow-sm">總淨利 ${profit>=0?'+':''}${profit.toLocaleString()}</div></div></div>`);
-      });
-      listHTML.push(`<div class="${bgClass} p-4 rounded-2xl border transition-all shadow-sm mb-4"><div class="flex justify-between items-center mb-1.5 pb-2.5 border-b border-slate-600/50"><div class="text-white font-bold text-[18px]">👤 ${escHTML(buyer)}</div><button onclick="copyBuyerInvoice('${escHTML(buyer)}')" class="text-[13px] bg-indigo-600/90 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-md font-bold">📋 單客請款</button></div><div class="mb-2">${itemsHTML.join('')}</div><div class="flex justify-between items-center mt-3 pt-3.5 border-t border-slate-700/50"><div class="text-[14px] font-bold ${g.isAllPaid ? 'text-slate-400' : 'text-amber-400'}">${g.isAllPaid ? '✅ 已結清' : `⏳ 待收 NT$ ${g.totalSell.toLocaleString()}`}</div><button ${g.isAllPaid ? '' : `onclick="markBuyerAllPaid('${escHTML(buyer)}')"`} class="px-3.5 py-2 rounded-lg text-[13px] font-bold ${g.isAllPaid ? 'bg-slate-700/50 text-slate-400' : 'bg-emerald-700/80 text-white active:scale-95'}">${g.isAllPaid ? '✅ 已結清' : '💰 一鍵標記已收'}</button></div></div>`);
-    });
-    list.innerHTML = listHTML.join('');
-  }
-  document.getElementById('shopBoardCost').textContent = `NT$ ${totalActualCost.toLocaleString()}`; document.getElementById('shopBoardUnpaid').textContent = `NT$ ${totalUnpaid.toLocaleString()}`; document.getElementById('shopTotalProfit').textContent = `NT$ ${totalProfit.toLocaleString()}`;
+    listHTML.push(`
+      <div class="${bgClass} p-4 rounded-2xl border transition-all shadow-sm mb-4">
+        <div class="flex justify-between items-center mb-1.5 pb-2.5 border-b border-slate-600/50">
+          <div class="text-white font-bold text-[18px]">👤 ${escHTML(buyer)}</div>
+          <button onclick="copyBuyerInvoice('${escHTML(buyer)}')" class="text-[13px] bg-indigo-600/90 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-md font-bold">📋 單客請款</button>
+        </div>
+        <div class="mb-2">${itemsHTML.join('')}</div>
+        <div class="flex justify-between items-center mt-3 pt-3.5 border-t border-slate-700/50">
+          <div class="text-[14px] font-bold ${g.isAllPaid ? 'text-slate-400' : 'text-amber-400'}">
+            ${g.isAllPaid ? '✅ 已結清' : `⏳ 待收 NT$ ${g.totalSell.toLocaleString()}`}
+          </div>
+          <button ${g.isAllPaid ? '' : `onclick="markBuyerAllPaid('${escHTML(buyer)}')"`} class="px-3.5 py-2 rounded-lg text-[13px] font-bold ${g.isAllPaid ? 'bg-slate-700/50 text-slate-400' : 'bg-emerald-700/80 text-white active:scale-95'}">
+            ${g.isAllPaid ? '✅ 已結清' : '💰 一鍵標記已收'}
+          </button>
+        </div>
+      </div>
+    `);
+  });
+
+  list.innerHTML = listHTML.join('');
+  document.getElementById('shopBoardCost').textContent = `NT$ ${Math.round(totalActualCost).toLocaleString()}`;
+  document.getElementById('shopBoardUnpaid').textContent = `NT$ ${Math.round(totalUnpaid).toLocaleString()}`;
+  document.getElementById('shopTotalProfit').textContent = `NT$ ${Math.round(totalProfit).toLocaleString()}`;
 }
-function clearShop() { if(confirm('清空所有代購紀錄？')) { shopRecords = []; SafeStorage.set('app_shop_records', []); renderShopList(); } }
 
-// ================= 10. 單位轉換與尺寸 =================
+// ================= 單位轉換 =================
 function switchToolSubTab(mode) {
   const uBtn = document.getElementById('btnToolUnit'), sBtn = document.getElementById('btnToolSize');
   if (mode === 'unit') { document.getElementById('subTabUnit').classList.remove('hidden'); document.getElementById('subTabSize').classList.add('hidden'); uBtn.className = "py-2.5 rounded-lg text-[14px] font-bold bg-emerald-600 text-white shadow-sm"; sBtn.className = "py-2.5 rounded-lg text-[14px] font-bold text-slate-400 hover:text-white transition-all"; } 
