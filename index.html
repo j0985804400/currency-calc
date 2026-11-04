@@ -5,21 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>全球匯率與雙幣記帳神器</title>
 
-  <!-- 絕對路徑，確保三星瀏覽器不迷路 -->
-  <link rel="manifest" href="https://j0985804400.github.io/currency-calc/manifest.json">
+  <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#0f172a">
-  
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230f172a'/%3E%3Ctext y='.9em' font-size='80' x='10'%3E%F0%9F%A7%AE%3C/text%3E%3C/svg%3E">
+  <link rel="apple-touch-icon" href="https://via.placeholder.com/192/0f172a/ffffff?text=App">
 
-  <!-- 絕對路徑註冊 SW，並加上 ?v=4 強制更新快取 -->
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('https://j0985804400.github.io/currency-calc/sw.js?v=4', { scope: '/currency-calc/' })
-          .then(reg => console.log('SW OK:', reg.scope))
-          .catch(err => console.log('SW Fail:', err));
+        navigator.serviceWorker.register('./sw.js?v=5')
+          .then(reg => {
+            reg.update();
+            console.log('SW Registered');
+          })
+          .catch(err => console.error('SW Error:', err));
       });
     }
   </script>
@@ -42,68 +42,67 @@
     input[type="text"], input[type="number"] { -webkit-appearance: none; margin: 0; }
     .sheet-open { transform: translateY(0%); }
     .sheet-closed { transform: translateY(100%); }
-    .fade-in { animation: fadeIn 0.2s ease-in-out; }
+    .fade-in { animation: fadeIn 0.15s ease-in-out; }
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-5px); }
+      from { opacity: 0; transform: translateY(-3px); }
       to { opacity: 1; transform: translateY(0); }
     }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     .calc-input-text { font-size: clamp(26px, 4.5vh, 40px); }
     .key-btn { font-size: clamp(18px, 3.2vh, 24px); }
-    .safe-bottom { padding-bottom: max(4px, env(safe-area-inset-bottom)); }
-    .isolate-layer { isolation: isolate; }
+    .safe-bottom { padding-bottom: max(6px, env(safe-area-inset-bottom)); }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 flex justify-center items-center w-full sm:p-2 relative">
 
-<!-- PWA 安裝提示列 (可關閉並記憶) -->
-<div id="installBanner" class="hidden absolute top-0 left-0 w-full bg-indigo-900/95 border-b border-indigo-700/50 px-4 py-3 flex justify-between items-center z-[100] shadow-md transition-all">
-  <div class="flex items-center gap-3 text-indigo-100">
-    <span class="text-2xl">📲</span>
+<!-- 安裝橫幅 -->
+<div id="installBanner" class="hidden absolute top-0 left-0 w-full bg-indigo-900/95 border-b border-indigo-700/60 px-4 py-2.5 flex justify-between items-center z-[100] shadow-lg">
+  <div class="flex items-center gap-2.5 text-indigo-100">
+    <span class="text-xl">📲</span>
     <div>
-      <p class="text-[14px] font-bold">加入桌面全螢幕使用</p>
-      <p class="text-[12px] text-indigo-300 opacity-90">免去網址列，體驗更流暢</p>
+      <p class="text-[13px] font-bold">加入主畫面全螢幕使用</p>
+      <p class="text-[11px] text-indigo-300">隱藏網址列，體驗更佳</p>
     </div>
   </div>
-  <div class="flex items-center gap-3">
-    <button id="installAppBtn" class="bg-indigo-500 hover:bg-indigo-400 text-white px-4 py-2 rounded-lg text-[14px] font-bold shadow-md active:scale-95 transition-all">
-      安裝 App
-    </button>
-    <button id="closeInstallBannerBtn" class="text-indigo-300 hover:text-white p-2 rounded-full active:scale-90 transition-all bg-indigo-800/50">
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+  <div class="flex items-center gap-2">
+    <button id="installAppBtn" class="bg-indigo-500 hover:bg-indigo-400 text-white px-3 py-1.5 rounded-lg text-[13px] font-bold shadow active:scale-95 transition-all">安裝</button>
+    <button id="closeInstallBannerBtn" class="text-indigo-300 hover:text-white p-1.5 rounded-full active:scale-90 transition-all bg-indigo-800/60">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
     </button>
   </div>
 </div>
 
 <div class="w-full max-w-md bg-slate-900 sm:rounded-3xl h-full flex flex-col shadow-2xl relative overflow-hidden sm:border border-slate-800">
 
-  <!-- 頂部狀態列 -->
+  <!-- 頂部資訊列 -->
   <header class="px-3.5 py-2 bg-slate-900 border-b border-slate-800 flex justify-between items-center z-10 shrink-0">
     <div class="min-w-0 pr-2">
       <div class="flex items-center gap-2">
-        <span id="statusIndicator" class="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0"></span>
+        <span id="statusIndicator" class="w-2.5 h-2.5 rounded-full bg-emerald-400 shrink-0"></span>
         <h1 id="topTitle" class="text-[16px] font-bold tracking-tight text-white truncate">全球即時匯率 (雙向)</h1>
       </div>
-      <p id="rateUpdateTime" class="text-[11px] text-slate-300 mt-0.5 font-medium truncate">正在同步最新匯率...</p>
+      <p id="rateUpdateTime" class="text-[11px] text-slate-300 mt-0.5 font-medium truncate">載入快取匯率中...</p>
     </div>
     <div class="flex items-center shrink-0">
-      <button id="refreshBtn" class="px-2.5 py-1.5 text-slate-200 hover:text-white bg-slate-800 rounded-lg border border-slate-700 active:scale-95 transition-all text-[12px] font-bold flex items-center gap-1 shadow-sm">
+      <button id="refreshBtn" onclick="fetchRates()" class="px-2.5 py-1.5 text-slate-200 hover:text-white bg-slate-800 rounded-lg border border-slate-700 active:scale-95 transition-all text-[12px] font-bold flex items-center gap-1 shadow-sm">
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
         重整
       </button>
     </div>
   </header>
 
-  <!-- 主內容區 -->
+  <!-- 主內容分頁容器 -->
   <div id="mainContent" class="flex-1 flex flex-col relative min-h-0 overflow-hidden">
     
     <!-- 分頁一：計算機 -->
-    <div id="tabCalc" class="flex flex-col h-full min-h-0 fade-in relative">
-      <div class="px-3 pt-1.5 pb-1 flex flex-col gap-1.5 relative flex-[3.8] min-h-[168px] max-h-[260px] z-10">
-        <div id="targetCard" class="flex-1 min-h-0 bg-slate-800/60 border-2 border-transparent rounded-2xl px-2.5 py-1.5 shadow-sm transition-all cursor-text flex flex-col justify-between overflow-hidden relative z-20" onclick="setActiveInput('target')">
+    <div id="tabCalc" class="flex flex-col h-full min-h-0 fade-in">
+      <div class="px-3 pt-2 pb-1.5 flex flex-col gap-1.5 relative flex-[3.8] min-h-[168px] max-h-[260px] z-10">
+        
+        <!-- 目標幣 Card -->
+        <div id="targetCard" class="flex-1 min-h-0 bg-slate-800/60 border-2 border-transparent rounded-2xl px-2.5 py-1.5 shadow-sm transition-all flex flex-col justify-between overflow-hidden" onclick="setActiveInput('target')">
           <div class="flex justify-between items-center gap-2">
-            <button class="flex items-center gap-1.5 bg-slate-700/70 hover:bg-slate-600/70 px-2 py-0.5 rounded-xl border border-slate-600/70 active:scale-95 transition-all shrink-0 relative z-50" onclick="event.stopPropagation(); openCurrencySheet('target')">
+            <button type="button" class="flex items-center gap-1.5 bg-slate-700/70 hover:bg-slate-600/70 px-2 py-0.5 rounded-xl border border-slate-600/70 active:scale-95 transition-all shrink-0" onclick="event.stopPropagation(); openCurrencySheet('target')">
               <span id="targetFlag" class="text-xl leading-none">🇯🇵</span>
               <div class="flex items-baseline gap-1">
                 <span id="targetCode" class="text-[15px] font-bold text-white">JPY</span>
@@ -117,23 +116,25 @@
             <div class="flex flex-col gap-0.5 shrink-0 z-10">
               <div id="targetRateInfo" class="text-[11px] text-slate-200 font-bold truncate">即時: --</div>
               <div class="flex gap-1">
-                <button id="editRateBtn" class="bg-slate-700 text-white px-2 py-0.5 rounded border border-slate-500 text-[11px] font-bold active:scale-95 shadow-sm relative z-50" onclick="event.stopPropagation(); promptCustomRate()">✎自訂匯率</button>
-                <button id="resetRateBtn" class="hidden bg-rose-900/80 text-rose-200 px-2 py-0.5 rounded border border-rose-700 text-[11px] font-bold active:scale-95 shadow-sm relative z-50" onclick="event.stopPropagation(); resetToLiveRate()">↺恢復即時</button>
+                <button type="button" id="editRateBtn" class="bg-slate-700 text-white px-2 py-0.5 rounded border border-slate-500 text-[11px] font-bold active:scale-95 shadow-sm" onclick="event.stopPropagation(); promptCustomRate()">✎自訂匯率</button>
+                <button type="button" id="resetRateBtn" class="hidden bg-rose-900/80 text-rose-200 px-2 py-0.5 rounded border border-rose-700 text-[11px] font-bold active:scale-95 shadow-sm" onclick="event.stopPropagation(); resetToLiveRate()">↺恢復即時</button>
               </div>
             </div>
-            <input id="targetInput" type="text" inputmode="none" readonly value="1000" placeholder="0" class="calc-input-text flex-1 w-0 min-w-0 bg-transparent font-mono font-bold tracking-tight text-white text-right outline-none focus:ring-0 leading-none truncate" />
+            <input id="targetInput" type="text" inputmode="none" readonly value="1000" placeholder="0" class="calc-input-text flex-1 w-0 min-w-0 bg-transparent font-mono font-bold tracking-tight text-white text-right outline-none leading-none truncate" />
           </div>
         </div>
 
-        <button onclick="swapCurrencies()" class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-slate-900 border-[3px] border-slate-900 rounded-full z-50 active:scale-90 transition-transform shadow-sm cursor-pointer">
+        <!-- 換幣交換按鈕 -->
+        <button type="button" onclick="swapCurrencies()" class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-slate-900 border-[3px] border-slate-900 rounded-full z-20 active:scale-90 transition-transform shadow-md">
           <div class="bg-slate-800 w-7 h-7 rounded-full flex items-center justify-center text-emerald-400 hover:bg-slate-700 transition-colors">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path></svg>
           </div>
         </button>
 
-        <div id="baseCard" class="flex-1 min-h-0 bg-slate-850 border-2 border-emerald-500/70 rounded-2xl px-2.5 py-1.5 shadow-inner transition-all cursor-text flex flex-col justify-between overflow-hidden relative z-20" onclick="setActiveInput('base')">
+        <!-- 基準幣 Card -->
+        <div id="baseCard" class="flex-1 min-h-0 bg-slate-850 border-2 border-emerald-500/70 rounded-2xl px-2.5 py-1.5 shadow-inner transition-all flex flex-col justify-between overflow-hidden" onclick="setActiveInput('base')">
           <div class="flex justify-between items-center gap-2">
-            <button class="flex items-center gap-1.5 bg-slate-700/70 hover:bg-slate-600/70 px-2 py-0.5 rounded-xl border border-slate-600/70 active:scale-95 transition-all shrink-0 relative z-50" onclick="event.stopPropagation(); openCurrencySheet('base')">
+            <button type="button" class="flex items-center gap-1.5 bg-slate-700/70 hover:bg-slate-600/70 px-2 py-0.5 rounded-xl border border-slate-600/70 active:scale-95 transition-all shrink-0" onclick="event.stopPropagation(); openCurrencySheet('base')">
               <span id="baseFlag" class="text-xl leading-none">🇹🇼</span>
               <div class="flex items-baseline gap-1">
                 <span id="baseCode" class="text-[15px] font-bold text-white">TWD</span>
@@ -145,32 +146,33 @@
           </div>
           <div class="flex justify-between items-end gap-2">
             <div class="text-[11px] text-slate-400 font-bold shrink-0 pb-0.5 whitespace-nowrap">點擊上方換幣別</div>
-            <input id="baseInput" type="text" inputmode="none" readonly placeholder="0" class="calc-input-text flex-1 w-0 min-w-0 bg-transparent font-mono font-bold tracking-tight text-emerald-300 text-right outline-none focus:ring-0 leading-none truncate" />
+            <input id="baseInput" type="text" inputmode="none" readonly placeholder="0" class="calc-input-text flex-1 w-0 min-w-0 bg-transparent font-mono font-bold tracking-tight text-emerald-300 text-right outline-none leading-none truncate" />
           </div>
         </div>
       </div>
 
-      <div class="px-3 pb-2 flex flex-col shrink-0 relative z-50 isolate-layer">
+      <!-- 計算機功能控制列 -->
+      <div class="px-3 pb-2 flex flex-col shrink-0 relative z-20">
         <div id="breakdownBox" class="hidden bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1 mb-1 text-[11px] font-mono font-bold shadow-inner space-y-0.5 fade-in">
           <div class="flex justify-between text-slate-300"><span>原始折合：</span><span id="bdRaw">0.00</span></div>
-          <div id="bdTaxRow" class="flex justify-between text-emerald-400 hidden"><span id="bdTaxLabel">免稅退稅 (10%)：</span><span id="bdTax">-0.00</span></div>
-          <div id="bdFeeRow" class="flex justify-between text-rose-400 hidden"><span id="bdFeeLabel">海外刷卡 (1.5%)：</span><span id="bdFee">+0.00</span></div>
+          <div id="bdTaxRow" class="flex justify-between text-emerald-400 hidden"><span id="bdTaxLabel">免稅退稅：</span><span id="bdTax">-0.00</span></div>
+          <div id="bdFeeRow" class="flex justify-between text-rose-400 hidden"><span id="bdFeeLabel">海外刷卡：</span><span id="bdFee">+0.00</span></div>
         </div>
 
         <div class="flex items-center justify-between w-full">
           <div class="flex items-center gap-1.5 shrink-0">
-            <button onclick="promptCustomAddon()" class="flex items-center justify-center w-7 h-7 bg-slate-800 hover:bg-slate-700 rounded-full border border-slate-600 active:scale-95 transition-all text-slate-200 shadow-sm text-xs shrink-0 cursor-pointer relative z-50">⚙️</button>
-            <button id="toggleFee" onclick="toggleGlobalFee()" class="px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 text-[12px] font-bold font-mono active:scale-95 transition-all shadow-sm whitespace-nowrap cursor-pointer relative z-50">+1.5%刷卡</button>
-            <button id="toggleTax" onclick="toggleGlobalTax()" class="px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 text-[12px] font-bold font-mono active:scale-95 transition-all shadow-sm whitespace-nowrap cursor-pointer relative z-50">-10%退稅</button>
+            <button type="button" onclick="promptCustomAddon()" class="flex items-center justify-center w-7 h-7 bg-slate-800 hover:bg-slate-700 rounded-full border border-slate-600 active:scale-95 transition-all text-slate-200 shadow-sm text-xs shrink-0">⚙️</button>
+            <button type="button" id="toggleFee" onclick="toggleGlobalFee()" class="px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 text-[12px] font-bold font-mono active:scale-95 transition-all shadow-sm whitespace-nowrap">+1.5%刷卡</button>
+            <button type="button" id="toggleTax" onclick="toggleGlobalTax()" class="px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 text-[12px] font-bold font-mono active:scale-95 transition-all shadow-sm whitespace-nowrap">-10%退稅</button>
           </div>
-          <button onclick="openRecordChoiceModal()" class="flex items-center justify-center gap-1 px-3 py-1 rounded-lg border border-amber-500/80 bg-amber-900/50 text-amber-300 text-[13px] font-bold active:scale-95 transition-all shadow-sm shrink-0 whitespace-nowrap cursor-pointer relative z-50">
+          <button type="button" onclick="openRecordChoiceModal()" class="flex items-center justify-center gap-1 px-3 py-1 rounded-lg border border-amber-500/80 bg-amber-900/50 text-amber-300 text-[13px] font-bold active:scale-95 transition-all shadow-sm shrink-0 whitespace-nowrap">
             📝 記一筆
           </button>
         </div>
       </div>
 
-      <!-- 計算機鍵盤 -->
-      <div class="bg-slate-950 px-2 pt-1.5 pb-1.5 rounded-t-2xl border-t border-slate-800/90 shadow-[0_-5px_20px_rgba(0,0,0,0.4)] flex-[5.2] flex flex-col min-h-[190px] relative z-10 pointer-events-auto">
+      <!-- 數字鍵盤 -->
+      <div class="bg-slate-950 px-2 pt-1.5 pb-2 rounded-t-2xl border-t border-slate-800/90 shadow-[0_-5px_20px_rgba(0,0,0,0.4)] flex-[5.2] flex flex-col min-h-[190px] relative z-10">
         <div class="grid grid-cols-4 grid-rows-5 gap-1.5 flex-1 min-h-0 font-semibold" id="calcKeyboard">
           <button class="key-btn h-full flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-rose-400 rounded-xl active:scale-95 transition-transform" data-val="C">C</button>
           <button class="key-btn h-full flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-emerald-400 rounded-xl active:scale-95 transition-transform" data-val="⌫">⌫</button>
@@ -196,19 +198,19 @@
     </div>
 
     <!-- 分頁二：旅遊清單 -->
-    <div id="tabTravel" class="hidden flex-col h-full fade-in p-4 overflow-y-auto no-scrollbar relative z-10 pointer-events-auto">
-      <div class="flex justify-between items-center mb-4">
+    <div id="tabTravel" class="hidden flex-col h-full fade-in p-4 overflow-y-auto no-scrollbar">
+      <div class="flex justify-between items-center mb-3">
         <div>
           <h2 class="text-xl font-bold text-white">旅遊花費與拆帳</h2>
-          <p class="text-sm text-slate-400 mt-1" id="tvlTotalCount">共 0 筆消費</p>
+          <p class="text-xs text-slate-400 mt-0.5" id="tvlTotalCount">共 0 筆消費</p>
         </div>
         <div class="flex gap-1.5 shrink-0">
-          <button onclick="toggleCurrencyView()" id="currencyViewBtn" class="text-xs bg-slate-800 text-emerald-400 px-3 py-2 rounded-lg border border-slate-700 active:scale-95 font-bold shadow-sm whitespace-nowrap">🔀 雙幣對照</button>
-          <button onclick="manageMembers()" class="text-xs bg-slate-800 text-slate-200 px-3 py-2 rounded-lg border border-slate-700 active:scale-95 font-bold shadow-sm whitespace-nowrap">👥 旅伴</button>
-          <button onclick="openBackupModal()" class="text-sm bg-slate-800 text-amber-300 px-2.5 py-2 rounded-lg border border-slate-700 active:scale-95 font-bold shadow-sm whitespace-nowrap" title="備份/還原">💾</button>
+          <button onclick="toggleCurrencyView()" id="currencyViewBtn" class="text-xs bg-slate-800 text-emerald-400 px-2.5 py-1.5 rounded-lg border border-slate-700 active:scale-95 font-bold shadow-sm whitespace-nowrap">🔀 雙幣對照</button>
+          <button onclick="manageMembers()" class="text-xs bg-slate-800 text-slate-200 px-2.5 py-1.5 rounded-lg border border-slate-700 active:scale-95 font-bold shadow-sm whitespace-nowrap">👥 旅伴</button>
+          <button onclick="openBackupModal()" class="text-xs bg-slate-800 text-amber-300 px-2 py-1.5 rounded-lg border border-slate-700 active:scale-95 font-bold shadow-sm whitespace-nowrap">💾</button>
         </div>
       </div>
-      <div class="grid grid-cols-2 gap-3 mb-4">
+      <div class="grid grid-cols-2 gap-2.5 mb-3">
         <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-3">
           <div class="text-xs text-slate-300 font-bold">整團總花費 (台幣)</div>
           <div class="text-lg font-mono font-bold text-white mt-1" id="tvlGroupTotal">NT$ 0</div>
@@ -218,117 +220,115 @@
           <div class="text-lg font-mono font-bold text-indigo-300 mt-1" id="tvlMyShareTotal">NT$ 0</div>
         </div>
       </div>
-      <div class="bg-slate-800/80 rounded-2xl p-4 border border-slate-700/50 mb-5 shadow-lg">
-        <div class="flex justify-between items-center border-b border-slate-700 pb-3 mb-3">
-          <span class="text-sm font-bold text-slate-200">🤝 結算分攤 (自動相抵)</span>
-          <button onclick="copyTravelSummary()" class="text-xs bg-emerald-700/80 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-md font-bold active:scale-95 transition-all">📋 複製結算單</button>
+      <div class="bg-slate-800/80 rounded-2xl p-3.5 border border-slate-700/50 mb-4 shadow-md">
+        <div class="flex justify-between items-center border-b border-slate-700 pb-2 mb-2.5">
+          <span class="text-sm font-bold text-slate-200">🤝 結算分攤 (自動互抵)</span>
+          <button onclick="copyTravelSummary()" class="text-xs bg-emerald-700/80 hover:bg-emerald-600 text-white px-2.5 py-1 rounded font-bold active:scale-95 transition-all">📋 複製結算單</button>
         </div>
-        <div id="travelSummaryBox" class="space-y-2 text-sm"></div>
+        <div id="travelSummaryBox" class="space-y-1.5 text-sm"></div>
       </div>
-      <div class="flex justify-between items-center mb-3">
+      <div class="flex justify-between items-center mb-2.5">
         <h3 class="text-sm font-bold text-slate-300">消費明細列表</h3>
-        <button onclick="clearTravel()" class="text-xs text-rose-400 bg-rose-950/30 px-3 py-1.5 rounded border border-rose-900/50 font-bold shadow-sm active:scale-95">🗑️ 全部清空</button>
+        <button onclick="clearTravel()" class="text-xs text-rose-400 bg-rose-950/30 px-2.5 py-1 rounded border border-rose-900/50 font-bold active:scale-95">🗑️ 全部清空</button>
       </div>
-      <div id="travelList" class="space-y-3 pb-6"></div>
+      <div id="travelList" class="space-y-2.5 pb-6"></div>
     </div>
 
     <!-- 分頁三：代購清單 -->
-    <div id="tabShop" class="hidden flex-col h-full fade-in p-4 overflow-y-auto no-scrollbar relative z-10 pointer-events-auto">
-      <div class="flex justify-between items-center mb-4">
+    <div id="tabShop" class="hidden flex-col h-full fade-in p-4 overflow-y-auto no-scrollbar">
+      <div class="flex justify-between items-center mb-3">
         <div>
           <h2 class="text-xl font-bold text-white">代購接單管理</h2>
-          <p class="text-sm text-slate-400 mt-1" id="shopTotalCount">共 0 筆接單</p>
+          <p class="text-xs text-slate-400 mt-0.5" id="shopTotalCount">共 0 筆接單</p>
         </div>
-        <div class="flex gap-2 shrink-0">
-          <button onclick="copyAllShopInvoices()" class="text-xs bg-emerald-700/90 hover:bg-emerald-600 text-white px-3 py-2 rounded-lg font-bold active:scale-95 shadow-sm whitespace-nowrap">📋 全部彙整</button>
-          <button onclick="openBackupModal()" class="text-sm bg-slate-800 text-amber-300 px-2.5 py-2 rounded-lg border border-slate-700 active:scale-95 font-bold shadow-sm whitespace-nowrap" title="備份/還原">💾</button>
-          <button onclick="clearShop()" class="text-xs text-rose-400 bg-rose-950/30 px-3 py-2 rounded-lg border border-rose-900/50 font-bold active:scale-95 shadow-sm whitespace-nowrap">🗑️ 清空</button>
+        <div class="flex gap-1.5 shrink-0">
+          <button onclick="copyAllShopInvoices()" class="text-xs bg-emerald-700/90 hover:bg-emerald-600 text-white px-2.5 py-1.5 rounded-lg font-bold active:scale-95 shadow-sm whitespace-nowrap">📋 總請款</button>
+          <button onclick="openBackupModal()" class="text-xs bg-slate-800 text-amber-300 px-2 py-1.5 rounded-lg border border-slate-700 active:scale-95 font-bold shadow-sm whitespace-nowrap">💾</button>
+          <button onclick="clearShop()" class="text-xs text-rose-400 bg-rose-950/30 px-2.5 py-1.5 rounded-lg border border-rose-900/50 font-bold active:scale-95 shadow-sm whitespace-nowrap">🗑️</button>
         </div>
       </div>
-      <div class="grid grid-cols-3 gap-2.5 mb-5">
-        <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-3">
-          <div class="text-xs text-slate-300 font-bold">實際總本金</div>
+      <div class="grid grid-cols-3 gap-2 mb-4">
+        <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-2.5">
+          <div class="text-[11px] text-slate-300 font-bold">實際總本金</div>
           <div class="text-sm font-mono font-bold text-white mt-1" id="shopBoardCost">NT$ 0</div>
         </div>
-        <div class="bg-amber-950/30 border border-amber-800/50 rounded-xl p-3">
-          <div class="text-xs text-amber-300 font-bold">待收款總額</div>
+        <div class="bg-amber-950/30 border border-amber-800/50 rounded-xl p-2.5">
+          <div class="text-[11px] text-amber-300 font-bold">待收款總額</div>
           <div class="text-sm font-mono font-bold text-amber-300 mt-1" id="shopBoardUnpaid">NT$ 0</div>
         </div>
-        <div class="bg-emerald-950/40 border border-emerald-800/50 rounded-xl p-3">
-          <div class="text-xs text-emerald-400 font-bold">本趟總淨利</div>
+        <div class="bg-emerald-950/40 border border-emerald-800/50 rounded-xl p-2.5">
+          <div class="text-[11px] text-emerald-400 font-bold">本趟總淨利</div>
           <div class="text-sm font-mono font-bold text-emerald-400 mt-1" id="shopTotalProfit">NT$ 0</div>
         </div>
       </div>
-      <div id="shopList" class="space-y-4 pb-6"></div>
+      <div id="shopList" class="space-y-3.5 pb-6"></div>
     </div>
 
     <!-- 分頁四：單位換算 -->
-    <div id="tabTools" class="hidden flex-col h-full fade-in p-4 overflow-y-auto no-scrollbar relative z-10 pointer-events-auto">
-      <div class="flex justify-between items-center mb-4">
-        <div>
-          <h2 class="text-xl font-bold text-white">實用單位與尺寸換算</h2>
-          <p class="text-sm text-slate-400 mt-1">出國批貨、買衣服鞋子一秒對照</p>
-        </div>
+    <div id="tabTools" class="hidden flex-col h-full fade-in p-4 overflow-y-auto no-scrollbar">
+      <div class="mb-3">
+        <h2 class="text-xl font-bold text-white">實用單位與尺寸換算</h2>
+        <p class="text-xs text-slate-400 mt-0.5">出國批貨、買衣服鞋子即時對照</p>
       </div>
-      <div class="grid grid-cols-2 gap-2 bg-slate-950 p-1.5 rounded-xl border border-slate-800 mb-5 shrink-0">
-        <button id="btnToolUnit" onclick="switchToolSubTab('unit')" class="py-2.5 rounded-lg text-[14px] font-bold bg-emerald-600 text-white transition-all shadow-sm">⚖️ 重量長度</button>
-        <button id="btnToolSize" onclick="switchToolSubTab('size')" class="py-2.5 rounded-lg text-[14px] font-bold text-slate-400 hover:text-white transition-all">👟 尺寸對照</button>
+      <div class="grid grid-cols-2 gap-2 bg-slate-950 p-1.5 rounded-xl border border-slate-800 mb-4 shrink-0">
+        <button id="btnToolUnit" onclick="switchToolSubTab('unit')" class="py-2 rounded-lg text-[13px] font-bold bg-emerald-600 text-white transition-all shadow-sm">⚖️ 重量長度</button>
+        <button id="btnToolSize" onclick="switchToolSubTab('size')" class="py-2 rounded-lg text-[13px] font-bold text-slate-400 hover:text-white transition-all">👟 尺寸對照</button>
       </div>
 
-      <div id="subTabUnit" class="space-y-5 pb-6">
-        <div class="bg-slate-800/70 rounded-2xl p-4 border border-slate-700/60 shadow-sm space-y-4">
-          <div class="flex justify-between items-center border-b border-slate-700 pb-2.5">
-            <span class="text-[16px] font-bold text-emerald-400">⚖️ 重量互轉 (批貨/行李)</span>
-            <span class="text-[12px] text-slate-400">輸入任一格自動算</span>
+      <div id="subTabUnit" class="space-y-4 pb-6">
+        <div class="bg-slate-800/70 rounded-2xl p-3.5 border border-slate-700/60 shadow-sm space-y-3">
+          <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+            <span class="text-[15px] font-bold text-emerald-400">⚖️ 重量互轉</span>
+            <span class="text-[11px] text-slate-400">輸入任一格即時算</span>
           </div>
-          <div class="grid grid-cols-2 gap-3">
-            <div class="bg-slate-900 p-3 rounded-xl border border-slate-700">
-              <label class="text-[13px] text-slate-300 font-bold block mb-1.5">公斤 (kg)</label>
-              <input type="number" step="any" id="wtKg" oninput="convertWeight('kg')" placeholder="1" value="1" class="w-full bg-transparent text-[22px] font-mono font-bold text-white outline-none" />
+          <div class="grid grid-cols-2 gap-2.5">
+            <div class="bg-slate-900 p-2.5 rounded-xl border border-slate-700">
+              <label class="text-[12px] text-slate-300 font-bold block mb-1">公斤 (kg)</label>
+              <input type="number" step="any" id="wtKg" oninput="convertWeight('kg')" placeholder="1" value="1" class="w-full bg-transparent text-[20px] font-mono font-bold text-white outline-none" />
             </div>
-            <div class="bg-slate-900 p-3 rounded-xl border border-amber-600/50">
-              <label class="text-[13px] text-amber-300 font-bold block mb-1.5">台灣台斤 (600g)</label>
-              <input type="number" step="any" id="wtTwJin" oninput="convertWeight('tw')" class="w-full bg-transparent text-[22px] font-mono font-bold text-amber-300 outline-none" />
+            <div class="bg-slate-900 p-2.5 rounded-xl border border-amber-600/50">
+              <label class="text-[12px] text-amber-300 font-bold block mb-1">台灣台斤 (600g)</label>
+              <input type="number" step="any" id="wtTwJin" oninput="convertWeight('tw')" class="w-full bg-transparent text-[20px] font-mono font-bold text-amber-300 outline-none" />
             </div>
-            <div class="bg-slate-900 p-3 rounded-xl border border-sky-600/50">
-              <label class="text-[13px] text-sky-300 font-bold block mb-1.5">大陸市斤 (500g)</label>
-              <input type="number" step="any" id="wtCnJin" oninput="convertWeight('cn')" class="w-full bg-transparent text-[22px] font-mono font-bold text-sky-300 outline-none" />
+            <div class="bg-slate-900 p-2.5 rounded-xl border border-sky-600/50">
+              <label class="text-[12px] text-sky-300 font-bold block mb-1">大陸市斤 (500g)</label>
+              <input type="number" step="any" id="wtCnJin" oninput="convertWeight('cn')" class="w-full bg-transparent text-[20px] font-mono font-bold text-sky-300 outline-none" />
             </div>
-            <div class="bg-slate-900 p-3 rounded-xl border border-slate-700">
-              <label class="text-[13px] text-slate-300 font-bold block mb-1.5">歐美磅 (lb)</label>
-              <input type="number" step="any" id="wtLb" oninput="convertWeight('lb')" class="w-full bg-transparent text-[22px] font-mono font-bold text-white outline-none" />
+            <div class="bg-slate-900 p-2.5 rounded-xl border border-slate-700">
+              <label class="text-[12px] text-slate-300 font-bold block mb-1">歐美磅 (lb)</label>
+              <input type="number" step="any" id="wtLb" oninput="convertWeight('lb')" class="w-full bg-transparent text-[20px] font-mono font-bold text-white outline-none" />
             </div>
           </div>
         </div>
-        <div class="bg-slate-800/70 rounded-2xl p-4 border border-slate-700/60 shadow-sm space-y-4">
-          <div class="flex justify-between items-center border-b border-slate-700 pb-2.5">
-            <span class="text-[16px] font-bold text-indigo-400">📐 長度與褲腰圍互轉</span>
+        <div class="bg-slate-800/70 rounded-2xl p-3.5 border border-slate-700/60 shadow-sm space-y-3">
+          <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+            <span class="text-[15px] font-bold text-indigo-400">📐 長度與腰圍互轉</span>
             <span class="text-[11px] text-slate-400">1吋=2.54cm / 1尺=33.3cm</span>
           </div>
-          <div class="grid grid-cols-3 gap-2.5">
-            <div class="bg-slate-900 p-2.5 rounded-xl border border-slate-700">
-              <label class="text-[12px] text-slate-300 font-bold block mb-1.5">公分 (cm)</label>
-              <input type="number" step="any" id="lenCm" oninput="convertLength('cm')" value="76.2" class="w-full bg-transparent text-[20px] font-mono font-bold text-white outline-none" />
+          <div class="grid grid-cols-3 gap-2">
+            <div class="bg-slate-900 p-2 rounded-xl border border-slate-700">
+              <label class="text-[11px] text-slate-300 font-bold block mb-1">公分 (cm)</label>
+              <input type="number" step="any" id="lenCm" oninput="convertLength('cm')" value="76.2" class="w-full bg-transparent text-[18px] font-mono font-bold text-white outline-none" />
             </div>
-            <div class="bg-slate-900 p-2.5 rounded-xl border border-indigo-500/50">
-              <label class="text-[12px] text-indigo-300 font-bold block mb-1.5">英吋 (腰圍吋)</label>
-              <input type="number" step="any" id="lenInch" oninput="convertLength('inch')" class="w-full bg-transparent text-[20px] font-mono font-bold text-indigo-300 outline-none" />
+            <div class="bg-slate-900 p-2 rounded-xl border border-indigo-500/50">
+              <label class="text-[11px] text-indigo-300 font-bold block mb-1">英吋 (吋)</label>
+              <input type="number" step="any" id="lenInch" oninput="convertLength('inch')" class="w-full bg-transparent text-[18px] font-mono font-bold text-indigo-300 outline-none" />
             </div>
-            <div class="bg-slate-900 p-2.5 rounded-xl border border-slate-700">
-              <label class="text-[12px] text-slate-300 font-bold block mb-1.5">大陸市尺</label>
-              <input type="number" step="any" id="lenChi" oninput="convertLength('chi')" class="w-full bg-transparent text-[20px] font-mono font-bold text-white outline-none" />
+            <div class="bg-slate-900 p-2 rounded-xl border border-slate-700">
+              <label class="text-[11px] text-slate-300 font-bold block mb-1">市尺</label>
+              <input type="number" step="any" id="lenChi" oninput="convertLength('chi')" class="w-full bg-transparent text-[18px] font-mono font-bold text-white outline-none" />
             </div>
           </div>
         </div>
       </div>
 
-      <div id="subTabSize" class="hidden space-y-4 pb-6">
-        <div class="grid grid-cols-5 gap-1.5">
-          <button onclick="renderSizeTable('women')" id="szBtnWomen" class="py-2 rounded-lg text-[12px] font-bold bg-indigo-600 text-white">👩女鞋</button>
-          <button onclick="renderSizeTable('men')" id="szBtnMen" class="py-2 rounded-lg text-[12px] font-bold bg-slate-800 text-slate-300">👨男鞋</button>
-          <button onclick="renderSizeTable('tops')" id="szBtnTops" class="py-2 rounded-lg text-[12px] font-bold bg-slate-800 text-slate-300">👕上衣</button>
-          <button onclick="renderSizeTable('pants')" id="szBtnPants" class="py-2 rounded-lg text-[12px] font-bold bg-slate-800 text-slate-300">👖褲子</button>
-          <button onclick="renderSizeTable('kids')" id="szBtnKids" class="py-2 rounded-lg text-[12px] font-bold bg-slate-800 text-slate-300">🧒兒童</button>
+      <div id="subTabSize" class="hidden space-y-3 pb-6">
+        <div class="grid grid-cols-5 gap-1">
+          <button onclick="renderSizeTable('women')" id="szBtnWomen" class="py-1.5 rounded-lg text-[11px] font-bold bg-indigo-600 text-white">👩女鞋</button>
+          <button onclick="renderSizeTable('men')" id="szBtnMen" class="py-1.5 rounded-lg text-[11px] font-bold bg-slate-800 text-slate-300">👨男鞋</button>
+          <button onclick="renderSizeTable('tops')" id="szBtnTops" class="py-1.5 rounded-lg text-[11px] font-bold bg-slate-800 text-slate-300">👕上衣</button>
+          <button onclick="renderSizeTable('pants')" id="szBtnPants" class="py-1.5 rounded-lg text-[11px] font-bold bg-slate-800 text-slate-300">👖褲子</button>
+          <button onclick="renderSizeTable('kids')" id="szBtnKids" class="py-1.5 rounded-lg text-[11px] font-bold bg-slate-800 text-slate-300">🧒兒童</button>
         </div>
         <div id="sizeTableContainer" class="space-y-3"></div>
       </div>
@@ -336,208 +336,211 @@
   </div>
 
   <!-- 底部導覽列 -->
-  <nav class="w-full shrink-0 bg-slate-950 border-t border-slate-800 flex justify-around items-center z-50 shadow-[0_-5px_20px_rgba(0,0,0,0.5)] pt-1.5 safe-bottom relative pointer-events-auto">
-    <button onclick="switchTab('tabCalc')" id="navCalc" class="flex flex-col items-center gap-0.5 w-1/4 text-emerald-400 transition-colors py-0.5 cursor-pointer">
+  <nav class="w-full shrink-0 bg-slate-950 border-t border-slate-800 flex justify-around items-center z-40 pt-1.5 safe-bottom">
+    <button type="button" onclick="switchTab('tabCalc')" id="navCalc" class="flex flex-col items-center gap-0.5 w-1/4 text-emerald-400 py-1 active:scale-95 transition-transform">
       <span class="text-[18px] leading-none">🧮</span><span class="text-[11px] font-bold">匯率計算</span>
     </button>
-    <button onclick="switchTab('tabTravel')" id="navTravel" class="flex flex-col items-center gap-0.5 w-1/4 text-slate-500 hover:text-slate-300 transition-colors py-0.5 cursor-pointer">
+    <button type="button" onclick="switchTab('tabTravel')" id="navTravel" class="flex flex-col items-center gap-0.5 w-1/4 text-slate-500 py-1 active:scale-95 transition-transform">
       <span class="text-[18px] leading-none">📒</span><span class="text-[11px] font-bold">旅遊清單</span>
     </button>
-    <button onclick="switchTab('tabShop')" id="navShop" class="flex flex-col items-center gap-0.5 w-1/4 text-slate-500 hover:text-slate-300 transition-colors py-0.5 cursor-pointer">
+    <button type="button" onclick="switchTab('tabShop')" id="navShop" class="flex flex-col items-center gap-0.5 w-1/4 text-slate-500 py-1 active:scale-95 transition-transform">
       <span class="text-[18px] leading-none">🛍️</span><span class="text-[11px] font-bold">代購清單</span>
     </button>
-    <button onclick="switchTab('tabTools')" id="navTools" class="flex flex-col items-center gap-0.5 w-1/4 text-slate-500 hover:text-slate-300 transition-colors py-0.5 cursor-pointer">
+    <button type="button" onclick="switchTab('tabTools')" id="navTools" class="flex flex-col items-center gap-0.5 w-1/4 text-slate-500 py-1 active:scale-95 transition-transform">
       <span class="text-[18px] leading-none">📏</span><span class="text-[11px] font-bold">單位換算</span>
     </button>
   </nav>
 
-  <!-- Modal 對話框 -->
-  <div id="recordChoiceModal" class="absolute inset-0 bg-black/70 z-50 hidden opacity-0 transition-opacity duration-300 flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-sm p-6 flex flex-col gap-4 shadow-2xl transform scale-95 transition-transform duration-300" id="recordChoiceBox">
-      <div class="text-center mb-1">
-        <h3 class="text-[17px] font-bold text-white mb-2">📝 記錄這筆金額</h3>
-        <div class="text-[24px] text-emerald-400 font-mono font-bold leading-none mb-1.5" id="recordAmountDisplay">0</div>
-        <div class="text-[13px] text-slate-400 font-mono" id="recordSubAmountDisplay">0</div>
+  <!-- 各種 Modal 彈窗 -->
+  <div id="recordChoiceModal" class="absolute inset-0 bg-black/75 z-50 hidden opacity-0 transition-opacity duration-200 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-sm p-5 flex flex-col gap-3.5 shadow-2xl transform scale-95 transition-transform duration-200" id="recordChoiceBox">
+      <div class="text-center">
+        <h3 class="text-[16px] font-bold text-white mb-1.5">📝 記錄這筆金額</h3>
+        <div class="text-[22px] text-emerald-400 font-mono font-bold leading-none mb-1" id="recordAmountDisplay">0</div>
+        <div class="text-[12px] text-slate-400 font-mono" id="recordSubAmountDisplay">0</div>
       </div>
-      <button onclick="openTravelForm()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-3.5 rounded-2xl font-bold text-[16px] flex justify-center items-center gap-2 active:scale-95 transition-all shadow-sm">
-        <span class="text-xl">📒</span> 記進【旅遊清單】
+      <button onclick="openTravelForm()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-2xl font-bold text-[15px] flex justify-center items-center gap-2 active:scale-95 shadow">
+        <span class="text-lg">📒</span> 記進【旅遊清單】
       </button>
-      <button onclick="openShopForm()" class="w-full bg-rose-600 hover:bg-rose-500 text-white py-3.5 rounded-2xl font-bold text-[16px] flex justify-center items-center gap-2 active:scale-95 transition-all shadow-sm">
-        <span class="text-xl">🛍️</span> 記進【代購清單】
+      <button onclick="openShopForm()" class="w-full bg-rose-600 hover:bg-rose-500 text-white py-3 rounded-2xl font-bold text-[15px] flex justify-center items-center gap-2 active:scale-95 shadow">
+        <span class="text-lg">🛍️</span> 記進【代購清單】
       </button>
-      <button onclick="closeModal('recordChoiceModal', 'recordChoiceBox')" class="w-full bg-slate-800 text-slate-300 py-3 rounded-2xl font-bold text-[14px] mt-2 active:scale-95 transition-all">取消</button>
+      <button onclick="closeModal('recordChoiceModal', 'recordChoiceBox')" class="w-full bg-slate-800 text-slate-300 py-2.5 rounded-2xl font-bold text-[13px] active:scale-95">取消</button>
     </div>
   </div>
 
-  <div id="travelFormModal" class="absolute inset-0 bg-black/80 z-50 hidden opacity-0 transition-opacity duration-300 flex items-end sm:items-center justify-center">
-    <div class="bg-slate-900 border-t sm:border border-slate-700 rounded-t-3xl sm:rounded-3xl w-full max-w-md p-5 flex flex-col shadow-2xl transform translate-y-full sm:translate-y-0 transition-transform duration-300 max-h-[88%] overflow-y-auto" id="travelFormBox">
-      <h3 class="text-[16px] font-bold text-white mb-3" id="tvlModalTitle">新增旅遊花費</h3>
-      <div class="space-y-3">
+  <!-- 旅遊登記彈窗 -->
+  <div id="travelFormModal" class="absolute inset-0 bg-black/80 z-50 hidden opacity-0 transition-opacity duration-200 flex items-end sm:items-center justify-center">
+    <div class="bg-slate-900 border-t sm:border border-slate-700 rounded-t-3xl sm:rounded-3xl w-full max-w-md p-4 flex flex-col shadow-2xl transform translate-y-full sm:translate-y-0 transition-transform duration-200 max-h-[90%] overflow-y-auto" id="travelFormBox">
+      <h3 class="text-[15px] font-bold text-white mb-2.5" id="tvlModalTitle">新增旅遊花費</h3>
+      <div class="space-y-2.5">
         <div>
-          <label class="text-[13px] text-slate-300 font-bold block mb-1.5">品項名稱</label>
-          <input type="text" id="tvlItem" placeholder="例如：午餐燒肉、計程車" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-[15px] text-white focus:outline-none focus:border-emerald-500" />
+          <label class="text-[12px] text-slate-300 font-bold block mb-1">品項名稱</label>
+          <input type="text" id="tvlItem" placeholder="例如：午餐燒肉、計程車" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-[14px] text-white focus:outline-none focus:border-emerald-500" />
         </div>
-        <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-2.5">
-          <div class="grid grid-cols-2 gap-3">
+        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2">
+          <div class="grid grid-cols-2 gap-2.5">
             <div>
-              <span class="text-[12px] text-slate-400 block font-bold" id="tvlOrigLabel">當地外幣金額</span>
-              <input type="number" step="any" id="tvlOrigAmount" oninput="syncTvlEditAmount()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-mono font-bold text-[18px] outline-none mt-1 focus:border-indigo-500" />
+              <span class="text-[11px] text-slate-400 block font-bold" id="tvlOrigLabel">當地外幣金額</span>
+              <input type="number" step="any" id="tvlOrigAmount" oninput="syncTvlEditAmount()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-white font-mono font-bold text-[16px] outline-none mt-0.5 focus:border-indigo-500" />
             </div>
             <div>
-              <span class="text-[12px] text-slate-400 block font-bold">折合台幣 (可改刷卡)</span>
-              <input type="number" id="tvlTwdAmount" oninput="onTvlTwdInput()" class="w-full bg-slate-900 border border-emerald-500/60 rounded-lg px-2.5 py-1.5 text-emerald-400 font-mono font-bold text-[18px] outline-none mt-1 focus:border-emerald-400 text-right" />
+              <span class="text-[11px] text-slate-400 block font-bold">折合台幣 (可手動修改)</span>
+              <input type="number" id="tvlTwdAmount" oninput="onTvlTwdInput()" class="w-full bg-slate-900 border border-emerald-500/60 rounded-lg px-2 py-1.5 text-emerald-400 font-mono font-bold text-[16px] outline-none mt-0.5 focus:border-emerald-400 text-right" />
             </div>
           </div>
-          <button type="button" id="tvlFeeToggleBtn" onclick="toggleTvlFee()" class="w-full py-2.5 px-3 rounded-xl border border-slate-700 bg-slate-900 flex justify-between items-center transition-all active:scale-95">
-            <span class="text-[13px] font-bold text-slate-200 flex items-center gap-2">
-              <span id="tvlFeeCheckIcon" class="w-4 h-4 rounded border border-slate-500 flex items-center justify-center text-[11px] font-bold"></span>
+          <button type="button" id="tvlFeeToggleBtn" onclick="toggleTvlFee()" class="w-full py-2 px-2.5 rounded-xl border border-slate-700 bg-slate-900 flex justify-between items-center transition-all active:scale-95">
+            <span class="text-[12px] font-bold text-slate-200 flex items-center gap-1.5">
+              <span id="tvlFeeCheckIcon" class="w-4 h-4 rounded border border-slate-500 flex items-center justify-center text-[10px] font-bold"></span>
               <span id="tvlFeeBtnText">💳 點此加計 1.5% 手續費</span>
             </span>
-            <span id="tvlFeePreviewText" class="text-[12px] font-mono font-bold text-amber-400">+NT$ 0 ➔ 0</span>
+            <span id="tvlFeePreviewText" class="text-[11px] font-mono font-bold text-amber-400">+NT$ 0 ➔ 0</span>
           </button>
         </div>
         <div>
-          <label class="text-[13px] text-slate-300 font-bold block mb-1.5">由誰墊付？</label>
-          <select id="tvlPayer" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-[15px] text-white focus:outline-none appearance-none"></select>
+          <label class="text-[12px] text-slate-300 font-bold block mb-1">由誰墊付？</label>
+          <select id="tvlPayer" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-[14px] text-white focus:outline-none"></select>
         </div>
         <div>
-          <div class="flex justify-between items-center mb-2">
-            <label class="text-[13px] text-slate-300 font-bold">分攤成員 (可複選)</label>
-            <div class="flex gap-2">
-              <button type="button" onclick="selectOnlyMe()" class="text-[12px] bg-indigo-950 text-indigo-300 border border-indigo-700 px-2.5 py-1 rounded font-bold active:scale-95">👤 僅自己</button>
-              <button type="button" onclick="selectAllMembers()" class="text-[12px] bg-slate-800 text-slate-300 border border-slate-600 px-2.5 py-1 rounded font-bold active:scale-95">👥 全平分</button>
+          <div class="flex justify-between items-center mb-1.5">
+            <label class="text-[12px] text-slate-300 font-bold">分攤成員</label>
+            <div class="flex gap-1.5">
+              <button type="button" onclick="selectOnlyMe()" class="text-[11px] bg-indigo-950 text-indigo-300 border border-indigo-700 px-2 py-0.5 rounded font-bold active:scale-95">👤 僅自己</button>
+              <button type="button" onclick="selectAllMembers()" class="text-[11px] bg-slate-800 text-slate-300 border border-slate-600 px-2 py-0.5 rounded font-bold active:scale-95">👥 全平分</button>
             </div>
           </div>
-          <div id="tvlSplitters" class="flex flex-wrap gap-2"></div>
+          <div id="tvlSplitters" class="flex flex-wrap gap-1.5"></div>
         </div>
       </div>
-      <div class="flex gap-3 mt-5">
-        <button onclick="closeModal('travelFormModal', 'travelFormBox')" class="flex-1 bg-slate-800 text-slate-300 py-3.5 rounded-xl text-[15px] font-bold active:scale-95 transition-all">取消</button>
-        <button onclick="saveTravelRecord()" class="flex-1 bg-indigo-600 text-white py-3.5 rounded-xl text-[15px] font-bold active:scale-95 transition-all shadow-md">儲存明細</button>
+      <div class="flex gap-2.5 mt-4">
+        <button onclick="closeModal('travelFormModal', 'travelFormBox')" class="flex-1 bg-slate-800 text-slate-300 py-2.5 rounded-xl text-[14px] font-bold active:scale-95">取消</button>
+        <button onclick="saveTravelRecord()" class="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl text-[14px] font-bold active:scale-95 shadow">儲存明細</button>
       </div>
     </div>
   </div>
 
-  <div id="shopFormModal" class="absolute inset-0 bg-black/80 z-50 hidden opacity-0 transition-opacity duration-300 flex items-end sm:items-center justify-center">
-    <div class="bg-slate-900 border-t sm:border border-slate-700 rounded-t-3xl sm:rounded-3xl w-full max-w-md p-5 flex flex-col shadow-2xl transform translate-y-full sm:translate-y-0 transition-transform duration-300 max-h-[88%] overflow-y-auto" id="shopFormBox">
-      <h3 class="text-[16px] font-bold text-white mb-3" id="shopModalTitle">新增代購接單</h3>
-      <div class="space-y-3">
+  <!-- 代購接單彈窗 -->
+  <div id="shopFormModal" class="absolute inset-0 bg-black/80 z-50 hidden opacity-0 transition-opacity duration-200 flex items-end sm:items-center justify-center">
+    <div class="bg-slate-900 border-t sm:border border-slate-700 rounded-t-3xl sm:rounded-3xl w-full max-w-md p-4 flex flex-col shadow-2xl transform translate-y-full sm:translate-y-0 transition-transform duration-200 max-h-[90%] overflow-y-auto" id="shopFormBox">
+      <h3 class="text-[15px] font-bold text-white mb-2.5" id="shopModalTitle">新增代購接單</h3>
+      <div class="space-y-2.5">
         <div class="flex gap-2">
           <div class="flex-1">
-            <label class="text-[12px] text-slate-400 font-bold block mb-1">買家姓名</label>
-            <input type="text" id="shopBuyer" placeholder="陳小姐" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-2 text-[14px] text-white focus:outline-none focus:border-emerald-500" />
+            <label class="text-[11px] text-slate-400 font-bold block mb-1">買家姓名</label>
+            <input type="text" id="shopBuyer" placeholder="陳小姐" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-1.5 text-[14px] text-white focus:outline-none focus:border-emerald-500" />
           </div>
           <div class="flex-[1.5]">
-            <label class="text-[12px] text-slate-400 font-bold block mb-1">代購品項</label>
-            <input type="text" id="shopItem" placeholder="限定包包" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-2 text-[14px] text-white focus:outline-none focus:border-emerald-500" />
+            <label class="text-[11px] text-slate-400 font-bold block mb-1">代購品項</label>
+            <input type="text" id="shopItem" placeholder="限定球鞋" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-1.5 text-[14px] text-white focus:outline-none focus:border-emerald-500" />
           </div>
           <div class="w-14">
-            <label class="text-[12px] text-slate-400 font-bold block mb-1 text-center">數量</label>
-            <input type="number" id="shopQty" min="1" value="1" oninput="syncShopSellUnit()" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-1 py-2 text-[14px] text-white text-center font-bold focus:outline-none focus:border-emerald-500" />
+            <label class="text-[11px] text-slate-400 font-bold block mb-1 text-center">數量</label>
+            <input type="number" id="shopQty" min="1" value="1" oninput="syncShopSellUnit()" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-1 py-1.5 text-[14px] text-white text-center font-bold focus:outline-none focus:border-emerald-500" />
           </div>
         </div>
 
         <div class="flex items-center justify-between bg-slate-800/80 px-2.5 py-1.5 rounded-xl border border-slate-700">
-           <span class="text-[12px] text-slate-200 font-bold">目前採購進度</span>
+           <span class="text-[12px] text-slate-200 font-bold">採購進度</span>
            <select id="shopIsBought" class="bg-slate-900 text-[12px] text-white px-2 py-1 rounded-lg border border-slate-600 outline-none font-bold">
              <option value="true">🛒 已購入</option>
-             <option value="false">📝 待購入 (許願/未買)</option>
+             <option value="false">📝 待購入 (未買)</option>
            </select>
         </div>
         
-        <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-3">
+        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2.5">
           <div class="flex justify-between items-center">
             <span class="text-[12px] text-slate-400 font-bold">單件外幣原價 (<span id="shopOrigCodeLabel">JPY</span>)</span>
-            <input type="number" step="any" id="shopOrigCostInput" oninput="syncShopOrigCost()" class="w-28 bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1 text-white font-mono text-[16px] font-bold text-right outline-none focus:border-emerald-500" />
+            <input type="number" step="any" id="shopOrigCostInput" oninput="syncShopOrigCost()" class="w-28 bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1 text-white font-mono text-[15px] font-bold text-right outline-none focus:border-emerald-500" />
           </div>
           <div class="flex justify-between items-center">
             <div class="flex flex-col">
-              <label class="text-[11px] text-amber-300/90 font-bold mb-0.5">✎ 自訂報價匯率</label>
-              <input type="number" step="0.0001" id="shopUsedRate" oninput="syncShopUsedRate()" class="w-24 bg-slate-800 border border-amber-500/50 rounded-lg px-2.5 py-1.5 text-amber-300 font-mono text-[14px] font-bold outline-none focus:border-amber-400" />
+              <label class="text-[11px] text-amber-300 font-bold mb-0.5">自訂報價匯率</label>
+              <input type="number" step="0.0001" id="shopUsedRate" oninput="syncShopUsedRate()" class="w-24 bg-slate-800 border border-amber-500/50 rounded-lg px-2 py-1 text-amber-300 font-mono text-[13px] font-bold outline-none focus:border-amber-400" />
             </div>
             <div class="flex flex-col items-end">
-              <span class="text-[11px] text-amber-300/90 font-bold mb-1">單件報價成本</span>
-              <span class="text-[16px] text-amber-300 font-mono font-bold" id="shopTwdCostText">NT$ 0</span>
+              <span class="text-[11px] text-amber-300 font-bold mb-0.5">單件成本</span>
+              <span class="text-[15px] text-amber-300 font-mono font-bold" id="shopTwdCostText">NT$ 0</span>
             </div>
           </div>
-          <div class="border-t border-slate-800 pt-3 flex justify-between items-center">
+          <div class="border-t border-slate-800 pt-2 flex justify-between items-center">
             <div>
-              <span class="text-[14px] text-white font-bold block">👉 單件向客收費</span>
-              <span class="text-[11px] text-slate-400 font-mono" id="shopTotalSellHint">x1件 總收費: NT$ 0</span>
+              <span class="text-[13px] text-white font-bold block">單件向客收費</span>
+              <span class="text-[11px] text-slate-400 font-mono" id="shopTotalSellHint">x1件 總額: NT$ 0</span>
             </div>
-            <input type="number" id="shopSellUnit" oninput="syncShopSellUnit()" class="w-28 bg-slate-800 border border-emerald-500/50 rounded-lg px-2.5 py-1.5 text-emerald-400 font-mono font-bold text-right outline-none focus:border-emerald-500 text-[16px]" />
+            <input type="number" id="shopSellUnit" oninput="syncShopSellUnit()" class="w-28 bg-slate-800 border border-emerald-500/50 rounded-lg px-2.5 py-1 text-emerald-400 font-mono font-bold text-right outline-none focus:border-emerald-500 text-[15px]" />
           </div>
 
-          <div id="shopActualRateContainer" class="hidden flex-col gap-2.5 border-t border-slate-800 pt-3 mt-1.5">
+          <div id="shopActualRateContainer" class="hidden flex-col gap-2 border-t border-slate-800 pt-2">
             <div class="flex justify-between items-center">
               <div class="flex flex-col">
-                <label class="text-[11px] text-sky-400 font-bold mb-0.5">後台: 實際結帳匯率</label>
-                <input type="number" step="0.0001" id="shopActualRate" oninput="syncShopActualRate()" class="w-24 bg-slate-800 border border-sky-500/50 rounded-lg px-2.5 py-1.5 text-sky-400 font-mono text-[14px] outline-none focus:border-sky-500" />
+                <label class="text-[11px] text-sky-400 font-bold mb-0.5">實際結帳匯率</label>
+                <input type="number" step="0.0001" id="shopActualRate" oninput="syncShopActualRate()" class="w-24 bg-slate-800 border border-sky-500/50 rounded-lg px-2 py-1 text-sky-400 font-mono text-[13px] outline-none focus:border-sky-500" />
               </div>
               <div class="flex flex-col items-end">
-                <span class="text-[11px] text-sky-400 font-bold mb-1">單件實際台幣</span>
-                <input type="number" id="shopActualCostInput" oninput="onShopActualCostInput()" class="w-28 bg-slate-800 border border-sky-500/50 rounded-lg px-2.5 py-1.5 text-sky-400 font-mono font-bold text-[16px] text-right outline-none focus:border-sky-400" />
+                <span class="text-[11px] text-sky-400 font-bold mb-0.5">單件實際台幣</span>
+                <input type="number" id="shopActualCostInput" oninput="onShopActualCostInput()" class="w-28 bg-slate-800 border border-sky-500/50 rounded-lg px-2.5 py-1 text-sky-400 font-mono font-bold text-[15px] text-right outline-none focus:border-sky-400" />
               </div>
             </div>
-            <button type="button" id="shopFeeToggleBtn" onclick="toggleShopFee()" class="w-full py-2 px-3 rounded-xl border border-slate-700 bg-slate-900 flex justify-between items-center transition-all active:scale-95">
-              <span class="text-[12px] font-bold text-slate-200 flex items-center gap-1.5">
-                <span id="shopFeeCheckIcon" class="w-4 h-4 rounded border border-slate-500 flex items-center justify-center text-[10px] font-bold"></span>
+            <button type="button" id="shopFeeToggleBtn" onclick="toggleShopFee()" class="w-full py-1.5 px-2.5 rounded-xl border border-slate-700 bg-slate-900 flex justify-between items-center transition-all active:scale-95">
+              <span class="text-[11px] font-bold text-slate-200 flex items-center gap-1.5">
+                <span id="shopFeeCheckIcon" class="w-3.5 h-3.5 rounded border border-slate-500 flex items-center justify-center text-[9px] font-bold"></span>
                 <span id="shopFeeBtnText">💳 點此加計 1.5% 刷卡手續費</span>
               </span>
               <span id="shopFeePreviewText" class="text-[11px] font-mono font-bold text-sky-300">+NT$ 0 ➔ 0</span>
             </button>
-            <div class="bg-slate-900 rounded-lg p-2.5 border border-slate-800 text-xs font-mono space-y-1 mt-0.5">
+            <div class="bg-slate-900 rounded-lg p-2 border border-slate-800 text-[11px] font-mono space-y-1">
               <div class="flex justify-between text-amber-300">
                 <span>中間賺取匯差：</span><span id="shopEditRateDiffText" class="font-bold">+0 NT$</span>
               </div>
               <div class="flex justify-between items-center text-emerald-400 font-bold pt-1 border-t border-slate-800">
                 <span>總計 <span id="shopQtyLabel">1</span> 件實賺總淨利：</span>
-                <span class="text-[18px] text-emerald-400 font-mono font-bold" id="shopProfitText">+0</span>
+                <span class="text-[16px] text-emerald-400 font-mono font-bold" id="shopProfitText">+0</span>
               </div>
             </div>
           </div>
         </div>
       </div>
-      <div class="flex gap-2.5 mt-5">
-        <button onclick="closeModal('shopFormModal', 'shopFormBox')" class="flex-1 bg-slate-800 text-slate-300 py-3 rounded-xl text-[14px] font-bold active:scale-95 transition-all">取消</button>
-        <button onclick="saveShopRecord()" class="flex-1 bg-rose-600 text-white py-3 rounded-xl text-[14px] font-bold active:scale-95 transition-all shadow-md">儲存接單</button>
+      <div class="flex gap-2 mt-4">
+        <button onclick="closeModal('shopFormModal', 'shopFormBox')" class="flex-1 bg-slate-800 text-slate-300 py-2.5 rounded-xl text-[14px] font-bold active:scale-95">取消</button>
+        <button onclick="saveShopRecord()" class="flex-1 bg-rose-600 text-white py-2.5 rounded-xl text-[14px] font-bold active:scale-95 shadow">儲存接單</button>
       </div>
     </div>
   </div>
 
-  <div id="backupModal" class="absolute inset-0 bg-black/80 z-50 hidden opacity-0 transition-opacity duration-300 flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-sm p-5 flex flex-col gap-3.5 shadow-2xl transform scale-95 transition-transform duration-300" id="backupBox">
-      <div class="flex justify-between items-center border-b border-slate-800 pb-2.5">
-        <h3 class="text-[16px] font-bold text-white">💾 帳本資料備份與還原</h3>
-        <button onclick="closeModal('backupModal', 'backupBox')" class="text-slate-400 hover:text-white text-sm font-bold px-2">✕</button>
+  <!-- 備份還原 Modal -->
+  <div id="backupModal" class="absolute inset-0 bg-black/80 z-50 hidden opacity-0 transition-opacity duration-200 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-sm p-4 flex flex-col gap-3 shadow-2xl transform scale-95 transition-transform duration-200" id="backupBox">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+        <h3 class="text-[15px] font-bold text-white">💾 備份與還原</h3>
+        <button onclick="closeModal('backupModal', 'backupBox')" class="text-slate-400 hover:text-white text-sm font-bold px-1.5">✕</button>
       </div>
-      <p class="text-[12px] text-slate-300 leading-relaxed">可將目前的帳本轉為備份碼保存；換手機後貼回下方即可完整還原。</p>
-      <button onclick="copyBackupCode()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-bold text-[14px] active:scale-95 transition-all shadow-md">
-        📋 一鍵複製目前帳本備份碼
+      <button onclick="copyBackupCode()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-xl font-bold text-[13px] active:scale-95 shadow">
+        📋 一鍵複製備份碼
       </button>
-      <div class="border-t border-slate-800 pt-3 space-y-2">
-        <label class="text-[12px] text-amber-300 font-bold block">📥 貼上備份碼還原：</label>
-        <textarea id="restoreCodeInput" rows="3" placeholder="請在此長按貼上備份碼..." class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-[12px] text-white font-mono focus:outline-none focus:border-amber-500"></textarea>
-        <button onclick="restoreFromCode()" class="w-full bg-amber-600 hover:bg-amber-500 text-white py-2.5 rounded-xl font-bold text-[14px] active:scale-95 transition-all shadow-md">
-          🔄 確認還原帳本資料
+      <div class="border-t border-slate-800 pt-2.5 space-y-2">
+        <label class="text-[11px] text-amber-300 font-bold block">貼上備份碼還原：</label>
+        <textarea id="restoreCodeInput" rows="2" placeholder="在此貼上備份碼..." class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2 text-[12px] text-white font-mono focus:outline-none"></textarea>
+        <button onclick="restoreFromCode()" class="w-full bg-amber-600 hover:bg-amber-500 text-white py-2 rounded-xl font-bold text-[13px] active:scale-95 shadow">
+          🔄 確認還原
         </button>
       </div>
     </div>
   </div>
 
-  <div id="currencySheetOverlay" class="absolute inset-0 bg-black/60 z-50 hidden opacity-0 transition-opacity duration-300" onclick="closeCurrencySheet()"></div>
-  <div id="currencySheet" class="absolute bottom-0 left-0 right-0 bg-slate-900 rounded-t-3xl h-[70%] z-50 sheet-closed transition-transform duration-300 flex flex-col border-t border-slate-700">
-    <div class="px-5 py-4 border-b border-slate-800 flex justify-between items-center">
-      <h3 class="text-[18px] font-bold text-white">選擇外幣</h3>
-      <button onclick="closeCurrencySheet()" class="p-2 bg-slate-800 rounded-full text-slate-300 active:scale-95"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+  <!-- 幣別選擇 Sheet -->
+  <div id="currencySheetOverlay" class="absolute inset-0 bg-black/60 z-50 hidden opacity-0 transition-opacity duration-200" onclick="closeCurrencySheet()"></div>
+  <div id="currencySheet" class="absolute bottom-0 left-0 right-0 bg-slate-900 rounded-t-3xl h-[68%] z-50 sheet-closed transition-transform duration-200 flex flex-col border-t border-slate-700">
+    <div class="px-4 py-3 border-b border-slate-800 flex justify-between items-center">
+      <h3 class="text-[16px] font-bold text-white">選擇幣別</h3>
+      <button onclick="closeCurrencySheet()" class="p-1.5 bg-slate-800 rounded-full text-slate-300 active:scale-95"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
     </div>
-    <div id="sheetList" class="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-3 pb-8 content-start"></div>
+    <div id="sheetList" class="flex-1 overflow-y-auto p-3.5 grid grid-cols-2 gap-2.5 content-start"></div>
   </div>
 
 </div>
 
 <script>
-// ================= 動態高度 =================
+// 高度自適應
 function syncAppHeight() {
   const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
   document.documentElement.style.setProperty('--app-height', `${vh}px`);
@@ -546,7 +549,7 @@ window.addEventListener('resize', syncAppHeight);
 if (window.visualViewport) window.visualViewport.addEventListener('resize', syncAppHeight);
 syncAppHeight();
 
-// ================= 安全儲存 =================
+// 儲存封裝
 const SafeStorage = {
   get(key, def) {
     try { const val = localStorage.getItem(key); return val ? JSON.parse(val) : def; } 
@@ -558,7 +561,7 @@ const SafeStorage = {
   }
 };
 
-// ================= PWA 安裝提示控制 =================
+// PWA 安裝控制
 let deferredPrompt;
 const installBanner = document.getElementById('installBanner');
 const installAppBtn = document.getElementById('installAppBtn');
@@ -576,7 +579,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
 installAppBtn.addEventListener('click', async () => {
   if (deferredPrompt) {
     deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
+    await deferredPrompt.userChoice;
     deferredPrompt = null;
     installBanner.classList.add('hidden');
   } else {
@@ -589,15 +592,7 @@ closeInstallBannerBtn.addEventListener('click', () => {
   SafeStorage.set('hideInstallBanner', true);
 });
 
-window.addEventListener('appinstalled', () => {
-  installBanner.classList.add('hidden');
-});
-
-if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
-  installBanner.classList.add('hidden');
-}
-
-// ================= 核心設定 =================
+// 匯率資料庫
 const defaultRates = {
   "TWD": { code: "TWD", name: "新台幣", flag: "🇹🇼", rate: 1.0 },
   "USD": { code: "USD", name: "美金", flag: "🇺🇸", rate: 32.48 },
@@ -640,12 +635,12 @@ let members = SafeStorage.get('app_members', ['我', '老婆', '朋友A']);
 let travelRecords = SafeStorage.get('app_travel_records', []);
 let shopRecords = SafeStorage.get('app_shop_records', []);
 
-// 資料自動相容與修復 (終極防護)
-shopRecords = shopRecords.map(r => {
+// 資料自動容錯轉換
+shopRecords = (Array.isArray(shopRecords) ? shopRecords : []).map(r => {
   if (!r) return null;
   const cost = Number(r.origCost) || 0;
   const sellUnit = Number(r.sellUnit ?? r.sell) || 0;
-  const usedRate = Number(r.usedRate) || (cost > 0 ? (Number(r.twdCost)||0) / cost : 0.2185);
+  const usedRate = Number(r.usedRate) || (cost > 0 ? (Number(r.twdCost) || 0) / cost : 0.2185);
   const actualRate = Number(r.actualRate) || usedRate;
   const twdCost = Number(r.twdCost) || Math.round(cost * usedRate);
   const actualCost = Number(r.actualCost) || twdCost;
@@ -677,7 +672,7 @@ function getCustomPairRate(tCode, bCode) {
 
 function escHTML(str) { return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m])); }
 
-// ================= 備份與還原 =================
+// 備份功能
 function openBackupModal() { document.getElementById('restoreCodeInput').value = ''; showModal('backupModal', 'backupBox'); }
 function copyBackupCode() {
   const code = btoa(encodeURIComponent(JSON.stringify({ members, travelRecords, shopRecords, customCrossRates, feeRate, taxRate })));
@@ -702,7 +697,7 @@ function restoreFromCode() {
     
     updateAddonButtons(); renderTravelList(); renderShopList(); closeModal('backupModal', 'backupBox');
     alert("✅ 帳本成功還原！");
-  } catch (e) { alert("❌ 備份碼損壞或不相容！"); }
+  } catch (e) { alert("❌ 備份碼無效！"); }
 }
 
 function copyTextToClipboard(text, successMsg) {
@@ -711,11 +706,11 @@ function copyTextToClipboard(text, successMsg) {
 }
 function fallbackCopy(text, successMsg) {
   const ta = document.createElement('textarea'); ta.value = text;
-  ta.style.position = 'fixed'; ta.style.opacity = '0'; ta.style.pointerEvents = 'none'; 
+  ta.style.position = 'fixed'; ta.style.opacity = '0';
   document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); alert(successMsg);
 }
 
-// ================= 計算機核心 =================
+// 安全算式解析器
 function evalSafe(expr) {
   try {
     let san = String(expr).trim(); if (!san) return 0;
@@ -730,40 +725,46 @@ function evalSafe(expr) {
   } catch { return 0; }
 }
 
+// 核心匯率抓取（加強平滑回退，保證不卡畫面）
 async function fetchRates() {
-  const ind = document.getElementById('statusIndicator'), ut = document.getElementById('rateUpdateTime');
-  ind.className = "w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse shrink-0"; ut.textContent = "連線全球即時匯率中...";
-  
-  // 加入隨機參數，確保 fetch 絕對不會吃到死快取
-  const url = `https://open.er-api.com/v6/latest/TWD?nocache=${new Date().getTime()}`;
+  const ind = document.getElementById('statusIndicator');
+  const ut = document.getElementById('rateUpdateTime');
+  ind.className = "w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse shrink-0";
+  ut.textContent = "連線全球即時匯率中...";
+
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 7000);
-  
+  const timer = setTimeout(() => controller.abort(), 6000);
+
   try {
-    const res = await fetch(url, { signal: controller.signal, cache: 'no-store' });
-    clearTimeout(timer); 
-    if (!res.ok) throw new Error();
-    
+    const res = await fetch(`https://open.er-api.com/v6/latest/TWD?_t=${Date.now()}`, { 
+      signal: controller.signal, 
+      cache: 'no-store' 
+    });
+    clearTimeout(timer);
+    if (!res.ok) throw new Error('API Response Error');
     const data = await res.json();
     if (data && data.result === "success" && data.rates) {
-      let hasUp = false;
       Object.keys(currentRates).forEach(code => {
         if (code !== 'TWD' && typeof data.rates[code] === 'number' && data.rates[code] > 0) { 
-          currentRates[code].rate = parseFloat((1 / data.rates[code]).toFixed(4)); hasUp = true; 
+          currentRates[code].rate = parseFloat((1 / data.rates[code]).toFixed(4));
         } 
       });
-      if (hasUp) { 
-        SafeStorage.set('global_rates_cache', currentRates); 
-        ind.className = "w-2.5 h-2.5 rounded-full bg-emerald-400 shrink-0"; 
-        ut.textContent = `匯率已同步 (${new Date().toLocaleTimeString('zh-TW', {hour:'2-digit',minute:'2-digit'})})`; 
-      }
+      SafeStorage.set('global_rates_cache', currentRates); 
+      ind.className = "w-2.5 h-2.5 rounded-full bg-emerald-400 shrink-0"; 
+      ut.textContent = `匯率已同步 (${new Date().toLocaleTimeString('zh-TW', {hour:'2-digit',minute:'2-digit'})})`; 
+    } else {
+      throw new Error('Data format error');
     }
-  } catch (e) { 
-    ind.className = "w-2.5 h-2.5 rounded-full bg-slate-500 shrink-0"; ut.textContent = "使用離線快取資料"; 
+  } catch (e) {
+    clearTimeout(timer);
+    // 連線失敗或逾時，直接平滑使用預設快取，不報錯不卡死
+    ind.className = "w-2.5 h-2.5 rounded-full bg-slate-500 shrink-0"; 
+    ut.textContent = `使用離線快取匯率 (${new Date().toLocaleTimeString('zh-TW', {hour:'2-digit',minute:'2-digit'})})`;
   }
-  updateCurrencyMeta(); renderCalculation(); updateAddonButtons();
+  updateCurrencyMeta(); 
+  renderCalculation(); 
+  updateAddonButtons();
 }
-document.getElementById('refreshBtn').addEventListener('click', fetchRates);
 
 function setActiveInput(type) {
   activeInputType = type;
@@ -846,7 +847,6 @@ function renderCalculation() {
   } else bdBox.classList.add('hidden');
 }
 
-// ================= 全域按鈕觸發 =================
 function toggleGlobalFee() { applyFee = !applyFee; updateAddonButtons(); }
 function toggleGlobalTax() { applyTaxFree = !applyTaxFree; updateAddonButtons(); }
 
@@ -870,7 +870,6 @@ function promptCustomRate() {
 }
 function resetToLiveRate() { delete customCrossRates[`${targetCode}_${baseCode}`]; delete customCrossRates[`${baseCode}_${targetCode}`]; SafeStorage.set('custom_pairs_cache', customCrossRates); updateCurrencyMeta(); renderCalculation(); }
 
-// ================= UI 與分頁 =================
 function switchTab(tabId) {
   ['tabCalc', 'tabTravel', 'tabShop', 'tabTools'].forEach(id => document.getElementById(id).classList.add('hidden'));
   document.getElementById(tabId).classList.remove('hidden');
@@ -891,7 +890,7 @@ function closeModal(bgId, boxId) {
   document.getElementById(boxId).classList.remove('scale-100', 'translate-y-0'); document.getElementById(boxId).classList.add('scale-95', 'translate-y-full');
   document.getElementById(bgId).classList.replace('opacity-100', 'opacity-0');
   if(modalHideTimer) clearTimeout(modalHideTimer);
-  modalHideTimer = setTimeout(() => { document.getElementById(bgId).classList.add('hidden'); }, 300);
+  modalHideTimer = setTimeout(() => { document.getElementById(bgId).classList.add('hidden'); }, 200);
 }
 
 function openCurrencySheet(mode) {
@@ -903,7 +902,7 @@ function openCurrencySheet(mode) {
 function closeCurrencySheet() {
   document.getElementById('currencySheet').classList.replace('sheet-open', 'sheet-closed');
   document.getElementById('currencySheetOverlay').classList.replace('opacity-100', 'opacity-0');
-  setTimeout(() => document.getElementById('currencySheetOverlay').classList.add('hidden'), 300);
+  setTimeout(() => document.getElementById('currencySheetOverlay').classList.add('hidden'), 200);
 }
 function buildSheetList() {
   const htmlBuffer = [];
@@ -911,7 +910,7 @@ function buildSheetList() {
     const info = currentRates[code], aCode = sheetMode === 'target' ? targetCode : baseCode;
     const aStyle = code === aCode ? 'border-emerald-500 bg-emerald-900/30' : 'border-slate-700 bg-slate-800';
     const cBadge = getCustomPairRate(code, 'TWD') !== undefined ? `<span class="bg-amber-500/20 text-amber-400 text-[10px] px-1.5 py-0.5 rounded ml-1.5 font-bold">自訂</span>` : '';
-    htmlBuffer.push(`<button onclick="selectCurrency('${code}')" class="flex items-center gap-3 p-3.5 rounded-xl border text-left transition-all active:scale-95 ${aStyle}"><span class="text-4xl">${info.flag}</span><div class="flex-1 min-w-0"><div class="font-bold text-[18px] text-white leading-none flex items-center">${code}${cBadge}</div><div class="text-[14px] font-bold text-slate-300 mt-1.5 truncate">${info.name}</div></div></button>`);
+    htmlBuffer.push(`<button type="button" onclick="selectCurrency('${code}')" class="flex items-center gap-3 p-3 rounded-xl border text-left transition-all active:scale-95 ${aStyle}"><span class="text-3xl">${info.flag}</span><div class="flex-1 min-w-0"><div class="font-bold text-[16px] text-white leading-none flex items-center">${code}${cBadge}</div><div class="text-[13px] font-bold text-slate-300 mt-1 truncate">${info.name}</div></div></button>`);
   });
   document.getElementById('sheetList').innerHTML = htmlBuffer.join('');
 }
@@ -925,7 +924,7 @@ function selectCurrency(code) {
 function openRecordChoiceModal() {
   editingTravelId = null; editingShopId = null;
   document.getElementById('recordAmountDisplay').textContent = `${snapOrigAmount.toLocaleString()} ${snapOrigCode}`;
-  document.getElementById('recordSubAmountDisplay').textContent = `計算成本 ≈ NT$ ${snapTwdAmount.toLocaleString()}${applyFee ? ` (已含${feeRate}%刷卡)` : ''}`;
+  document.getElementById('recordSubAmountDisplay').textContent = `折合成本 ≈ NT$ ${snapTwdAmount.toLocaleString()}${applyFee ? ` (含${feeRate}%刷卡)` : ''}`;
   showModal('recordChoiceModal', 'recordChoiceBox');
 }
 
@@ -935,19 +934,19 @@ function renderFeeToggleUI(type, applied, baseTwd) {
   if (!btn) return;
   const theme = type === 'shop' ? 'sky' : 'emerald';
   if (applied) {
-    btn.className = `w-full py-2.5 px-3 rounded-xl border border-${theme}-500 bg-${theme}-950/60 flex justify-between items-center transition-all active:scale-95 shadow-sm`;
-    icon.className = `w-4 h-4 rounded bg-${theme}-500 border border-${theme}-400 text-slate-950 flex items-center justify-center text-[11px] font-bold`;
-    icon.textContent = "✓"; txt.className = `text-${theme}-300 font-bold`; txt.textContent = `💳 已加 ${feeRate}% 手續費`;
-    prev.className = `text-[12px] font-mono font-bold text-${theme}-400`; prev.textContent = `未稅 ${baseTwd.toLocaleString()} + 費 ${feeAmt.toLocaleString()}`;
+    btn.className = `w-full py-2 px-2.5 rounded-xl border border-${theme}-500 bg-${theme}-950/60 flex justify-between items-center transition-all active:scale-95 shadow-sm`;
+    icon.className = `w-4 h-4 rounded bg-${theme}-500 border border-${theme}-400 text-slate-950 flex items-center justify-center text-[10px] font-bold`;
+    icon.textContent = "✓"; txt.className = `text-${theme}-300 font-bold text-[12px]`; txt.textContent = `💳 已加 ${feeRate}% 手續費`;
+    prev.className = `text-[11px] font-mono font-bold text-${theme}-400`; prev.textContent = `未稅 ${baseTwd.toLocaleString()} + 費 ${feeAmt.toLocaleString()}`;
   } else {
-    btn.className = "w-full py-2.5 px-3 rounded-xl border border-slate-700 bg-slate-900 hover:bg-slate-800 flex justify-between items-center transition-all active:scale-95";
-    icon.className = "w-4 h-4 rounded border border-slate-500 flex items-center justify-center text-[11px] font-bold";
-    icon.textContent = ""; txt.className = "text-slate-200 font-bold"; txt.textContent = `💳 點此加計 ${feeRate}% 刷卡手續費`;
-    prev.className = "text-[12px] font-mono font-bold text-amber-400"; prev.textContent = `+NT$ ${feeAmt.toLocaleString()} ➔ ${total.toLocaleString()}`;
+    btn.className = "w-full py-2 px-2.5 rounded-xl border border-slate-700 bg-slate-900 hover:bg-slate-800 flex justify-between items-center transition-all active:scale-95";
+    icon.className = "w-4 h-4 rounded border border-slate-500 flex items-center justify-center text-[10px] font-bold";
+    icon.textContent = ""; txt.className = "text-slate-200 font-bold text-[12px]"; txt.textContent = `💳 點此加計 ${feeRate}% 刷卡手續費`;
+    prev.className = "text-[11px] font-mono font-bold text-amber-400"; prev.textContent = `+NT$ ${feeAmt.toLocaleString()} ➔ ${total.toLocaleString()}`;
   }
 }
 
-// ================= 旅遊清單 =================
+// 旅遊記帳
 function toggleCurrencyView() { currencyViewMode = currencyViewMode === 'dual' ? 'foreign' : (currencyViewMode === 'foreign' ? 'twd' : 'dual'); SafeStorage.set('app_curr_view_mode', currencyViewMode); updateCurrencyViewBtn(); renderTravelList(); }
 function updateCurrencyViewBtn() { const btn = document.getElementById('currencyViewBtn'); if (btn) btn.textContent = currencyViewMode === 'dual' ? '🔀 雙幣對照' : (currencyViewMode === 'foreign' ? '💴 當地外幣' : '🇹🇼 結算台幣'); }
 
@@ -972,7 +971,7 @@ function buildTravelMemberInputs(selectedPayer, selectedSplitters) {
   const allMembers = Array.from(new Set([...members, selectedPayer, ...(selectedSplitters || [])])).filter(Boolean);
   allMembers.forEach(m => {
     const sm = escHTML(m); payerHTML += `<option value="${sm}" ${m === selectedPayer ? 'selected' : ''}>${sm}</option>`;
-    splitHTML += `<label class="flex items-center gap-1.5 bg-slate-800 border border-slate-700 px-3 py-2 rounded-lg text-[14px] text-white cursor-pointer select-none has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-900/30 transition-all whitespace-nowrap"><input type="checkbox" value="${sm}" ${(selectedSplitters || []).includes(m) ? 'checked' : ''} class="accent-indigo-500 w-4 h-4"> ${sm}</label>`;
+    splitHTML += `<label class="flex items-center gap-1.5 bg-slate-800 border border-slate-700 px-2.5 py-1.5 rounded-lg text-[13px] text-white cursor-pointer select-none has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-900/30 transition-all whitespace-nowrap"><input type="checkbox" value="${sm}" ${(selectedSplitters || []).includes(m) ? 'checked' : ''} class="accent-indigo-500 w-3.5 h-3.5"> ${sm}</label>`;
   });
   payerSel.innerHTML = payerHTML; splitDiv.innerHTML = splitHTML;
 }
@@ -984,7 +983,7 @@ function openTravelForm() {
   document.getElementById('tvlModalTitle').textContent = '新增旅遊花費'; document.getElementById('tvlOrigLabel').textContent = `當地外幣金額 (${snapOrigCode})`;
   document.getElementById('tvlOrigAmount').value = snapOrigAmount; document.getElementById('tvlTwdAmount').value = snapTwdAmount; document.getElementById('tvlItem').value = '';
   tvlFeeApplied = applyFee; tvlBaseTwd = applyFee ? Math.round(snapTwdAmount / (1 + feeRate / 100)) : snapTwdAmount;
-  updateTvlFeeUI(); buildTravelMemberInputs(members[0], members); setTimeout(() => showModal('travelFormModal', 'travelFormBox'), 200);
+  updateTvlFeeUI(); buildTravelMemberInputs(members[0], members); setTimeout(() => showModal('travelFormModal', 'travelFormBox'), 150);
 }
 function editTravelRecord(id) {
   const rec = travelRecords.find(r => r.id === id); if (!rec) return; editingTravelId = id;
@@ -1010,9 +1009,9 @@ function renderTravelList() {
   document.getElementById('tvlTotalCount').textContent = `共 ${travelRecords.length} 筆消費`;
   const myName = members[0] || '我'; document.getElementById('tvlMyShareLabel').textContent = `${myName}的實質花費`;
 
-  if (travelRecords.length === 0) {
+  if (!travelRecords || travelRecords.length === 0) {
     document.getElementById('tvlGroupTotal').textContent = 'NT$ 0'; document.getElementById('tvlMyShareTotal').textContent = 'NT$ 0';
-    list.innerHTML = `<div class="text-center text-slate-500 py-10 text-[14px]">尚無記帳紀錄</div>`; summary.innerHTML = `<div class="text-slate-500 text-center py-2 text-[14px]">目前沒有帳目</div>`; return;
+    list.innerHTML = `<div class="text-center text-slate-500 py-8 text-[13px]">尚無記帳紀錄</div>`; summary.innerHTML = `<div class="text-slate-500 text-center py-1 text-[13px]">目前沒有帳目</div>`; return;
   }
   
   let groupTotalTwd = 0, myShareTotalTwd = 0, balances = {}; members.forEach(m => balances[m] = { TWD: 0 });
@@ -1020,17 +1019,16 @@ function renderTravelList() {
     const twdAmt = Number(r.twdAmount) || 0;
     const origAmt = Number(r.origAmount) || 0;
     groupTotalTwd += twdAmt;
-    const splitCount = Math.max(1, (r.splitters && r.splitters.length) ? r.splitters.length : 1);
+    const splitters = (Array.isArray(r.splitters) && r.splitters.length > 0) ? r.splitters : [myName];
+    const splitCount = splitters.length;
     const splitTwd = twdAmt / splitCount, splitOrig = origAmt / splitCount;
-    if (r.splitters && r.splitters.includes(myName)) myShareTotalTwd += splitTwd;
+    if (splitters.includes(myName)) myShareTotalTwd += splitTwd;
     if (!balances[r.payer]) balances[r.payer] = { TWD: 0 }; balances[r.payer].TWD += twdAmt;
     if (r.origCode !== 'TWD') { if (!balances[r.payer][r.origCode]) balances[r.payer][r.origCode] = 0; balances[r.payer][r.origCode] += origAmt; }
-    if (r.splitters) {
-      r.splitters.forEach(s => {
-        if (!balances[s]) balances[s] = { TWD: 0 }; balances[s].TWD -= splitTwd;
-        if (r.origCode !== 'TWD') { if (!balances[s][r.origCode]) balances[s][r.origCode] = 0; balances[s][r.origCode] -= splitOrig; }
-      });
-    }
+    splitters.forEach(s => {
+      if (!balances[s]) balances[s] = { TWD: 0 }; balances[s].TWD -= splitTwd;
+      if (r.origCode !== 'TWD') { if (!balances[s][r.origCode]) balances[s][r.origCode] = 0; balances[s][r.origCode] -= splitOrig; }
+    });
   });
 
   document.getElementById('tvlGroupTotal').textContent = `NT$ ${Math.round(groupTotalTwd).toLocaleString()}`; document.getElementById('tvlMyShareTotal').textContent = `NT$ ${Math.round(myShareTotalTwd).toLocaleString()}`;
@@ -1041,19 +1039,19 @@ function renderTravelList() {
     if (netTwd === 0 && Object.keys(b).every(k => Math.round(b[k]) === 0)) return;
     let foreignStrs = []; Object.keys(b).forEach(code => { if (code !== 'TWD' && Math.abs(b[code]) >= 0.5 && (b[code] * netTwd >= 0)) foreignStrs.push(`${Math.round(Math.abs(b[code])).toLocaleString()} ${code}`); });
     const fText = foreignStrs.join(' + ');
-    const displayHTML = (currencyViewMode === 'dual' && fText) ? `${fText} <span class="text-[12px] font-normal text-slate-400 ml-1">(≈ NT$ ${Math.abs(netTwd).toLocaleString()})</span>` : (currencyViewMode === 'foreign' && fText ? fText : `NT$ ${Math.abs(netTwd).toLocaleString()}`);
-    sumHTML.push(`<div class="flex justify-between items-center py-1.5"><span class="text-white font-bold text-[15px]">${escHTML(m)}</span><span class="${netTwd >= 0 ? 'text-emerald-400' : 'text-rose-400'} font-bold font-mono text-[15px] text-right">${netTwd >= 0 ? '應收回' : '須支付'} ${displayHTML}</span></div>`);
+    const displayHTML = (currencyViewMode === 'dual' && fText) ? `${fText} <span class="text-[11px] font-normal text-slate-400 ml-1">(≈ NT$ ${Math.abs(netTwd).toLocaleString()})</span>` : (currencyViewMode === 'foreign' && fText ? fText : `NT$ ${Math.abs(netTwd).toLocaleString()}`);
+    sumHTML.push(`<div class="flex justify-between items-center py-1"><span class="text-white font-bold text-[14px]">${escHTML(m)}</span><span class="${netTwd >= 0 ? 'text-emerald-400' : 'text-rose-400'} font-bold font-mono text-[14px] text-right">${netTwd >= 0 ? '應收回' : '須支付'} ${displayHTML}</span></div>`);
   });
-  summary.innerHTML = sumHTML.length ? sumHTML.join('') : '<div class="text-slate-400 text-center py-2 text-[14px]">結清完成！大家已互不相欠 🎉</div>';
+  summary.innerHTML = sumHTML.length ? sumHTML.join('') : '<div class="text-slate-400 text-center py-1 text-[13px]">結清完成！大家互不相欠 🎉</div>';
 
   const listHTML = [];
   [...travelRecords].reverse().forEach(r => {
     const oAmt = Number(r.origAmount) || 0;
     const tAmt = Number(r.twdAmount) || 0;
-    const priceHTML = currencyViewMode === 'dual' ? `<div class="text-right"><div class="text-white font-mono font-bold text-[17px]">${oAmt.toLocaleString()} ${r.origCode}</div><div class="text-[13px] text-emerald-400 font-mono mt-0.5">≈ NT$ ${tAmt.toLocaleString()}</div></div>` : (currencyViewMode === 'foreign' ? `<div class="text-white font-mono font-bold text-[17px]">${oAmt.toLocaleString()} ${r.origCode}</div>` : `<div class="text-emerald-400 font-mono font-bold text-[17px]">NT$ ${tAmt.toLocaleString()}</div>`);
-    const splitters = r.splitters || [];
-    const splitBadge = (splitters.length === 1 && splitters[0] === r.payer) ? `<span class="text-indigo-300 font-bold">[個人私帳]</span>` : `${escHTML(r.payer)} ➔ 平分給 ${splitters.map(escHTML).join(', ')}`;
-    listHTML.push(`<div class="bg-slate-800/60 p-3.5 rounded-xl border border-slate-700/50 flex justify-between items-center shadow-sm relative pr-[78px]"><div class="min-w-0 pr-2"><div class="text-white font-bold text-[16px] truncate">${escHTML(r.item)}</div><div class="text-[12px] text-slate-400 mt-1 truncate">${splitBadge}</div></div>${priceHTML}<div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1"><button onclick="editTravelRecord(${r.id})" class="p-2 text-slate-400 hover:text-amber-400 active:scale-90 transition-all">✏️</button><button onclick="deleteTravelRecord(${r.id})" class="p-2 text-slate-500 hover:text-rose-400 active:scale-90 transition-all"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button></div></div>`);
+    const priceHTML = currencyViewMode === 'dual' ? `<div class="text-right"><div class="text-white font-mono font-bold text-[15px]">${oAmt.toLocaleString()} ${r.origCode || 'JPY'}</div><div class="text-[12px] text-emerald-400 font-mono mt-0.5">≈ NT$ ${tAmt.toLocaleString()}</div></div>` : (currencyViewMode === 'foreign' ? `<div class="text-white font-mono font-bold text-[15px]">${oAmt.toLocaleString()} ${r.origCode || 'JPY'}</div>` : `<div class="text-emerald-400 font-mono font-bold text-[15px]">NT$ ${tAmt.toLocaleString()}</div>`);
+    const splitters = Array.isArray(r.splitters) ? r.splitters : [];
+    const splitBadge = (splitters.length === 1 && splitters[0] === r.payer) ? `<span class="text-indigo-300 font-bold">[個人帳]</span>` : `${escHTML(r.payer)} ➔ 分攤: ${splitters.map(escHTML).join(', ')}`;
+    listHTML.push(`<div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700/50 flex justify-between items-center shadow-sm relative pr-[70px]"><div class="min-w-0 pr-2"><div class="text-white font-bold text-[15px] truncate">${escHTML(r.item)}</div><div class="text-[11px] text-slate-400 mt-0.5 truncate">${splitBadge}</div></div>${priceHTML}<div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1"><button onclick="editTravelRecord(${r.id})" class="p-1.5 text-slate-400 hover:text-amber-400 active:scale-90">✏️</button><button onclick="deleteTravelRecord(${r.id})" class="p-1.5 text-slate-500 hover:text-rose-400 active:scale-90"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button></div></div>`);
   });
   list.innerHTML = listHTML.join('');
 }
@@ -1065,9 +1063,9 @@ function copyTravelSummary() {
     const twdAmt = Number(r.twdAmount) || 0;
     groupTotal += twdAmt;
     balances[r.payer] = (balances[r.payer]||0) + twdAmt;
-    const splitCount = Math.max(1, (r.splitters && r.splitters.length) ? r.splitters.length : 1);
-    const split = twdAmt / splitCount;
-    if (r.splitters) r.splitters.forEach(s => balances[s] = (balances[s]||0) - split);
+    const splitters = (Array.isArray(r.splitters) && r.splitters.length > 0) ? r.splitters : [members[0]];
+    const split = twdAmt / splitters.length;
+    splitters.forEach(s => balances[s] = (balances[s]||0) - split);
   });
   let lines = ['📒【旅遊花費與結算明細】', `💰 整團花費：NT$ ${Math.round(groupTotal).toLocaleString()}`, '------------------', '🤝【結算收付】'];
   Object.keys(balances).forEach(m => { const amt = Math.round(balances[m]); if (amt > 0) lines.push(`🟢 ${m}：應收回 NT$ ${amt.toLocaleString()}`); else if (amt < 0) lines.push(`🔴 ${m}：須支付 NT$ ${Math.abs(amt).toLocaleString()}`); });
@@ -1079,7 +1077,7 @@ function copyTravelSummary() {
 function manageMembers() { const res = prompt(`旅伴名單（逗號隔開）：`, members.join('，')); if (res) { const list = res.split(/[,，]/).map(s => s.trim()).filter(Boolean); if (list.length) { members = list; SafeStorage.set('app_members', members); renderTravelList(); } } }
 function clearTravel() { if(confirm('清空所有旅遊帳目？')) { travelRecords = []; SafeStorage.set('app_travel_records', []); renderTravelList(); } }
 
-// ================= 代購清單 =================
+// 代購接單
 function updateShopFeeUI() { renderFeeToggleUI('shop', shopFeeApplied, shopBaseActualTwd); }
 function syncShopOrigCost() {
   modalOrigAmount = parseFloat(document.getElementById('shopOrigCostInput').value) || 0;
@@ -1103,8 +1101,8 @@ function recalcShopFinal() {
   let unitActualCost = Math.round(parseFloat(document.getElementById('shopActualCostInput').value) || 0);
   if (document.getElementById('shopActualRateContainer').classList.contains('hidden')) unitActualCost = Math.round(modalOrigAmount * snapActualRate);
   const totalSell = sellUnit * qty, totalActualCost = unitActualCost * qty, rateDiffTotal = (Math.round(modalOrigAmount * uRate) * qty) - totalActualCost, totalProfit = totalSell - totalActualCost;
-  document.getElementById('shopQtyLabel').textContent = qty; document.getElementById('shopTotalSellHint').textContent = `x${qty}件 總收費: NT$ ${totalSell.toLocaleString()}`; document.getElementById('shopEditRateDiffText').textContent = `${rateDiffTotal >= 0 ? '+' : ''}${rateDiffTotal.toLocaleString()} NT$`;
-  const pEl = document.getElementById('shopProfitText'); pEl.textContent = `${totalProfit >= 0 ? '+' : ''}${totalProfit.toLocaleString()}`; pEl.className = totalProfit >= 0 ? "text-[18px] text-emerald-400 font-mono font-bold" : "text-[18px] text-rose-400 font-mono font-bold";
+  document.getElementById('shopQtyLabel').textContent = qty; document.getElementById('shopTotalSellHint').textContent = `x${qty}件 總額: NT$ ${totalSell.toLocaleString()}`; document.getElementById('shopEditRateDiffText').textContent = `${rateDiffTotal >= 0 ? '+' : ''}${rateDiffTotal.toLocaleString()} NT$`;
+  const pEl = document.getElementById('shopProfitText'); pEl.textContent = `${totalProfit >= 0 ? '+' : ''}${totalProfit.toLocaleString()}`; pEl.className = totalProfit >= 0 ? "text-[16px] text-emerald-400 font-mono font-bold" : "text-[16px] text-rose-400 font-mono font-bold";
 }
 
 function openShopForm() {
@@ -1114,7 +1112,7 @@ function openShopForm() {
   document.getElementById('shopActualRateContainer').classList.replace('flex', 'hidden'); document.getElementById('shopUsedRate').value = snapUsedRate.toFixed(4); document.getElementById('shopActualRate').value = snapActualRate.toFixed(4);
   const initActCost = Math.round(modalOrigAmount * snapActualRate); shopFeeApplied = applyFee; shopBaseActualTwd = applyFee ? Math.round(initActCost / (1 + feeRate / 100)) : initActCost;
   document.getElementById('shopActualCostInput').value = initActCost; document.getElementById('shopSellUnit').value = Math.round(modalOrigAmount * snapUsedRate); 
-  updateShopFeeUI(); syncShopUsedRate(); setTimeout(() => showModal('shopFormModal', 'shopFormBox'), 200);
+  updateShopFeeUI(); syncShopUsedRate(); setTimeout(() => showModal('shopFormModal', 'shopFormBox'), 150);
 }
 
 function editShopRecord(id) {
@@ -1207,8 +1205,8 @@ function renderShopList() {
   document.getElementById('shopTotalCount').textContent = `共 ${shopRecords.length} 筆接單`;
   let totalActualCost = 0, totalUnpaid = 0, totalProfit = 0;
 
-  if (shopRecords.length === 0) { 
-    list.innerHTML = `<div class="text-center text-slate-500 py-10 text-[15px]">目前沒有代購接單</div>`; 
+  if (!shopRecords || shopRecords.length === 0) { 
+    list.innerHTML = `<div class="text-center text-slate-500 py-8 text-[13px]">目前沒有代購接單</div>`; 
     document.getElementById('shopBoardCost').textContent = 'NT$ 0'; 
     document.getElementById('shopBoardUnpaid').textContent = 'NT$ 0'; 
     document.getElementById('shopTotalProfit').textContent = 'NT$ 0';
@@ -1257,44 +1255,44 @@ function renderShopList() {
       const profit = tSell - tAct;
 
       const boughtBtn = r.isBought ? 
-        `<button onclick="toggleShopBoughtById(${r.id})" class="bg-emerald-900/50 text-emerald-300 border border-emerald-700 text-[11px] px-1.5 py-0.5 rounded font-bold active:scale-95 whitespace-nowrap">🛒 已購入</button>` : 
-        `<button onclick="toggleShopBoughtById(${r.id})" class="bg-amber-900/60 text-amber-300 border border-amber-600 text-[11px] px-1.5 py-0.5 rounded font-bold active:scale-95 whitespace-nowrap">📝 待購入</button>`;
+        `<button onclick="toggleShopBoughtById(${r.id})" class="bg-emerald-900/50 text-emerald-300 border border-emerald-700 text-[10px] px-1.5 py-0.5 rounded font-bold active:scale-95 whitespace-nowrap">🛒 已買</button>` : 
+        `<button onclick="toggleShopBoughtById(${r.id})" class="bg-amber-900/60 text-amber-300 border border-amber-600 text-[10px] px-1.5 py-0.5 rounded font-bold active:scale-95 whitespace-nowrap">📝 待買</button>`;
 
       const paidBtn = r.isPaid ? 
-        `<button onclick="toggleShopPaidById(${r.id})" class="bg-emerald-900/50 text-emerald-300 border border-emerald-700 text-[11px] px-1.5 py-0.5 rounded font-bold active:scale-95 whitespace-nowrap">✅ 已付</button>` : 
-        `<button onclick="toggleShopPaidById(${r.id})" class="bg-slate-700 text-slate-300 border border-slate-600 text-[11px] px-1.5 py-0.5 rounded font-bold active:scale-95 whitespace-nowrap">💰 待收</button>`;
+        `<button onclick="toggleShopPaidById(${r.id})" class="bg-emerald-900/50 text-emerald-300 border border-emerald-700 text-[10px] px-1.5 py-0.5 rounded font-bold active:scale-95 whitespace-nowrap">✅ 已付</button>` : 
+        `<button onclick="toggleShopPaidById(${r.id})" class="bg-slate-700 text-slate-300 border border-slate-600 text-[10px] px-1.5 py-0.5 rounded font-bold active:scale-95 whitespace-nowrap">💰 待收</button>`;
 
       itemsHTML.push(`
-        <div class="flex flex-col py-3.5 border-b ${r.isBought ? 'border-slate-700/50' : 'border-amber-500/60 border-dashed'} last:border-0 relative">
-          <div class="flex justify-between items-start gap-2 mb-2.5 pr-[72px]">
+        <div class="flex flex-col py-3 border-b ${r.isBought ? 'border-slate-700/50' : 'border-amber-500/60 border-dashed'} last:border-0 relative">
+          <div class="flex justify-between items-start gap-2 mb-2 pr-[65px]">
             <div class="flex flex-wrap items-center gap-1.5">
-              <span class="text-white text-[16px] font-bold">${escHTML(r.item || '代購品項')}</span>
-              <span class="text-[14px] text-emerald-300 font-mono font-bold">x${qty}</span>
+              <span class="text-white text-[15px] font-bold">${escHTML(r.item || '代購品項')}</span>
+              <span class="text-[13px] text-emerald-300 font-mono font-bold">x${qty}</span>
               ${boughtBtn}
               ${paidBtn}
             </div>
-            <div class="absolute right-0 top-0 flex items-center gap-1 shrink-0 bg-slate-900 px-1.5 py-1 rounded-lg border border-slate-700">
-              <button onclick="editShopRecord(${r.id})" class="text-[14px] text-amber-400 active:scale-90 px-1.5 py-0.5">✏️</button>
-              <button onclick="deleteShopRecordById(${r.id})" class="text-[14px] text-rose-400 active:scale-90 px-1.5 py-0.5">🗑️</button>
+            <div class="absolute right-0 top-0 flex items-center gap-1 bg-slate-900 px-1 py-0.5 rounded-lg border border-slate-700">
+              <button onclick="editShopRecord(${r.id})" class="text-[13px] text-amber-400 active:scale-90 px-1">✏️</button>
+              <button onclick="deleteShopRecordById(${r.id})" class="text-[13px] text-rose-400 active:scale-90 px-1">🗑️</button>
             </div>
           </div>
-          <div class="bg-slate-950/90 rounded-lg p-3 border border-slate-800 text-[12px] font-mono space-y-1.5 mb-2.5 shadow-inner">
+          <div class="bg-slate-950/90 rounded-lg p-2.5 border border-slate-800 text-[11px] font-mono space-y-1 mb-2 shadow-inner">
             <div class="flex justify-between text-slate-300">
-              <span>外幣原價：</span><span class="font-bold text-white text-[14px]">${origCost.toLocaleString()} ${r.origCode || 'JPY'}</span>
+              <span>外幣原價：</span><span class="font-bold text-white text-[13px]">${origCost.toLocaleString()} ${r.origCode || 'JPY'}</span>
             </div>
             <div class="flex justify-between text-amber-300">
               <span>報價成本：</span><span class="font-bold">NT$ ${tQuote.toLocaleString()}</span>
             </div>
             <div class="flex justify-between text-sky-400">
-              <span>實際成本：</span><span class="font-bold text-[14px]">NT$ ${tAct.toLocaleString()}</span>
+              <span>實際成本：</span><span class="font-bold text-[13px]">NT$ ${tAct.toLocaleString()}</span>
             </div>
           </div>
-          <div class="flex justify-between items-center px-1">
+          <div class="flex justify-between items-center px-0.5">
             <div>
-              <span class="text-[13px] text-slate-300">客收總額：</span>
-              <span class="text-[16px] text-emerald-400 font-mono font-bold">NT$ ${tSell.toLocaleString()}</span>
+              <span class="text-[12px] text-slate-300">客收總額：</span>
+              <span class="text-[15px] text-emerald-400 font-mono font-bold">NT$ ${tSell.toLocaleString()}</span>
             </div>
-            <div class="text-[13px] ${profit >= 0 ? 'text-emerald-400 border-emerald-800/60' : 'text-rose-400 border-rose-800/60'} font-mono font-bold bg-slate-900 border px-2.5 py-1.5 rounded-lg shadow-sm">
+            <div class="text-[12px] ${profit >= 0 ? 'text-emerald-400 border-emerald-800/60' : 'text-rose-400 border-rose-800/60'} font-mono font-bold bg-slate-900 border px-2 py-1 rounded-lg shadow-sm">
               總淨利 ${profit >= 0 ? '+' : ''}${profit.toLocaleString()}
             </div>
           </div>
@@ -1303,17 +1301,17 @@ function renderShopList() {
     });
 
     listHTML.push(`
-      <div class="${bgClass} p-4 rounded-2xl border transition-all shadow-sm mb-4">
-        <div class="flex justify-between items-center mb-1.5 pb-2.5 border-b border-slate-600/50">
-          <div class="text-white font-bold text-[18px]">👤 ${escHTML(buyer)}</div>
-          <button onclick="copyBuyerInvoice('${escHTML(buyer)}')" class="text-[13px] bg-indigo-600/90 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-md font-bold">📋 單客請款</button>
+      <div class="${bgClass} p-3.5 rounded-2xl border transition-all shadow-sm mb-3">
+        <div class="flex justify-between items-center mb-1 pb-2 border-b border-slate-600/50">
+          <div class="text-white font-bold text-[16px]">👤 ${escHTML(buyer)}</div>
+          <button onclick="copyBuyerInvoice('${escHTML(buyer)}')" class="text-[12px] bg-indigo-600/90 hover:bg-indigo-500 text-white px-2.5 py-1 rounded-md font-bold">📋 單客請款</button>
         </div>
-        <div class="mb-2">${itemsHTML.join('')}</div>
-        <div class="flex justify-between items-center mt-3 pt-3.5 border-t border-slate-700/50">
-          <div class="text-[14px] font-bold ${g.isAllPaid ? 'text-slate-400' : 'text-amber-400'}">
+        <div>${itemsHTML.join('')}</div>
+        <div class="flex justify-between items-center mt-2.5 pt-2.5 border-t border-slate-700/50">
+          <div class="text-[13px] font-bold ${g.isAllPaid ? 'text-slate-400' : 'text-amber-400'}">
             ${g.isAllPaid ? '✅ 已結清' : `⏳ 待收 NT$ ${g.totalSell.toLocaleString()}`}
           </div>
-          <button ${g.isAllPaid ? '' : `onclick="markBuyerAllPaid('${escHTML(buyer)}')"`} class="px-3.5 py-2 rounded-lg text-[13px] font-bold ${g.isAllPaid ? 'bg-slate-700/50 text-slate-400' : 'bg-emerald-700/80 text-white active:scale-95'}">
+          <button ${g.isAllPaid ? '' : `onclick="markBuyerAllPaid('${escHTML(buyer)}')"`} class="px-3 py-1.5 rounded-lg text-[12px] font-bold ${g.isAllPaid ? 'bg-slate-700/50 text-slate-400' : 'bg-emerald-700/80 text-white active:scale-95'}">
             ${g.isAllPaid ? '✅ 已結清' : '💰 一鍵標記已收'}
           </button>
         </div>
@@ -1327,11 +1325,13 @@ function renderShopList() {
   document.getElementById('shopTotalProfit').textContent = `NT$ ${Math.round(totalProfit).toLocaleString()}`;
 }
 
-// ================= 單位轉換 =================
+function clearShop() { if(confirm('清空所有代購紀錄？')) { shopRecords = []; SafeStorage.set('app_shop_records', []); renderShopList(); } }
+
+// 單位與尺寸對照
 function switchToolSubTab(mode) {
   const uBtn = document.getElementById('btnToolUnit'), sBtn = document.getElementById('btnToolSize');
-  if (mode === 'unit') { document.getElementById('subTabUnit').classList.remove('hidden'); document.getElementById('subTabSize').classList.add('hidden'); uBtn.className = "py-2.5 rounded-lg text-[14px] font-bold bg-emerald-600 text-white shadow-sm"; sBtn.className = "py-2.5 rounded-lg text-[14px] font-bold text-slate-400 hover:text-white transition-all"; } 
-  else { document.getElementById('subTabUnit').classList.add('hidden'); document.getElementById('subTabSize').classList.remove('hidden'); sBtn.className = "py-2.5 rounded-lg text-[14px] font-bold bg-emerald-600 text-white shadow-sm"; uBtn.className = "py-2.5 rounded-lg text-[14px] font-bold text-slate-400 hover:text-white transition-all"; renderSizeTable('men'); }
+  if (mode === 'unit') { document.getElementById('subTabUnit').classList.remove('hidden'); document.getElementById('subTabSize').classList.add('hidden'); uBtn.className = "py-2 rounded-lg text-[13px] font-bold bg-emerald-600 text-white shadow-sm"; sBtn.className = "py-2 rounded-lg text-[13px] font-bold text-slate-400 hover:text-white transition-all"; } 
+  else { document.getElementById('subTabUnit').classList.add('hidden'); document.getElementById('subTabSize').classList.remove('hidden'); sBtn.className = "py-2 rounded-lg text-[13px] font-bold bg-emerald-600 text-white shadow-sm"; uBtn.className = "py-2 rounded-lg text-[13px] font-bold text-slate-400 hover:text-white transition-all"; renderSizeTable('men'); }
 }
 function convertWeight(source) {
   let kg = 0;
@@ -1347,19 +1347,24 @@ function convertLength(source) {
 const sizeData = {
   women: [{ title: '👩 女鞋尺寸對照表', headers: ['台灣/日本(cm)', '歐洲(EU)', '美國(US)', '英國(UK)'], rows: [['22.0', '34.5', '5.0', '2.5'], ['22.5', '35', '5.5', '3.0'], ['23.0', '36', '6.0', '3.5'], ['23.5', '37', '6.5', '4.0'], ['24.0', '38', '7.0', '4.5'], ['24.5', '38.5', '7.5', '5.0'], ['25.0', '39', '8.0', '5.5'], ['25.5', '40', '8.5', '6.0'], ['26.0', '40.5', '9.0', '6.5']] }],
   men: [{ title: '👨 男鞋尺寸對照表 (27cm = EU42 = US9)', headers: ['台灣/日本(cm)', '歐洲(EU)', '美國(US)', '英國(UK)'], rows: [['25.0', '40', '7.0', '6.0'], ['25.5', '40.5', '7.5', '6.5'], ['26.0', '41', '8.0', '7.0'], ['26.5', '41.5', '8.5', '7.5'], ['27.0', '42', '9.0', '8.0'], ['27.5', '42.5', '9.5', '8.5'], ['28.0', '43', '10.0', '9.0'], ['28.5', '43.5', '10.5', '9.5'], ['29.0', '44', '11.0', '10.0'], ['30.0', '45', '12.0', '11.0']] }],
-  tops: [{ title: '👨 男裝 / 通用上衣 (含韓國尺碼)', headers: ['國際碼', '韓國號', '歐碼(EU)', '胸圍(cm)', '參考身高'], rows: [['S', '90', '44~46', '86~92', '165~170'], ['M', '95', '48', '92~96', '170~175'], ['L', '100', '50', '96~102', '175~180'], ['XL', '105', '52', '102~108', '180~185'], ['XXL', '110', '54', '108~114', '185~190']] }, { title: '👩 女裝上衣 / 洋裝 (含日韓歐美)', headers: ['國際碼', '日本(JP)', '韓國號', '歐洲(EU)', '美國(US)'], rows: [['XS', '5 ~ 7', '44 (80)', '32 ~ 34', '0 ~ 2'], ['S', '7 ~ 9', '55 (85)', '34 ~ 36', '4 ~ 6'], ['M', '9 ~ 11', '66 (90)', '38 ~ 40', '8 ~ 10'], ['L', '11 ~ 13', '77 (95)', '42', '12'], ['XL', '13 ~ 15', '88 (100)', '44', '14 ~ 16']] }],
-  pants: [{ title: '👖 褲子 / 牛仔褲腰圍對照表', headers: ['腰圍(吋)', '實際腰圍(cm)', '大陸市尺', '國際碼', '歐碼(EU)'], rows: [['26"', '66 cm', '1尺98', 'XS(女S)', '34'], ['27"', '68.5 cm', '2尺05', 'S(女M)', '36'], ['28"', '71 cm', '2尺13', 'S', '36~38'], ['29"', '73.5 cm', '2尺20', 'M', '38'], ['30"', '76 cm', '2尺28', 'M', '38~40'], ['31"', '78.5 cm', '2尺35', 'L', '40'], ['32"', '81 cm', '2尺43', 'L', '40~42'], ['33"', '83.5 cm', '2尺50', 'XL', '42'], ['34"', '86.5 cm', '2尺60', 'XL', '44'], ['36"', '91.5 cm', '2尺75', 'XXL', '46'], ['38"', '96.5 cm', '2尺90', '3XL', '48']] }],
-  kids: [{ title: '🧒 童鞋尺寸對照表', headers: ['日本/台灣(cm)', '歐洲(EU)', '美國(US)', '參考年齡'], rows: [['13.0', '21', '6C', '1~2 歲'], ['14.0', '22.5', '7C', '2~3 歲'], ['15.0', '24', '8C', '3~4 歲'], ['16.0', '25', '9C', '4~5 歲'], ['17.0', '27', '10C', '5~6 歲'], ['18.0', '28', '11C', '6~7 歲'], ['19.0', '30', '12C', '7~8 歲'], ['20.0', '31', '13C', '8~9 歲'], ['21.0', '32.5', '1Y', '9~10 歲']] }, { title: '🧒 童裝身高尺碼對照表', headers: ['日韓/台灣碼', '歐美碼', '適合身高(cm)', '適合體重(kg)'], rows: [['90 碼', '2T', '85 ~ 95', '11 ~ 14 kg'], ['100 碼', '3T ~ 4T', '95 ~ 105', '14 ~ 17 kg'], ['110 碼', '4 ~ 5', '105 ~ 115', '17 ~ 20 kg'], ['120 碼', '6 ~ 7', '115 ~ 125', '20 ~ 24 kg'], ['130 碼', '8', '125 ~ 135', '24 ~ 29 kg'], ['140 碼', '10', '135 ~ 145', '29 ~ 35 kg'], ['150 碼', '12', '145 ~ 155', '35 ~ 42 kg']] }]
+  tops: [{ title: '👨 男裝 / 通用上衣', headers: ['國際碼', '韓國號', '歐碼(EU)', '胸圍(cm)', '參考身高'], rows: [['S', '90', '44~46', '86~92', '165~170'], ['M', '95', '48', '92~96', '170~175'], ['L', '100', '50', '96~102', '175~180'], ['XL', '105', '52', '102~108', '180~185'], ['XXL', '110', '54', '108~114', '185~190']] }, { title: '👩 女裝上衣 / 洋裝', headers: ['國際碼', '日本(JP)', '韓國號', '歐洲(EU)', '美國(US)'], rows: [['XS', '5 ~ 7', '44 (80)', '32 ~ 34', '0 ~ 2'], ['S', '7 ~ 9', '55 (85)', '34 ~ 36', '4 ~ 6'], ['M', '9 ~ 11', '66 (90)', '38 ~ 40', '8 ~ 10'], ['L', '11 ~ 13', '77 (95)', '42', '12'], ['XL', '13 ~ 15', '88 (100)', '44', '14 ~ 16']] }],
+  pants: [{ title: '👖 褲子 / 牛仔褲腰圍', headers: ['腰圍(吋)', '實際腰圍(cm)', '市尺', '國際碼', '歐碼(EU)'], rows: [['26"', '66 cm', '1尺98', 'XS(女S)', '34'], ['27"', '68.5 cm', '2尺05', 'S(女M)', '36'], ['28"', '71 cm', '2尺13', 'S', '36~38'], ['29"', '73.5 cm', '2尺20', 'M', '38'], ['30"', '76 cm', '2尺28', 'M', '38~40'], ['31"', '78.5 cm', '2尺35', 'L', '40'], ['32"', '81 cm', '2尺43', 'L', '40~42'], ['33"', '83.5 cm', '2尺50', 'XL', '42'], ['34"', '86.5 cm', '2尺60', 'XL', '44'], ['36"', '91.5 cm', '2尺75', 'XXL', '46'], ['38"', '96.5 cm', '2尺90', '3XL', '48']] }],
+  kids: [{ title: '🧒 童鞋尺寸對照', headers: ['日本/台灣(cm)', '歐洲(EU)', '美國(US)', '參考年齡'], rows: [['13.0', '21', '6C', '1~2 歲'], ['14.0', '22.5', '7C', '2~3 歲'], ['15.0', '24', '8C', '3~4 歲'], ['16.0', '25', '9C', '4~5 歲'], ['17.0', '27', '10C', '5~6 歲'], ['18.0', '28', '11C', '6~7 歲'], ['19.0', '30', '12C', '7~8 歲'], ['20.0', '31', '13C', '8~9 歲'], ['21.0', '32.5', '1Y', '9~10 歲']] }, { title: '🧒 童裝身高尺碼', headers: ['日韓/台灣碼', '歐美碼', '適合身高(cm)', '適合體重(kg)'], rows: [['90 碼', '2T', '85 ~ 95', '11 ~ 14 kg'], ['100 碼', '3T ~ 4T', '95 ~ 105', '14 ~ 17 kg'], ['110 碼', '4 ~ 5', '105 ~ 115', '17 ~ 20 kg'], ['120 碼', '6 ~ 7', '115 ~ 125', '20 ~ 24 kg'], ['130 碼', '8', '125 ~ 135', '24 ~ 29 kg'], ['140 碼', '10', '135 ~ 145', '29 ~ 35 kg'], ['150 碼', '12', '145 ~ 155', '35 ~ 42 kg']] }]
 };
 function renderSizeTable(type) {
-  ['szBtnWomen', 'szBtnMen', 'szBtnTops', 'szBtnPants', 'szBtnKids'].forEach(id => { const el = document.getElementById(id); if (el) el.className = "py-2 rounded-lg text-[12px] font-bold bg-slate-800 text-slate-300 transition-all"; });
-  const activeBtn = document.getElementById({ women: 'szBtnWomen', men: 'szBtnMen', tops: 'szBtnTops', pants: 'szBtnPants', kids: 'szBtnKids' }[type]); if (activeBtn) activeBtn.className = "py-2 rounded-lg text-[12px] font-bold bg-indigo-600 text-white shadow-sm transition-all";
-  const htmlBuffer = (sizeData[type] || sizeData.men).map(t => `<div class="bg-slate-800/80 rounded-2xl border border-slate-700 overflow-hidden shadow-lg"><div class="bg-slate-900 px-3 py-2 text-[13px] font-bold text-indigo-300 border-b border-slate-700">${t.title}</div><table class="w-full text-center text-[13px]"><thead class="bg-slate-950 text-slate-300 font-bold border-b border-slate-700"><tr>${t.headers.map(h => `<th class="py-2.5 px-1 text-[11px]">${h}</th>`).join('')}</tr></thead><tbody class="divide-y divide-slate-700/60 font-mono">${t.rows.map(r => `<tr class="hover:bg-slate-700/40">${r.map((c, i) => `<td class="py-2.5 px-1 ${i===0?'font-bold text-emerald-400':i===1?'font-bold text-white':i===2?'text-amber-300':'text-slate-300'}">${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`);
+  ['szBtnWomen', 'szBtnMen', 'szBtnTops', 'szBtnPants', 'szBtnKids'].forEach(id => { const el = document.getElementById(id); if (el) el.className = "py-1.5 rounded-lg text-[11px] font-bold bg-slate-800 text-slate-300 transition-all"; });
+  const activeBtn = document.getElementById({ women: 'szBtnWomen', men: 'szBtnMen', tops: 'szBtnTops', pants: 'szBtnPants', kids: 'szBtnKids' }[type]); if (activeBtn) activeBtn.className = "py-1.5 rounded-lg text-[11px] font-bold bg-indigo-600 text-white shadow-sm transition-all";
+  const htmlBuffer = (sizeData[type] || sizeData.men).map(t => `<div class="bg-slate-800/80 rounded-2xl border border-slate-700 overflow-hidden shadow-md"><div class="bg-slate-900 px-3 py-1.5 text-[12px] font-bold text-indigo-300 border-b border-slate-700">${t.title}</div><table class="w-full text-center text-[12px]"><thead class="bg-slate-950 text-slate-300 font-bold border-b border-slate-700"><tr>${t.headers.map(h => `<th class="py-2 px-1 text-[11px]">${h}</th>`).join('')}</tr></thead><tbody class="divide-y divide-slate-700/60 font-mono">${t.rows.map(r => `<tr class="hover:bg-slate-700/40">${r.map((c, i) => `<td class="py-2 px-1 ${i===0?'font-bold text-emerald-400':i===1?'font-bold text-white':i===2?'text-amber-300':'text-slate-300'}">${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`);
   document.getElementById('sizeTableContainer').innerHTML = htmlBuffer.join('');
 }
 
-// 初始化
-setActiveInput('target'); updateCurrencyMeta(); updateCurrencyViewBtn(); convertWeight('kg'); convertLength('cm'); fetchRates();
+// 啟動初始化
+setActiveInput('target'); 
+updateCurrencyMeta(); 
+updateCurrencyViewBtn(); 
+convertWeight('kg'); 
+convertLength('cm'); 
+fetchRates();
 </script>
 </body>
 </html>
