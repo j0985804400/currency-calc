@@ -6,7 +6,7 @@
   <title>全球匯率與雙幣記帳神器</title>
 
   <!-- 終極修復：全部改用「絕對路徑」，確保三星瀏覽器絕對找得到設定檔 -->
-  <link rel="manifest" href="https://j0985804400.github.io/currency-calc/manifest.json">
+  <link rel="manifest" href="./manifest.json">
   
   <meta name="theme-color" content="#0f172a">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -17,7 +17,7 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('https://j0985804400.github.io/currency-calc/sw.js', { scope: '/currency-calc/' })
+        navigator.serviceWorker.register('./sw.js')
           .then(reg => console.log('ServiceWorker 註冊成功，範圍:', reg.scope))
           .catch(err => console.log('ServiceWorker 註冊失敗: ', err));
       });
