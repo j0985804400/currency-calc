@@ -5,15 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>全球匯率與雙幣記帳神器</title>
 
-  <!-- 1. 正規連結實體的 manifest 檔案 -->
+  <!-- PWA 必備檔案連結 -->
   <link rel="manifest" href="./manifest.json">
-  
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#0f172a">
   <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230f172a'/%3E%3Ctext y='.9em' font-size='80' x='10'%3E%F0%9F%A7%AE%3C/text%3E%3C/svg%3E">
 
-  <!-- 2. 註冊 Service Worker (PWA 必備條件) -->
+  <!-- 註冊 Service Worker -->
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
@@ -25,9 +24,6 @@
   </script>
 
   <script src="https://cdn.tailwindcss.com"></script>
-  
-  <!-- 下方的 CSS 與 body 內容完全不變，請保留您原本的代碼... -->
-
   
   <style>
     :root { --app-height: 100dvh; }
@@ -55,9 +51,10 @@
     .calc-input-text { font-size: clamp(26px, 4.5vh, 40px); }
     .key-btn { font-size: clamp(18px, 3.2vh, 24px); }
     .safe-bottom { padding-bottom: max(4px, env(safe-area-inset-bottom)); }
+    .isolate-layer { isolation: isolate; }
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 flex justify-center items-center w-full sm:p-2">
+<body class="bg-slate-950 text-slate-100 flex justify-center items-center w-full sm:p-2 relative">
 
 <div class="w-full max-w-md bg-slate-900 sm:rounded-3xl h-full flex flex-col shadow-2xl relative overflow-hidden sm:border border-slate-800">
 
@@ -77,6 +74,20 @@
       </button>
     </div>
   </header>
+
+  <!-- ================= 專屬安裝 PWA 提示列 (隱藏於瀏覽器模式，安裝後消失) ================= -->
+  <div id="installBanner" class="hidden bg-indigo-900/90 border-b border-indigo-700/50 px-3 py-2 flex justify-between items-center z-20 shrink-0 shadow-sm transition-all">
+    <div class="flex items-center gap-2 text-indigo-100">
+      <span class="text-xl">📲</span>
+      <div>
+        <p class="text-[13px] font-bold">加入桌面全螢幕使用</p>
+        <p class="text-[11px] text-indigo-300 opacity-90">免去網址列，體驗更流暢</p>
+      </div>
+    </div>
+    <button id="installAppBtn" class="bg-indigo-500 hover:bg-indigo-400 text-white px-3 py-1.5 rounded-lg text-[13px] font-bold shadow-md active:scale-95 transition-all">
+      安裝 App
+    </button>
+  </div>
 
   <!-- 主內容切換區 -->
   <div id="mainContent" class="flex-1 flex flex-col relative min-h-0 overflow-hidden">
@@ -133,7 +144,7 @@
         </div>
       </div>
 
-      <div class="px-3 pb-2 flex flex-col shrink-0 relative z-50">
+      <div class="px-3 pb-2 flex flex-col shrink-0 relative z-50 isolate-layer">
         <div id="breakdownBox" class="hidden bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1 mb-1 text-[11px] font-mono font-bold shadow-inner space-y-0.5 fade-in">
           <div class="flex justify-between text-slate-300"><span>原始折合：</span><span id="bdRaw">0.00</span></div>
           <div id="bdTaxRow" class="flex justify-between text-emerald-400 hidden"><span id="bdTaxLabel">免稅退稅 (10%)：</span><span id="bdTax">-0.00</span></div>
@@ -143,7 +154,6 @@
         <div class="flex items-center justify-between w-full">
           <div class="flex items-center gap-1.5 shrink-0">
             <button onclick="promptCustomAddon()" class="flex items-center justify-center w-7 h-7 bg-slate-800 hover:bg-slate-700 rounded-full border border-slate-600 active:scale-95 transition-all text-slate-200 shadow-sm text-xs shrink-0 cursor-pointer">⚙️</button>
-            <!-- 補回遺失的 onclick 事件綁定，保證絕對點得到！ -->
             <button id="toggleFee" onclick="toggleGlobalFee()" class="px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 text-[12px] font-bold font-mono active:scale-95 transition-all shadow-sm whitespace-nowrap cursor-pointer">+1.5%刷卡</button>
             <button id="toggleTax" onclick="toggleGlobalTax()" class="px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 text-[12px] font-bold font-mono active:scale-95 transition-all shadow-sm whitespace-nowrap cursor-pointer">-10%退稅</button>
           </div>
@@ -521,6 +531,41 @@
 </div>
 
 <script>
+// ================= PWA 強制觸發安裝機制 =================
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+  // 防止 Chrome 67 以前的版本自動顯示提示
+  e.preventDefault();
+  deferredPrompt = e;
+  // 顯示畫面上方專屬的「安裝 App」提示橫幅
+  document.getElementById('installBanner').classList.remove('hidden');
+});
+
+document.getElementById('installAppBtn').addEventListener('click', async () => {
+  if (deferredPrompt) {
+    // 顯示原生安裝對話框
+    deferredPrompt.prompt();
+    // 等待使用者選擇
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log(`User response to the install prompt: ${outcome}`);
+    deferredPrompt = null;
+    // 隱藏提示橫幅
+    document.getElementById('installBanner').classList.add('hidden');
+  }
+});
+
+// 當應用程式已經被安裝時，隱藏提示橫幅
+window.addEventListener('appinstalled', (evt) => {
+  document.getElementById('installBanner').classList.add('hidden');
+  console.log('App was successfully installed');
+});
+
+// 如果目前已經是以 PWA 全螢幕模式運行，就不要顯示安裝橫幅
+if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+  document.getElementById('installBanner').classList.add('hidden');
+}
+
+
 // ================= 動態鎖定真實可視高度 =================
 function syncAppHeight() {
   const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
@@ -757,7 +802,7 @@ function renderCalculation() {
   } else bdBox.classList.add('hidden');
 }
 
-// ================== 全域按鈕觸發函數 ==================
+// ================= 全域按鈕觸發 =================
 function toggleGlobalFee() { applyFee = !applyFee; updateAddonButtons(); }
 function toggleGlobalTax() { applyTaxFree = !applyTaxFree; updateAddonButtons(); }
 
