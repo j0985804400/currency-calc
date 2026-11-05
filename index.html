@@ -9,12 +9,12 @@
   <meta name="theme-color" content="#0f172a">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="apple-touch-icon" href="https://via.placeholder.com/192/0f172a/ffffff?text=App">
+  <link rel="apple-touch-icon" href="./icon-192.png">
 
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=5')
+        navigator.serviceWorker.register('./sw.js?v=6')
           .then(reg => {
             reg.update();
             console.log('SW Registered');
@@ -40,6 +40,7 @@
     }
     * { max-height: 1000000px; box-sizing: border-box; }
     input[type="text"], input[type="number"] { -webkit-appearance: none; margin: 0; }
+    input, textarea { -webkit-user-select: text; user-select: text; }
     .sheet-open { transform: translateY(0%); }
     .sheet-closed { transform: translateY(100%); }
     .fade-in { animation: fadeIn 0.15s ease-in-out; }
@@ -646,7 +647,7 @@ shopRecords = (Array.isArray(shopRecords) ? shopRecords : []).map(r => {
   const actualCost = Number(r.actualCost) || twdCost;
   return {
     ...r,
-    id: r.id || Date.now() + Math.random(),
+    id: r.id || (Date.now() + Math.floor(Math.random() * 1000)),
     buyer: String(r.buyer || '未署名買家').trim(),
     item: String(r.item || '代購品項').trim(),
     qty: Math.max(1, Number(r.qty) || 1),
@@ -670,7 +671,7 @@ function getCustomPairRate(tCode, bCode) {
   return undefined;
 }
 
-function escHTML(str) { return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m])); }
+function escHTML(str) { return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
 // 備份功能
 function openBackupModal() { document.getElementById('restoreCodeInput').value = ''; showModal('backupModal', 'backupBox'); }
@@ -714,7 +715,7 @@ function fallbackCopy(text, successMsg) {
 function evalSafe(expr) {
   try {
     let san = String(expr).trim(); if (!san) return 0;
-    san = san.replace(/[^0-9.+\-*/%]/g, '').replace(/([+\-*/.])\1+/g, '$1').replace(/[+\-*/.]+$/, '');
+    san = san.replace(/[^0-9.+\-*/%]/g, '').replace(/([+\-*/.])+/g, '$1').replace(/[+\-*/.]+$/, '');
     if (!san) return 0;
     san = san.replace(/([*/])(\d+(?:\.\d+)?)%/g, '$1($2*0.01)');
     let prev;
@@ -865,7 +866,8 @@ function promptCustomAddon() {
 }
 function promptCustomRate() {
   const live = (currentRates[targetCode].rate / currentRates[baseCode].rate), curCus = getCustomPairRate(targetCode, baseCode);
-  const ur = prompt(`輸入自訂匯率：\n(即時: 1 ${targetCode} = ${live.toFixed(4)} ${baseCode})`, curCus !== undefined ? Number(curCus.toFixed(4)) : live.toFixed(4));
+  const ur = prompt(`輸入自訂匯率：
+(即時: 1 ${targetCode} = ${live.toFixed(4)} ${baseCode})`, curCus !== undefined ? Number(curCus.toFixed(4)) : live.toFixed(4));
   if (ur !== null && !isNaN(parseFloat(ur)) && parseFloat(ur) > 0) { delete customCrossRates[`${baseCode}_${targetCode}`]; customCrossRates[`${targetCode}_${baseCode}`] = parseFloat(ur); SafeStorage.set('custom_pairs_cache', customCrossRates); updateCurrencyMeta(); renderCalculation(); }
 }
 function resetToLiveRate() { delete customCrossRates[`${targetCode}_${baseCode}`]; delete customCrossRates[`${baseCode}_${targetCode}`]; SafeStorage.set('custom_pairs_cache', customCrossRates); updateCurrencyMeta(); renderCalculation(); }
@@ -1174,7 +1176,9 @@ function deleteShopRecordById(id) { if (confirm('確定刪除這筆單？')) { s
 function markBuyerAllPaid(buyer) { shopRecords.forEach(r => { if(r.buyer === buyer) r.isPaid = true; }); SafeStorage.set('app_shop_records', shopRecords); renderShopList(); }
 
 function copyBuyerInvoice(buyer) {
-  const recs = shopRecords.filter(r => r.buyer === buyer); let total = 0, lines = [`🛍️【代購請款單】\n👤 買家：${buyer}\n------------------`];
+  const recs = shopRecords.filter(r => r.buyer === buyer); let total = 0, lines = [`🛍️【代購請款單】
+👤 買家：${buyer}
+------------------`];
   recs.forEach(r => { 
     const t = (Number(r.sellUnit ?? r.sell) || 0) * (Number(r.qty) || 1); 
     lines.push(`• ${r.item} x${r.qty||1}：NT$ ${t.toLocaleString()} ${r.isPaid?'(已付)':''}`); 
@@ -1304,14 +1308,14 @@ function renderShopList() {
       <div class="${bgClass} p-3.5 rounded-2xl border transition-all shadow-sm mb-3">
         <div class="flex justify-between items-center mb-1 pb-2 border-b border-slate-600/50">
           <div class="text-white font-bold text-[16px]">👤 ${escHTML(buyer)}</div>
-          <button onclick="copyBuyerInvoice('${escHTML(buyer)}')" class="text-[12px] bg-indigo-600/90 hover:bg-indigo-500 text-white px-2.5 py-1 rounded-md font-bold">📋 單客請款</button>
+          <button data-buyer="${escHTML(buyer)}" onclick="copyBuyerInvoice(this.dataset.buyer)" class="text-[12px] bg-indigo-600/90 hover:bg-indigo-500 text-white px-2.5 py-1 rounded-md font-bold">📋 單客請款</button>
         </div>
         <div>${itemsHTML.join('')}</div>
         <div class="flex justify-between items-center mt-2.5 pt-2.5 border-t border-slate-700/50">
           <div class="text-[13px] font-bold ${g.isAllPaid ? 'text-slate-400' : 'text-amber-400'}">
             ${g.isAllPaid ? '✅ 已結清' : `⏳ 待收 NT$ ${g.totalSell.toLocaleString()}`}
           </div>
-          <button ${g.isAllPaid ? '' : `onclick="markBuyerAllPaid('${escHTML(buyer)}')"`} class="px-3 py-1.5 rounded-lg text-[12px] font-bold ${g.isAllPaid ? 'bg-slate-700/50 text-slate-400' : 'bg-emerald-700/80 text-white active:scale-95'}">
+          <button ${g.isAllPaid ? '' : `data-buyer="${escHTML(buyer)}" onclick="markBuyerAllPaid(this.dataset.buyer)"`} class="px-3 py-1.5 rounded-lg text-[12px] font-bold ${g.isAllPaid ? 'bg-slate-700/50 text-slate-400' : 'bg-emerald-700/80 text-white active:scale-95'}">
             ${g.isAllPaid ? '✅ 已結清' : '💰 一鍵標記已收'}
           </button>
         </div>
